@@ -1,6 +1,6 @@
 'use client'
 
-import { InputHTMLAttributes, forwardRef } from 'react'
+import { InputHTMLAttributes, forwardRef, useId } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -10,44 +10,57 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
 }
 
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ className, label, error, ...props }, ref) => {
+  ({ className, label, error, id, ...props }, ref) => {
+    const generatedId = useId()
+    const inputId = id ?? generatedId
+    const errorId = `${inputId}-error`
+
     return (
-      <div className="flex items-start">
-        <div className="flex items-center h-5">
-          <div className="relative">
-            <input
-              type="checkbox"
-              ref={ref}
-              className={cn(
-                'appearance-none h-4 w-4 rounded border border-gray-300 bg-white',
-                'checked:bg-primary-600 checked:border-primary-600',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                'disabled:bg-gray-100 disabled:cursor-not-allowed',
-                'transition-colors duration-200 cursor-pointer',
-                error && 'border-red-500',
-                className
-              )}
-              {...props}
-            />
-            <Check
-              className="absolute top-0 left-0 h-4 w-4 text-white pointer-events-none hidden peer-checked:block"
-              strokeWidth={3}
-            />
-          </div>
+      <div className="flex items-start gap-3">
+        <div className="relative flex h-5 items-center">
+          <input
+            type="checkbox"
+            ref={ref}
+            id={inputId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+            className={cn(
+              // `peer` is what makes the tick below render. Without it the
+              // peer-checked: variant never matches, so a checked box was a
+              // featureless filled square -- which is why two admin screens
+              // hand-rolled their own raw checkboxes instead.
+              'peer h-4 w-4 cursor-pointer appearance-none rounded-xs border border-border-strong bg-surface',
+              'checked:border-caramel-600 checked:bg-caramel-600',
+              'transition-colors duration-fast ease-standard',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+              'disabled:cursor-not-allowed disabled:bg-surface-subtle',
+              error && 'border-danger-600',
+              className
+            )}
+            {...props}
+          />
+          <Check
+            aria-hidden="true"
+            strokeWidth={3}
+            className="pointer-events-none absolute left-0 top-0.5 hidden h-4 w-4 text-white peer-checked:block"
+          />
         </div>
+
         {label && (
-          <div className="ml-3">
+          <div>
             <label
-              htmlFor={props.id}
+              htmlFor={inputId}
               className={cn(
-                'text-sm font-medium text-gray-700 cursor-pointer',
-                props.disabled && 'text-gray-400 cursor-not-allowed'
+                'cursor-pointer text-ui text-text-primary',
+                props.disabled && 'cursor-not-allowed text-text-tertiary'
               )}
             >
               {label}
             </label>
             {error && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+              <p id={errorId} role="alert" className="mt-1 text-caption text-danger-700">
+                {error}
+              </p>
             )}
           </div>
         )}
@@ -59,3 +72,4 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
 Checkbox.displayName = 'Checkbox'
 
 export default Checkbox
+export { Checkbox }
