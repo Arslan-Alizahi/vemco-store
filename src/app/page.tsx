@@ -165,7 +165,7 @@ export default function HomePage() {
                   transition={{ delay: index * 0.1, duration: 0.5 }}
                   viewport={{ once: true }}
                 >
-                  <Card hover3D noPadding className="h-full">
+                  <Card interactive noPadding className="h-full">
                     <Link href={`/products/${product.slug}`}>
                       <div className="aspect-w-1 aspect-h-1 bg-gray-200">
                         <img

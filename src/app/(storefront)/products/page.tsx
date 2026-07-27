@@ -212,7 +212,7 @@ function ProductsContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card hover3D noPadding className="h-full flex flex-col">
+                <Card interactive noPadding className="h-full flex flex-col">
                   <Link href={`/products/${product.slug}`}>
                     <div className="relative">
                       <img

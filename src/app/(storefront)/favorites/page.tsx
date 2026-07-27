@@ -129,7 +129,7 @@ export default function FavoritesPage() {
                   transition={{ delay: index * 0.05 }}
                   layout
                 >
-                  <Card hover3D noPadding className="h-full flex flex-col relative group">
+                  <Card interactive noPadding className="h-full flex flex-col relative group">
                     {/* Remove Button */}
                     <button
                       onClick={() => handleRemove(item.product_id, item.product_name)}

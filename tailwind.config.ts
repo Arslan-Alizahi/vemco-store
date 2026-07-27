@@ -23,11 +23,14 @@ const config: Config = {
         warning,
         danger,
         ...semantic,
-        // Compatibility aliases. Roughly 870 call sites still reference these
-        // names; they are retired in Task 7 once .gradient-text no longer
-        // @applies to-accent-500.
+        // Compatibility alias, retired at the end of Phase 2.
+        //
+        // 142 call sites still say primary-*, including every UI primitive and
+        // the shell. Aliasing to the full forest ramp means the new brand
+        // renders everywhere immediately, without a call-site migration and
+        // without a window where the app is too broken to review. `accent` is
+        // already gone -- it had two references and both are now rewritten.
         primary: forest,
-        accent: clay,
       },
       fontFamily: {
         sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],

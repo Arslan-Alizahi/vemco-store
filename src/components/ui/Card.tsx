@@ -4,19 +4,24 @@ import { HTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/cn'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  hover3D?: boolean
+  /** Opt in to a resting shadow. Default is a hairline only, so elevation
+   *  means something when it is used. */
+  elevated?: boolean
+  /** Only interactive cards respond to hover. Without this, static
+   *  legal-copy and order-summary cards advertise a false affordance. */
+  interactive?: boolean
   noPadding?: boolean
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, children, hover3D, noPadding, ...props }, ref) => {
+  ({ className, children, elevated, interactive, noPadding, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
-          'bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300',
-          hover3D && 'card-3d card-3d-hover',
-          !hover3D && 'hover:shadow-lg',
+          'bg-surface rounded-md overflow-hidden transition-shadow duration-base ease-standard',
+          elevated ? 'shadow-e1' : 'shadow-e0',
+          interactive && 'hover:shadow-e2',
           !noPadding && 'p-6',
           className
         )}

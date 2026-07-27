@@ -512,7 +512,7 @@ export default function AdminPage() {
             </div>
 
             {/* Revenue Management Card */}
-            <Card hover3D className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-primary-200">
+            <Card interactive className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-primary-200">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>

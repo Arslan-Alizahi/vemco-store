@@ -3,37 +3,42 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 255, 255, 255;
-    --background-end-rgb: 255, 255, 255;
+  html {
+    /* Inter's stylistic sets -- disambiguated 'a' and a curved 'l'. */
+    font-feature-settings:
+      'cv11' 1,
+      'ss01' 1;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --foreground-rgb: 255, 255, 255;
-      --background-start-rgb: 0, 0, 0;
-      --background-end-rgb: 0, 0, 0;
+  /* Transforms, parallax and looping motion are what trigger vestibular
+     symptoms; opacity and colour transitions are safe to keep. framer-motion
+     is covered separately by MotionConfig in the root layout. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 }
 
 @layer utilities {
-  /* Custom scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded-lg;
+    @apply rounded-md bg-stone-100;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 rounded-lg hover:bg-gray-500;
+    @apply rounded-md bg-stone-300 hover:bg-stone-400;
   }
 
-  /* Hide scrollbar */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -43,223 +48,57 @@
     scrollbar-width: none;
   }
 
-  /* 3D Card Effect */
-  .card-3d {
-    transform-style: preserve-3d;
-    transform: perspective(1000px);
-  }
-
-  .card-3d-hover {
-    transition: transform 0.5s;
-  }
-
-  .card-3d-hover:hover {
-    transform: perspective(1000px) rotateY(-5deg) rotateX(5deg) scale(1.05);
-  }
-
-  /* Gradient text */
   .gradient-text {
     @apply bg-gradient-to-r from-forest-700 to-forest-500 bg-clip-text text-transparent;
   }
 
-  /* Glass effect */
+  /* Used only where the backdrop is controlled by the shell. Over arbitrary
+     content, backdrop-filter makes contrast non-deterministic and voids the
+     verified AA pairings. */
   .glass {
-    @apply bg-white bg-opacity-80 backdrop-blur-lg;
+    @apply bg-surface/80 backdrop-blur-lg;
   }
 
-  /* Loading skeleton */
+  /* Shimmer, not pulse. The previous implementation relied on animate-pulse,
+     which a bare @keyframes pulse in this file was silently overriding with
+     an expanding red ring. */
   .skeleton {
-    @apply bg-gray-200 animate-pulse rounded;
+    @apply animate-shimmer rounded-sm;
+    background-image: linear-gradient(
+      90deg,
+      theme('colors.stone.100') 0%,
+      theme('colors.stone.200') 50%,
+      theme('colors.stone.100') 100%
+    );
+    background-size: 200% 100%;
   }
 
-  /* Print styles - ULTRA SIMPLIFIED */
-  @media print {
-    /* Remove browser default headers/footers (URL, date, etc) */
-    @page {
-      margin: 0;
-      size: auto;
-    }
-
-    html, body {
-      background: white !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    /* Remove all shadows */
-    * {
-      box-shadow: none !important;
-      text-shadow: none !important;
-    }
-
-    /* HIDE NAVBAR COMPLETELY */
-    nav,
-    [class*="Navbar"],
-    [class*="navbar"],
-    header {
-      display: none !important;
-      visibility: hidden !important;
-    }
-
-    /* Hide everything on the billing page EXCEPT the modal */
-    body > div > div:not(.fixed) {
-      display: none !important;
-    }
-
-    /* Hide all fixed modals EXCEPT the one we want */
-    .fixed:not(.inset-0) {
-      display: none !important;
-    }
-
-    /* Reset the receipt modal position */
-    .fixed.inset-0 {
-      position: static !important;
-      background: white !important;
-      inset: auto !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    /* Ensure receipt content takes full width with minimal spacing */
-    .print-receipt-content {
-      max-width: 100% !important;
-      padding: 10mm 15mm !important;
-      margin: 0 auto !important;
-      page-break-after: avoid !important;
-      page-break-before: avoid !important;
-    }
-
-    /* Prevent page breaks in receipt content */
-    .print-receipt-content * {
-      page-break-inside: avoid !important;
-    }
-
-    /* Ensure tables print correctly */
-    .print-receipt-content table {
-      width: 100% !important;
-      page-break-inside: avoid !important;
-    }
-
-    .print-receipt-content tr {
-      page-break-inside: avoid !important;
-      page-break-after: avoid !important;
-    }
-
-    .print-receipt-content thead {
-      display: table-header-group !important;
-    }
-
-    /* Remove shadows and borders for print */
-    .print-receipt-content * {
-      box-shadow: none !important;
-      text-shadow: none !important;
-    }
-
-    /* Optimize colors for print */
-    .print-receipt-content .bg-gray-50,
-    .print-receipt-content .bg-gray-100 {
-      background: white !important;
-    }
-
-    /* Ensure text is black for print */
-    .print-receipt-content .text-gray-600,
-    .print-receipt-content .text-gray-500 {
-      color: #333 !important;
-    }
+  .loading-dots {
+    display: inline-flex;
+    gap: 4px;
   }
-}
 
-/* Custom animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
+  .loading-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    animation: loading-dot 1.4s ease-in-out infinite;
+  }
 
-@keyframes glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(14, 165, 233, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(14, 165, 233, 0.8), 0 0 30px rgba(14, 165, 233, 0.6); }
-}
+  .loading-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
 
-.float-animation {
-  animation: float 3s ease-in-out infinite;
-}
-
-.glow-animation {
-  animation: glow 2s ease-in-out infinite;
-}
-
-/* Product card 3D tilt effect */
-.product-card {
-  transition: all 0.3s ease;
-  transform-style: preserve-3d;
-}
-
-.product-card:hover {
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.1),
-    0 10px 20px rgba(0, 0, 0, 0.08);
-}
-
-.product-card-image {
-  transition: transform 0.3s ease;
-}
-
-.product-card:hover .product-card-image {
-  transform: translateZ(20px) scale(1.05);
-}
-
-/* Cart drawer animation */
-.cart-drawer-enter {
-  transform: translateX(100%);
-}
-
-.cart-drawer-enter-active {
-  transform: translateX(0);
-  transition: transform 300ms ease-out;
-}
-
-.cart-drawer-exit {
-  transform: translateX(0);
-}
-
-.cart-drawer-exit-active {
-  transform: translateX(100%);
-  transition: transform 300ms ease-in;
-}
-
-/* Toast notifications */
-.toast-enter {
-  animation: slideUp 0.3s ease-out;
-}
-
-.toast-exit {
-  animation: slideDown 0.3s ease-in;
-}
-
-/* Loading dots */
-.loading-dots {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.loading-dots span {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: currentColor;
-  animation: loading-dot 1.4s ease-in-out infinite;
-}
-
-.loading-dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.loading-dots span:nth-child(3) {
-  animation-delay: 0.4s;
+  .loading-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
 }
 
 @keyframes loading-dot {
-  0%, 60%, 100% {
+  0%,
+  60%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }
@@ -269,49 +108,62 @@
   }
 }
 
-/* Button hover effects */
-.btn-hover-lift {
-  transition: all 0.2s ease;
-}
-
-.btn-hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Input focus effects */
-.input-focus-glow {
-  transition: all 0.2s ease;
-}
-
-.input-focus-glow:focus {
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-/* Badge animations */
-.badge-pulse {
-  position: relative;
-}
-
-.badge-pulse::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: inherit;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+/* Receipt printing.
+   Scoped to the POS via [data-print="receipt-host"]. The previous selector
+   `body > div > div:not(.fixed)` was never scoped to /billing, so printing
+   any of the twelve legal or content pages produced a blank page with only
+   the footer -- on exactly the documents users save and archive. */
+@media print {
+  @page {
+    margin: 0;
+    size: auto;
   }
-  70% {
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+
+  html,
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+
+  [data-print='receipt-host'] nav,
+  [data-print='receipt-host'] header {
+    display: none !important;
+  }
+
+  [data-print='receipt-host'] > div:not(.fixed) {
+    display: none !important;
+  }
+
+  [data-print='receipt-host'] .fixed:not(.inset-0) {
+    display: none !important;
+  }
+
+  [data-print='receipt-host'] .fixed.inset-0 {
+    position: static !important;
+    inset: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .print-receipt-content {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 10mm 15mm !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-receipt-content *,
+  .print-receipt-content table,
+  .print-receipt-content tr {
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-receipt-content thead {
+    display: table-header-group !important;
   }
 }
