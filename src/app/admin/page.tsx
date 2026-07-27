@@ -572,6 +572,7 @@ export default function AdminPage() {
                     price: '',
                     stock_quantity: '',
                     is_featured: false,
+                    image_url: '',
                   })
                   setProductModal(true)
                 }}

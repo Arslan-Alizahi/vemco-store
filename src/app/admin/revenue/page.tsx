@@ -360,8 +360,8 @@ export default function RevenuePage() {
           </div>
 
           {/* Recent Transactions */}
-          <Card>
-            <CardHeader>
+          <Card noPadding>
+            <CardHeader className="px-6 pt-6">
               <div className="flex justify-between items-center">
                 <CardTitle>Recent Transactions</CardTitle>
                 <Link href="/admin/revenue/transactions">
@@ -371,7 +371,7 @@ export default function RevenuePage() {
                 </Link>
               </div>
             </CardHeader>
-            <CardContent noPadding>
+            <CardContent className="pt-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b">

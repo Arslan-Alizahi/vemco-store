@@ -7,6 +7,7 @@ export interface Product {
   sku: string
   category_id: number
   category_name?: string
+  primary_image?: string
   price: number
   compare_at_price?: number
   cost_price?: number
