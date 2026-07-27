@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Fraunces, JetBrains_Mono } from 'next/font/google'
-import { MotionConfig } from 'framer-motion'
 import './globals.css'
-import { ToastProvider } from '@/components/ui/Toast'
+import { Providers } from './providers'
 
 // `variable` is what makes these usable from Tailwind. Without it next/font
 // self-hosts under a generated family name, so the config's `font-sans`
@@ -26,11 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body className="min-h-screen bg-canvas font-sans text-body text-text-primary antialiased">
-        {/* Covers every framer-motion animation in the app in one line. The
-            CSS-level guard lives in globals.css. */}
-        <MotionConfig reducedMotion="user">
-          <ToastProvider>{children}</ToastProvider>
-        </MotionConfig>
+        {/* MotionConfig lives in Providers, not here -- see the note there.
+            The CSS-level reduced-motion guard is in globals.css. */}
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

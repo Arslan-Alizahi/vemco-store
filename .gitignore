@@ -32,6 +32,8 @@ next-env.d.ts
 
 # testing
 /coverage
+/.playwright-mcp
+/*.png
 
 # debug logs
 npm-debug.log*
