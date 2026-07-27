@@ -88,7 +88,7 @@ export async function PUT(
       .prepare('SELECT * FROM social_media_links WHERE id = ?')
       .get(params.id)
 
-    return NextResponse.json(apiResponse(updatedLink, 'Social media link updated successfully'))
+    return NextResponse.json(apiResponse(updatedLink, true, 'Social media link updated successfully'))
   } catch (error) {
     console.error('Error updating social media link:', error)
     return NextResponse.json(apiError('Failed to update social media link'), {
@@ -118,7 +118,7 @@ export async function DELETE(
 
     db.prepare('DELETE FROM social_media_links WHERE id = ?').run(params.id)
 
-    return NextResponse.json(apiResponse(null, 'Social media link deleted successfully'))
+    return NextResponse.json(apiResponse(null, true, 'Social media link deleted successfully'))
   } catch (error) {
     console.error('Error deleting social media link:', error)
     return NextResponse.json(apiError('Failed to delete social media link'), {

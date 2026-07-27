@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Fetch created order
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId)
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as Record<string, unknown>
       const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId)
 
       return NextResponse.json(

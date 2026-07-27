@@ -26,7 +26,7 @@ export async function GET(
         WHERE p.slug = ? AND p.is_active = 1
       `
       )
-      .get(slug)
+      .get(slug) as { id: number; category_id: number | null } | undefined
 
     if (!product) {
       return NextResponse.json(

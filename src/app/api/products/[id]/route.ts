@@ -24,7 +24,9 @@ export async function GET(
       WHERE ${isNumeric ? 'p.id' : 'p.slug'} = ?
     `
 
-    const product = db.prepare(sql).get(isNumeric ? parseInt(identifier) : identifier)
+    const product = db.prepare(sql).get(isNumeric ? parseInt(identifier) : identifier) as
+      | { id: number; category_id: number | null }
+      | undefined
 
     if (!product) {
       return NextResponse.json(

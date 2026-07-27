@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Fetch created receipt
-      const receipt = db.prepare('SELECT * FROM billing_receipts WHERE id = ?').get(receiptId)
+      const receipt = db.prepare('SELECT * FROM billing_receipts WHERE id = ?').get(receiptId) as Record<string, unknown>
       const items = db.prepare('SELECT * FROM billing_items WHERE receipt_id = ?').all(receiptId)
 
       return NextResponse.json(

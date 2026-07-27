@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       .prepare('SELECT * FROM social_media_links WHERE id = ?')
       .get(result.lastInsertRowid)
 
-    return NextResponse.json(apiResponse(newLink, 'Social media link created successfully'), {
+    return NextResponse.json(apiResponse(newLink, true, 'Social media link created successfully'), {
       status: 201,
     })
   } catch (error) {

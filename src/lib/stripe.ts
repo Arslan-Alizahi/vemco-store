@@ -9,7 +9,10 @@ if (!stripeSecretKey) {
 
 export const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey, {
-      apiVersion: '2024-11-20.acacia',
+      // Pinned deliberately. Bumping this changes Stripe response shapes and
+      // default behaviour, so it belongs to a payments task with its own
+      // verification -- not to a type fix in a repo with no tests.
+      apiVersion: '2024-11-20.acacia' as unknown as Stripe.LatestApiVersion,
       typescript: true,
     })
   : null

@@ -59,7 +59,7 @@ export async function PUT(
     db.prepare(updateSql).run(...params_array)
 
     // Fetch updated order
-    const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId)
+    const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as Record<string, unknown>
 
     return NextResponse.json(
       apiResponse({
