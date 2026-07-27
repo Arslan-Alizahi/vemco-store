@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { XCircle, AlertTriangle, ShoppingCart, Home } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 
-export default function OrderCancelPage() {
+function OrderCancelContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [order, setOrder] = useState<any>(null)
@@ -142,6 +142,20 @@ export default function OrderCancelPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OrderCancelPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      }
+    >
+      <OrderCancelContent />
+    </Suspense>
   )
 }
 
