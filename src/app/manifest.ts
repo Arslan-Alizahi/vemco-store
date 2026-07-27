@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { forest, stone } from '@/design/tokens'
+import { bark, caramel } from '@/design/tokens'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Furniture for considered spaces.',
     start_url: '/',
     display: 'standalone',
-    background_color: stone[50],
-    theme_color: forest[600],
+    background_color: bark[50],
+    theme_color: caramel[600],
     icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
   }
 }

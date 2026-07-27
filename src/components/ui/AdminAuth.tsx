@@ -74,7 +74,7 @@ export function AdminAuth({ children }: AdminAuthProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-bark-100 to-bark-200">
         <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
           <div className="flex justify-center mb-6">
             <div className="bg-primary-100 p-4 rounded-full">

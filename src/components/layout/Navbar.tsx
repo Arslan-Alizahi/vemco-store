@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { ShoppingCart, Menu, X, Package, Heart } from 'lucide-react'
 import { useCart } from '@/hooks/useCart'
 import { useFavorites } from '@/hooks/useFavorites'
@@ -13,6 +14,7 @@ import * as LucideIcons from 'lucide-react'
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [navLinks, setNavLinks] = useState<NavItem[]>([])
+  const pathname = usePathname()
   const { itemCount } = useCart()
   const { count: favoritesCount } = useFavorites()
 
@@ -38,30 +40,52 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+    <nav className="glass sticky top-0 z-sticky border-b border-border-subtle">
+      <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
+        <div className="flex h-16 justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <Package className="h-8 w-8 text-primary-600" />
-              <span className="text-xl font-bold gradient-text">ModernStore</span>
+            <Link
+              href="/"
+              className="flex items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+            >
+              <Package className="h-6 w-6 text-caramel-700" aria-hidden="true" />
+              <span className="font-serif text-h3 tracking-[-0.015em] text-text-primary">
+                ModernStore
+              </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden items-center gap-7 md:flex">
             {navLinks.map((link) => {
               const Icon = getIcon(link.icon)
+              const isActive =
+                pathname === link.href ||
+                (link.href !== '/' && pathname.startsWith(link.href))
               return (
                 <Link
                   key={link.id}
                   href={link.href}
                   target={link.target || '_self'}
-                  className="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium flex items-center gap-1"
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'relative flex items-center gap-1.5 rounded-sm py-1 text-ui font-medium',
+                    'transition-colors duration-fast ease-standard',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+                    isActive
+                      ? 'text-text-primary'
+                      : 'text-text-secondary hover:text-text-primary'
+                  )}
                 >
-                  {Icon && <Icon className="h-4 w-4" />}
+                  {Icon && <Icon className="h-4 w-4" aria-hidden="true" />}
                   {link.label}
+                  {isActive && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-[21px] left-0 right-0 h-0.5 bg-caramel-600"
+                    />
+                  )}
                 </Link>
               )
             })}
@@ -71,26 +95,26 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             <Link
               href="/favorites"
-              className="relative p-2 text-gray-700 hover:text-red-500 transition-colors"
-              title="Favorites"
+              aria-label={`Favourites${favoritesCount > 0 ? `, ${favoritesCount} saved` : ''}`}
+              className="relative flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Heart className="h-6 w-6" />
+              <Heart className="h-5 w-5" aria-hidden="true" />
               {favoritesCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-scale-in">
-                  {favoritesCount}
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-caramel-600 px-1 text-[10px] font-medium tabular-nums text-white">
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
                 </span>
               )}
             </Link>
 
             <Link
               href="/cart"
-              className="relative p-2 text-gray-700 hover:text-primary-600 transition-colors"
-              title="Shopping Cart"
+              aria-label={`Cart${itemCount > 0 ? `, ${itemCount} items` : ', empty'}`}
+              className="relative flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <ShoppingCart className="h-6 w-6" />
+              <ShoppingCart className="h-5 w-5" aria-hidden="true" />
               {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-scale-in">
-                  {itemCount}
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-caramel-600 px-1 text-[10px] font-medium tabular-nums text-white">
+                  {itemCount > 99 ? '99+' : itemCount}
                 </span>
               )}
             </Link>
@@ -99,9 +123,12 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-gray-700 hover:text-primary-600 transition-colors"
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-menu"
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              className="flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
@@ -115,9 +142,10 @@ export default function Navbar() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-white border-t overflow-hidden"
+            id="mobile-menu"
+            className="overflow-hidden border-t border-border-subtle bg-surface md:hidden"
           >
-            <div className="px-4 py-2 space-y-1">
+            <div className="space-y-1 px-4 py-2">
               {navLinks.map((link) => {
                 const Icon = getIcon(link.icon)
                 return (

@@ -62,12 +62,12 @@ export default function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50"
+            className="fixed inset-0 z-overlay bg-scrim backdrop-blur-[2px]"
             onClick={closeOnOverlayClick ? onClose : undefined}
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 z-modal overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
               <motion.div
                 ref={modalRef}
@@ -76,8 +76,7 @@ export default function Modal({
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ duration: 0.3, type: 'spring', damping: 25 }}
                 className={cn(
-                  'relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl',
-                  'w-full',
+                  'relative w-full transform overflow-hidden rounded-lg bg-surface text-left shadow-e3',
                   sizeClasses[size]
                 )}
                 onClick={(e) => e.stopPropagation()}

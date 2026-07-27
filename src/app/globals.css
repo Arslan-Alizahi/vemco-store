@@ -32,11 +32,11 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply rounded-md bg-stone-100;
+    @apply rounded-md bg-bark-100;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-md bg-stone-300 hover:bg-stone-400;
+    @apply rounded-md bg-bark-300 hover:bg-bark-400;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -49,7 +49,7 @@
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-forest-700 to-forest-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-bark-900 to-caramel-700 bg-clip-text text-transparent;
   }
 
   /* Used only where the backdrop is controlled by the shell. Over arbitrary
@@ -66,9 +66,9 @@
     @apply animate-shimmer rounded-sm;
     background-image: linear-gradient(
       90deg,
-      theme('colors.stone.100') 0%,
-      theme('colors.stone.200') 50%,
-      theme('colors.stone.100') 100%
+      theme('colors.bark.100') 0%,
+      theme('colors.bark.200') 50%,
+      theme('colors.bark.100') 100%
     );
     background-size: 200% 100%;
   }

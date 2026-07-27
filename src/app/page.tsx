@@ -8,7 +8,8 @@ import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
-import { ShoppingBag, TrendingUp, Shield, Zap, ArrowRight } from 'lucide-react'
+import { Trees, Ruler, Truck, Hammer, ArrowRight } from 'lucide-react'
+import Badge from '@/components/ui/Badge'
 import { formatCurrency } from '@/lib/utils'
 import { Product } from '@/types/product'
 
@@ -31,24 +32,24 @@ export default function HomePage() {
 
   const features = [
     {
-      icon: ShoppingBag,
-      title: 'Wide Selection',
-      description: 'Browse through thousands of products across multiple categories',
+      icon: Trees,
+      title: 'Solid wood',
+      description: 'No veneer over particleboard. What you see on the edge is what it is made of.',
     },
     {
-      icon: Shield,
-      title: 'Secure Checkout',
-      description: 'Safe and secure payment processing for your peace of mind',
+      icon: Hammer,
+      title: 'Real joinery',
+      description: 'Mortise and tenon where it matters, so the frame stays square for decades.',
     },
     {
-      icon: Zap,
-      title: 'Fast Delivery',
-      description: 'Quick and reliable shipping to get your products on time',
+      icon: Ruler,
+      title: 'Honest dimensions',
+      description: 'Every listing carries full measurements and a doorway clearance note.',
     },
     {
-      icon: TrendingUp,
-      title: 'Best Prices',
-      description: 'Competitive pricing with regular deals and discounts',
+      icon: Truck,
+      title: 'Room of choice',
+      description: 'Delivered, carried in, unwrapped, and the packaging taken away with us.',
     },
   ]
 
@@ -61,58 +62,82 @@ export default function HomePage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative bg-gradient-to-r from-primary-600 to-primary-800 text-white"
+        className="relative overflow-hidden bg-bark-900 text-white"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-          <div className="text-center">
-            <motion.h1
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="text-4xl md:text-6xl font-bold mb-6"
-            >
-              Welcome to ModernStore
-            </motion.h1>
+        {/* Warm ambient wash, so the panel reads as lit walnut rather than a
+            flat dark block. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_0%,theme(colors.caramel.800)_0%,transparent_60%)] opacity-70"
+        />
+
+        <div className="relative mx-auto max-w-content px-5 py-section-lg sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-prose text-center">
             <motion.p
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 12, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="text-xl md:text-2xl mb-8 text-primary-100"
+              transition={{ delay: 0.05, duration: 0.4 }}
+              className="mb-5 text-overline uppercase text-caramel-300"
             >
-              Your one-stop shop for everything you need
+              Made to be lived with
             </motion.p>
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
+
+            <motion.h1
+              initial={{ y: 16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="mb-6 font-serif text-[2.5rem] leading-[1.05] tracking-[-0.03em] md:text-display"
+            >
+              Furniture for considered spaces
+            </motion.h1>
+
+            <motion.p
+              initial={{ y: 16, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.18, duration: 0.5 }}
+              className="mx-auto mb-10 max-w-[46ch] text-body-lg text-bark-200"
+            >
+              Solid wood, honest joinery, and pieces that earn their place. Built to
+              outlast the room you bought them for.
+            </motion.p>
+
+            <motion.div
+              initial={{ y: 16, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.26, duration: 0.5 }}
+              className="flex flex-col justify-center gap-3 sm:flex-row"
             >
               <Link href="/products">
-                <Button size="lg" variant="secondary" rightIcon={<ArrowRight />}>
-                  Start Shopping
+                <Button size="lg" rightIcon={<ArrowRight className="h-4 w-4" />} fullWidth>
+                  Shop the collection
                 </Button>
               </Link>
               <Link href="/about">
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary-700">
-                  Learn More
+                <Button
+                  size="lg"
+                  variant="outline"
+                  fullWidth
+                  className="border-white/25 text-white hover:bg-white/10"
+                >
+                  Our story
                 </Button>
               </Link>
             </motion.div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-50 to-transparent"></div>
       </motion.section>
 
       {/* Features Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-section-md">
+        <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
           <motion.h2
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-bold text-center mb-12"
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="mb-12 text-center font-serif text-h1 text-text-primary"
           >
-            Why Choose ModernStore?
+            Why people keep coming back
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
@@ -123,14 +148,14 @@ export default function HomePage() {
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 viewport={{ once: true }}
               >
-                <Card className="text-center h-full hover:shadow-xl transition-shadow">
-                  <div className="flex justify-center mb-4">
-                    <div className="p-3 bg-primary-100 rounded-full">
-                      <feature.icon className="h-8 w-8 text-primary-600" />
+                <Card className="h-full text-center">
+                  <div className="mb-4 flex justify-center">
+                    <div className="rounded-full bg-caramel-100 p-3">
+                      <feature.icon className="h-6 w-6 text-caramel-700" aria-hidden="true" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <h3 className="mb-2 text-h3 text-text-primary">{feature.title}</h3>
+                  <p className="text-body text-text-secondary">{feature.description}</p>
                 </Card>
               </motion.div>
             ))}
@@ -139,16 +164,19 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-surface py-section-md">
+        <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="mb-12 text-center"
           >
-            <h2 className="text-3xl font-bold mb-4">Featured Products</h2>
-            <p className="text-gray-600">Check out our handpicked selection of popular items</p>
+            <h2 className="mb-3 font-serif text-h1 text-text-primary">This season</h2>
+            <p className="text-body-lg text-text-secondary">
+              A short list, chosen because they earn the room
+            </p>
           </motion.div>
 
           {isLoading ? (
@@ -165,32 +193,42 @@ export default function HomePage() {
                   transition={{ delay: index * 0.1, duration: 0.5 }}
                   viewport={{ once: true }}
                 >
-                  <Card interactive noPadding className="h-full">
-                    <Link href={`/products/${product.slug}`}>
-                      <div className="aspect-w-1 aspect-h-1 bg-gray-200">
+                  <Card interactive noPadding className="group h-full">
+                    <Link href={`/products/${product.slug}`} className="block">
+                      {/* 4:5 portrait -- furniture reads taller than it does
+                          square. The transform is on the image inside its own
+                          clipped frame, never on the card, so type stays sharp
+                          and nothing spills into the grid gutter. */}
+                      <div className="relative aspect-[4/5] overflow-hidden bg-surface-subtle">
                         <img
                           src={product.primary_image || '/placeholder.png'}
                           alt={product.name}
-                          className="w-full h-64 object-cover product-card-image"
+                          className="h-full w-full object-cover transition-transform duration-slow ease-standard group-hover:scale-[1.04]"
                         />
-                      </div>
-                      <div className="p-4">
-                        <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-2xl font-bold text-primary-600">
-                              {formatCurrency(product.price)}
-                            </span>
-                            {product.compare_at_price && (
-                              <span className="text-sm text-gray-500 line-through ml-2">
-                                {formatCurrency(product.compare_at_price)}
-                              </span>
-                            )}
+                        {product.compare_at_price && (
+                          <div className="absolute left-3 top-3">
+                            <Badge variant="sale" size="sm">
+                              Sale
+                            </Badge>
                           </div>
-                          <Button size="sm" variant="primary">
-                            View Details
-                          </Button>
+                        )}
+                      </div>
+                      <div className="p-5">
+                        <h3 className="mb-1 text-h3 text-text-primary">{product.name}</h3>
+                        <p className="mb-4 line-clamp-2 text-ui text-text-secondary">
+                          {product.description}
+                        </p>
+                        <div className="flex items-baseline gap-2">
+                          {/* Price is neutral, not brand. Colouring the base
+                              price leaves nothing louder for a markdown. */}
+                          <span className="text-h3 tabular-nums text-text-primary">
+                            {formatCurrency(product.price)}
+                          </span>
+                          {product.compare_at_price && (
+                            <span className="text-ui tabular-nums text-text-tertiary line-through">
+                              {formatCurrency(product.compare_at_price)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </Link>
@@ -211,20 +249,26 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-        <div className="max-w-4xl mx-auto text-center px-4">
+      <section className="bg-caramel-700 py-section-md text-white">
+        <div className="mx-auto max-w-prose px-5 text-center sm:px-6">
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
           >
-            <h2 className="text-3xl font-bold mb-4">Ready to Start Shopping?</h2>
-            <p className="text-xl mb-8 text-primary-100">
-              Join thousands of satisfied customers and experience the best online shopping
+            <h2 className="mb-4 font-serif text-h1">Not sure where to start?</h2>
+            <p className="mb-8 text-body-lg text-caramel-100">
+              Tell us about the room and we will put a shortlist together. No
+              obligation, no showroom pressure.
             </p>
-            <Link href="/products">
-              <Button size="lg" variant="secondary">
-                Shop Now
+            <Link href="/contact">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10"
+              >
+                Talk to us
               </Button>
             </Link>
           </motion.div>

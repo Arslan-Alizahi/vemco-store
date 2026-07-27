@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 import defaultTheme from 'tailwindcss/defaultTheme'
-import { stone, forest, clay, success, warning, danger, semantic } from './src/design/tokens'
+import { bark, caramel, sage, success, warning, danger, semantic } from './src/design/tokens'
 import { durationCss, easing } from './src/design/motion'
 
 const config: Config = {
@@ -16,21 +16,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        stone,
-        forest,
-        clay,
+        bark,
+        caramel,
+        sage,
         success,
         warning,
         danger,
         ...semantic,
-        // Compatibility alias, retired at the end of Phase 2.
-        //
-        // 142 call sites still say primary-*, including every UI primitive and
-        // the shell. Aliasing to the full forest ramp means the new brand
-        // renders everywhere immediately, without a call-site migration and
-        // without a window where the app is too broken to review. `accent` is
-        // already gone -- it had two references and both are now rewritten.
-        primary: forest,
+        // Compatibility aliases for call sites not yet migrated. `primary`
+        // maps to the brand and `gray` to the warm neutral, so untouched
+        // markup picks up the new palette instead of sitting on Tailwind's
+        // cool stock grey next to migrated warm surfaces.
+        primary: caramel,
+        gray: bark,
       },
       fontFamily: {
         sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],

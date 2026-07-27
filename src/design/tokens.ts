@@ -3,70 +3,76 @@
  * scripts/verify-contrast.mjs, so the WCAG gate asserts against the values
  * the app actually ships rather than a copy that can drift.
  *
- * Product context: furniture. Neutrals are warm so they harmonise with oak,
- * walnut, linen and brass -- a cool grey canvas makes warm product
- * photography look dirty. The brand hue is a deep evergreen, chosen to stay
- * legible against that warm photography instead of dissolving into it.
+ * Product context: furniture. The palette is walnut and caramel -- warm
+ * throughout, so the UI reads as the same material family as the product
+ * photography rather than sitting on top of it.
  */
 
 /**
- * Warm neutral -- the entire UI base.
+ * Bark -- warm grey-brown neutral. The entire UI base.
+ *
+ * Deliberately lower in chroma than caramel. That gap is what stops the
+ * brand from disappearing into the neutrals, which is the failure mode of
+ * an all-warm palette.
  *
  * Steps 50-300 are decorative surfaces and hairlines only. 400 is the
  * lightest step permitted to carry meaning, because WCAG 1.4.11 requires
- * 3:1 for UI component boundaries. The lightness jump from 300 to 400 is a
- * designed discontinuity, not an uneven ramp.
+ * 3:1 for UI component boundaries.
  */
-export const stone: Record<string, string> = {
-  50: '#FAF9F6',
-  100: '#F3F1EC',
-  200: '#E7E3DA',
-  300: '#D4CEC1',
-  400: '#948A76',
-  500: '#7B7263',
-  600: '#615949',
-  700: '#4A4336',
-  800: '#332E25',
-  900: '#221F19',
-  950: '#14120E',
+export const bark: Record<string, string> = {
+  50: '#FAF8F5',
+  100: '#F2EEE8',
+  200: '#E6E0D6',
+  300: '#D3CABB',
+  400: '#94897A',
+  500: '#786D5F',
+  600: '#5C5343',
+  700: '#4A4238',
+  800: '#342E27',
+  900: '#221E19',
+  950: '#14110E',
 }
 
 /**
- * Brand -- deep evergreen.
+ * Caramel -- the brand.
  *
  * Appears on exactly three things: the primary button, the focus ring, and
- * the active nav / selected row indicator. Never on price: colouring the
+ * the active nav / selected row indicator. Never on price -- colouring the
  * base price spends the accent on information and leaves no headroom to
  * signal a markdown.
+ *
+ * 600 is the darkest caramel that still reads as caramel rather than brown;
+ * anything lighter cannot carry white text at 4.5:1.
  */
-export const forest: Record<string, string> = {
-  50: '#F1F6F1',
-  100: '#DEEADE',
-  200: '#BDD4BF',
-  300: '#93B698',
-  400: '#639172',
-  500: '#42714F',
-  600: '#2F5A3D',
-  700: '#254832',
-  800: '#1E3928',
-  900: '#182E20',
-  950: '#0C1A12',
+export const caramel: Record<string, string> = {
+  50: '#FDF7EF',
+  100: '#F9EAD5',
+  200: '#F1D3A9',
+  300: '#E4B577',
+  400: '#D09344',
+  500: '#B87A2E',
+  600: '#9E6728',
+  700: '#7D4C18',
+  800: '#613A13',
+  900: '#45290E',
+  950: '#2B1907',
 }
 
 /**
- * Secondary accent -- markdowns and sale tags ONLY.
+ * Sage -- markdowns and sale tags ONLY.
  *
- * Because clay appears nowhere else in the interface, a discounted price is
- * recognisable at a glance without needing a label. Deliberately a partial
- * ramp: the unused steps are omitted so nobody reaches for one.
+ * Green against a warm brown palette is the classic walnut-and-foliage
+ * pairing, and being the one cool hue in the system makes a discount
+ * recognisable at a glance without a label. Deliberately a partial ramp so
+ * nobody reaches for an unused step.
  */
-export const clay: Record<string, string> = {
-  50: '#FDF5F1',
-  100: '#F9E7DE',
-  200: '#F0CBB9',
-  600: '#A64E2C',
-  700: '#873E22',
-  900: '#4E2414',
+export const sage: Record<string, string> = {
+  50: '#F2F5F1',
+  100: '#E1EADF',
+  200: '#C3D5C0',
+  600: '#4A6B45',
+  700: '#3B5637',
+  900: '#24331F',
 }
 
 export const success: Record<string, string> = {
@@ -98,14 +104,14 @@ export const danger: Record<string, string> = {
  * makes a future dark theme a token swap rather than a rewrite.
  */
 export const semantic = {
-  canvas: stone[50],
+  canvas: bark[50],
   surface: '#FFFFFF',
-  'surface-subtle': stone[100],
-  'border-subtle': stone[200],
-  'border-strong': stone[400],
-  'text-primary': stone[900],
-  'text-secondary': stone[600],
-  'text-tertiary': stone[500],
-  ring: forest[600],
-  scrim: 'rgb(28 24 18 / 0.32)',
+  'surface-subtle': bark[100],
+  'border-subtle': bark[200],
+  'border-strong': bark[400],
+  'text-primary': bark[900],
+  'text-secondary': bark[600],
+  'text-tertiary': bark[500],
+  ring: caramel[600],
+  scrim: 'rgb(32 26 20 / 0.32)',
 } as const

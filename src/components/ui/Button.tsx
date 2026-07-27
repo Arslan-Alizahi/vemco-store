@@ -6,33 +6,35 @@ import { cn } from '@/lib/cn'
 import { Loader2 } from 'lucide-react'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-sm font-medium transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
+  cn(
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm font-medium',
+    // Colour only. Hover never changes geometry -- the previous base string
+    // carried btn-hover-lift, so ghost, link and disabled buttons all rose 2px
+    // with a 20px shadow.
+    'transition-colors duration-fast ease-standard',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+    'disabled:pointer-events-none disabled:opacity-50'
+  ),
   {
     variants: {
       variant: {
-        primary:
-          'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-        secondary:
-          'bg-primary-100 text-primary-900 hover:bg-primary-200 focus:ring-primary-500',
-        success:
-          'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-        danger:
-          'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-        warning:
-          'bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500',
-        outline:
-          'border-2 border-gray-300 bg-transparent hover:bg-gray-50 focus:ring-gray-500',
-        ghost:
-          'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
-        link:
-          'bg-transparent underline-offset-4 hover:underline text-primary-600 hover:text-primary-700',
+        primary: 'bg-caramel-600 text-white hover:bg-caramel-700',
+        secondary: 'bg-caramel-100 text-caramel-900 hover:bg-caramel-200',
+        success: 'bg-success-600 text-white hover:bg-success-700',
+        danger: 'bg-danger-600 text-white hover:bg-danger-700',
+        // Was bg-yellow-500 with white text at 1.90:1 -- a clear AA failure.
+        warning: 'bg-warning-600 text-white hover:bg-warning-700',
+        outline: 'border border-border-strong bg-transparent text-text-primary hover:bg-surface-subtle',
+        ghost: 'bg-transparent text-text-secondary hover:bg-surface-subtle hover:text-text-primary',
+        link: 'bg-transparent text-caramel-700 underline-offset-4 hover:underline',
       },
+      // Matches Input and Select exactly, so the three align in a row.
       size: {
-        sm: 'text-sm px-3 py-1.5',
-        md: 'text-sm px-4 py-2',
-        lg: 'text-base px-6 py-3',
-        xl: 'text-lg px-8 py-4',
+        sm: 'h-8 px-3 text-ui',
+        md: 'h-9 px-3.5 text-ui',
+        lg: 'h-11 px-5 text-body',
         icon: 'h-9 w-9 p-0',
+        'icon-lg': 'h-11 w-11 p-0',
       },
       fullWidth: {
         true: 'w-full',
@@ -54,21 +56,25 @@ export interface ButtonProps
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, children, variant, size, fullWidth, isLoading, leftIcon, rightIcon, disabled, ...props }, ref) => {
+  (
+    { className, children, variant, size, fullWidth, isLoading, leftIcon, rightIcon, disabled, ...props },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
         className={cn(buttonVariants({ variant, size, fullWidth }), className)}
         disabled={disabled || isLoading}
+        aria-busy={isLoading || undefined}
         {...props}
       >
         {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : leftIcon ? (
-          <span className="mr-2">{leftIcon}</span>
-        ) : null}
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        ) : (
+          leftIcon
+        )}
         {children}
-        {rightIcon && !isLoading && <span className="ml-2">{rightIcon}</span>}
+        {!isLoading && rightIcon}
       </button>
     )
   }
@@ -77,3 +83,4 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button'
 
 export default Button
+export { Button, buttonVariants }
