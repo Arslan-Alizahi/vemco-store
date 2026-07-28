@@ -203,6 +203,62 @@ const findStuckAnimations = async page => {
   }
 }
 
+/**
+ * Tabs through a page and reports any stop with no visible focus indicator.
+ *
+ * axe cannot check this -- it reads a static snapshot, and focus styling only
+ * exists while something is focused. It went unnoticed here because the
+ * primitives all carry their own ring, so the gap was only in hand-written
+ * anchors: three breadcrumb links and an inline link to the delivery terms,
+ * on the page a keyboard user is most likely to be reading carefully.
+ *
+ * "Has an outline" is not the test. Tailwind's outline-none sets a
+ * transparent 2px outline rather than removing it, so the components that ring
+ * themselves with a box-shadow all look outlined and all measure as passing.
+ * The only honest test is whether anything changed: styles are read focused,
+ * then blurred, then compared.
+ */
+const findUnfocusableStops = async (page, limit = 25) => {
+  const bad = []
+
+  for (let step = 0; step < limit; step += 1) {
+    await page.keyboard.press('Tab')
+
+    const result = await page.evaluate(() => {
+      const element = document.activeElement
+      if (!element || element === document.body) return null
+
+      const read = () => {
+        const style = getComputedStyle(element)
+        return {
+          outline: `${style.outlineStyle} ${style.outlineWidth} ${style.outlineColor}`,
+          shadow: style.boxShadow,
+          border: `${style.borderColor} ${style.borderWidth}`,
+          background: style.backgroundColor,
+          text: style.color,
+        }
+      }
+
+      const focused = read()
+      element.blur()
+      const blurred = read()
+      element.focus()
+
+      const changed = Object.keys(focused).some(key => focused[key] !== blurred[key])
+      if (changed) return null
+
+      return {
+        tag: element.tagName.toLowerCase(),
+        label: (element.getAttribute('aria-label') || element.textContent || '').trim().slice(0, 44),
+      }
+    })
+
+    if (result) bad.push(result)
+  }
+
+  return bad
+}
+
 const run = async () => {
   requireBuild()
   const server = startServer()
@@ -218,6 +274,7 @@ const run = async () => {
     let checks = 0
     let reflowFailures = 0
     let motionFailures = 0
+    let focusFailures = 0
 
     for (const viewport of VIEWPORTS) {
       const context = await browser.newContext({
@@ -299,7 +356,37 @@ const run = async () => {
 
     await reducedContext.close()
 
+    console.log('')
+
+    const focusContext = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+    const focusPage = await focusContext.newPage()
+
+    for (const route of routes) {
+      await focusPage.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle' })
+      const invisible = await findUnfocusableStops(focusPage)
+      checks += 1
+
+      console.log(
+        `  ${(invisible.length === 0 ? 'PASS' : 'FAIL').padEnd(6)}${'focus'.padEnd(11)}${route.padEnd(28)}${
+          invisible.length === 0 ? '' : `${invisible.length} stop(s) with no visible focus`
+        }`
+      )
+      for (const stop of invisible) {
+        console.log(`         <${stop.tag}> "${stop.label}"`)
+      }
+      if (invisible.length > 0) focusFailures += 1
+    }
+
+    await focusContext.close()
+
     console.log(`\n  ${checks} checks across ${routes.length} routes`)
+
+    if (focusFailures > 0) {
+      console.log(
+        `\n  ${focusFailures} route(s) have a tab stop with no visible focus. WCAG 2.4.7.`
+      )
+      process.exitCode = 1
+    }
 
     if (reflowFailures > 0) {
       console.log(`\n  ${reflowFailures} route(s) scroll horizontally. WCAG 1.4.10 Reflow.`)
@@ -338,7 +425,9 @@ const run = async () => {
       return
     }
 
-    console.log('  No WCAG A or AA violations, no reflow failures, nothing stuck.\n')
+    console.log(
+      '  No WCAG A or AA violations. Reflow clean, nothing stuck, every tab stop visible.\n'
+    )
   } finally {
     if (browser) await browser.close()
     server.kill()

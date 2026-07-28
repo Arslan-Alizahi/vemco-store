@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -29,6 +29,9 @@ interface Fields {
 
 const EMPTY: Fields = { name: '', email: '', phone: '', address: '', city: '' }
 
+/** Visual order, so "the first error" means the first one down the page. */
+const FIELD_ORDER: (keyof Fields)[] = ['name', 'email', 'phone', 'address', 'city']
+
 export default function CartPage() {
   const router = useRouter()
   // isLoading was previously discarded, so on every single load the page
@@ -40,6 +43,7 @@ export default function CartPage() {
   const [values, setValues] = useState<Fields>(EMPTY)
   const [errors, setErrors] = useState<Partial<Fields>>({})
   const [isProcessing, setIsProcessing] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const tax = calculateTax(subtotal)
   const shipping = subtotal >= 100000 ? 0 : 2500
@@ -61,6 +65,22 @@ export default function CartPage() {
     if (!values.address.trim()) next.address = 'We need somewhere to deliver to'
     if (!values.city.trim()) next.city = 'City decides the delivery rate'
     setErrors(next)
+
+    // Land on the first problem rather than leaving focus on the button that
+    // just refused. The messages were already announced correctly, but a
+    // keyboard user was left five fields below the first thing to fix, with
+    // nothing telling them which one it was.
+    const first = FIELD_ORDER.find(field => next[field])
+    if (first) {
+      requestAnimationFrame(() => {
+        const element = formRef.current?.elements.namedItem(first)
+        if (element instanceof HTMLElement) {
+          element.focus()
+          element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        }
+      })
+    }
+
     return Object.keys(next).length === 0
   }
 
@@ -285,7 +305,7 @@ export default function CartPage() {
             {/* A real form: submits on Enter, and every field carries an
                 autocomplete token so the browser can fill it. Previously this
                 was loose inputs in a div with no autocomplete at all. */}
-            <form onSubmit={handleCheckout} noValidate className="space-y-4">
+            <form ref={formRef} onSubmit={handleCheckout} noValidate className="space-y-4">
               <Input
                 label="Full name"
                 name="name"

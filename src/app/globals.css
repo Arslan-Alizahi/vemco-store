@@ -10,6 +10,24 @@
       'ss01' 1;
   }
 
+  /* A focus ring on anything focusable, whether or not someone remembered.
+
+     The primitives all carry their own, so this was easy to believe was
+     handled. It was not: tabbing the product page walked through three
+     breadcrumb links and an inline link to the delivery terms with no visible
+     focus at all, because those are hand-written anchors rather than Buttons.
+     A keyboard user simply could not see where they were.
+
+     :where() holds this at zero specificity, so any component that sets its
+     own focus-visible styles still wins, and the components that pair a ring
+     with focus-visible:outline-none suppress this cleanly rather than
+     doubling up. It is a floor, not a rule to work around. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid theme('colors.ring');
+    outline-offset: 2px;
+    border-radius: theme('borderRadius.xs');
+  }
+
   /* Transforms, parallax and looping motion are what trigger vestibular
      symptoms; opacity and colour transitions are safe to keep. framer-motion
      is covered separately by MotionConfig in the root layout. */
