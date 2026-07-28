@@ -1,21 +1,29 @@
 /**
- * Runs axe-core over every storefront route, at desktop and phone widths.
+ * Three checks over every storefront route.
  *
- * The contrast gate proves the palette is sound in the abstract; it says
- * nothing about what the pages actually render. This checks the assembled
- * page: labels on controls, alternative text, heading order, landmark
- * structure, name-role-value on anything custom, and colour contrast as
- * composited rather than as specified.
+ * axe-core, for what the contrast gate cannot see. That gate proves the
+ * palette is sound in the abstract; this one reads the assembled page —
+ * labels on controls, alternative text, heading order, landmark structure,
+ * name-role-value on anything custom, and contrast as composited rather than
+ * as specified. It is what caught the primary button rendering at 3.49:1.
  *
- * Both widths matter because layout changes what exists. The product page's
- * buy bar only mounts under lg, and a control that appears on one width and
- * not the other is a control only one of the two runs can see.
+ * Reflow (WCAG 1.4.10), because axe does not check it. Content has to work at
+ * 320 CSS pixels with no horizontal scrolling, and at 640 — which is a 1280
+ * desktop zoomed to 200%, the resize-text case from 1.4.4.
  *
- * Serves the production build, not the dev server: dev overlays inject their
- * own markup, and it is the shipped bundle we care about.
+ * Reduced motion, because it fails in the worst possible way. A framer-motion
+ * element whose animation never runs stays pinned at its initial keyframe, so
+ * a mis-wired MotionConfig does not merely stop the movement, it leaves the
+ * content at opacity 0. That happened here once already, and the page looked
+ * blank to exactly the people who asked for less motion.
+ *
+ * Runs against the production build, not the dev server: dev overlays inject
+ * their own markup, and it is the shipped bundle that matters.
  */
 
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { chromium } from 'playwright'
 import AxeBuilder from '@axe-core/playwright'
 
@@ -25,6 +33,11 @@ const ORIGIN = `http://127.0.0.1:${PORT}`
 const VIEWPORTS = [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'phone', width: 375, height: 812 },
+]
+
+const REFLOW_WIDTHS = [
+  { name: '320px', width: 320, height: 800 }, // 1.4.10 Reflow
+  { name: '200% zoom', width: 640, height: 512 }, // 1.4.4 Resize text, 1280 at 200%
 ]
 
 /** WCAG only. Best-practice rules are advisory and would make the gate noise. */
@@ -63,6 +76,23 @@ const waitForServer = async (url, timeoutMs = 90_000) => {
   throw new Error(`Server did not come up at ${url} within ${timeoutMs}ms`)
 }
 
+/**
+ * Says so plainly when there is no build to serve.
+ *
+ * `next dev` writes over .next with development artefacts, so running the dev
+ * server after a build leaves no production build behind. Without this the
+ * only symptom is the server never answering, and ninety seconds of silence
+ * followed by a timeout points nowhere near the actual cause.
+ */
+const requireBuild = () => {
+  if (existsSync(join(process.cwd(), '.next', 'BUILD_ID'))) return
+  console.error(
+    '  No production build in .next. Run `npm run build` first.\n' +
+      '  (`next dev` overwrites it, so a dev session since the last build is enough to do this.)\n'
+  )
+  process.exit(1)
+}
+
 const startServer = () => {
   const server = spawn(
     process.platform === 'win32' ? 'npx.cmd' : 'npx',
@@ -92,7 +122,89 @@ const discoverProductRoute = async () => {
   }
 }
 
+/**
+ * Reports anything sticking out past the viewport, and names it.
+ *
+ * A bare "the page scrolls sideways" is close to useless on a page with a
+ * thousand elements, so this returns the offending boxes. Elements inside a
+ * deliberately scrollable strip -- the featured carousel -- are ignored,
+ * since overflowing their own container is the entire point.
+ */
+const findOverflow = page =>
+  page.evaluate(() => {
+    const root = document.documentElement
+    const overflow = root.scrollWidth - root.clientWidth
+    if (overflow <= 0) return { overflow: 0, culprits: [] }
+
+    const scrollable = element => {
+      for (let node = element.parentElement; node; node = node.parentElement) {
+        const overflowX = getComputedStyle(node).overflowX
+        if (overflowX === 'auto' || overflowX === 'scroll') return true
+      }
+      return false
+    }
+
+    const culprits = []
+    for (const element of document.querySelectorAll('body *')) {
+      const box = element.getBoundingClientRect()
+      if (box.width === 0 || box.height === 0) continue
+      if (box.right <= root.clientWidth + 1 && box.left >= -1) continue
+      if (scrollable(element)) continue
+      culprits.push({
+        tag: element.tagName.toLowerCase(),
+        classes: String(element.className || '').slice(0, 70),
+        left: Math.round(box.left),
+        right: Math.round(box.right),
+      })
+    }
+    return { overflow, culprits: culprits.slice(0, 5) }
+  })
+
+/**
+ * Runs in the page. Anything framer-motion touched that is on screen and not
+ * yet fully opaque.
+ *
+ * Reduced motion keeps the opacity fade and drops the transforms -- a fade is
+ * not what triggers vestibular symptoms -- so a partly-faded element is
+ * normal and only a permanently faded one is a fault.
+ */
+const STUCK_PROBE = `
+  Array.from(document.querySelectorAll('[style*="opacity"], [style*="transform"]'))
+    .filter(element => {
+      const box = element.getBoundingClientRect()
+      if (box.width === 0 || box.height === 0) return false
+      if (box.top > window.innerHeight) return false
+      return Number(getComputedStyle(element).opacity) < 0.99
+    })
+`
+
+/**
+ * Waits for the fades to land, then reports whatever did not.
+ *
+ * Measuring immediately catches the homepage hero mid-fade at 0.87 and calls
+ * it broken, which it is not. The real failure -- framer rejecting an easing
+ * and pinning the element to its initial keyframe -- sits at opacity 0 and
+ * stays there, so anything still faded after this window genuinely is.
+ */
+const findStuckAnimations = async page => {
+  try {
+    await page.waitForFunction(`${STUCK_PROBE}.length === 0`, null, { timeout: 3000 })
+    return []
+  } catch {
+    return page.evaluate(`
+      ${STUCK_PROBE}
+        .slice(0, 5)
+        .map(element => ({
+          tag: element.tagName.toLowerCase(),
+          classes: String(element.className || '').slice(0, 70),
+          opacity: getComputedStyle(element).opacity,
+        }))
+    `)
+  }
+}
+
 const run = async () => {
+  requireBuild()
   const server = startServer()
   let browser
 
@@ -104,6 +216,8 @@ const run = async () => {
 
     const failures = []
     let checks = 0
+    let reflowFailures = 0
+    let motionFailures = 0
 
     for (const viewport of VIEWPORTS) {
       const context = await browser.newContext({
@@ -132,7 +246,72 @@ const run = async () => {
       await context.close()
     }
 
-    console.log(`\n  ${checks} page checks across ${routes.length} routes and ${VIEWPORTS.length} widths`)
+    console.log('')
+
+    for (const width of REFLOW_WIDTHS) {
+      const context = await browser.newContext({
+        viewport: { width: width.width, height: width.height },
+      })
+      const page = await context.newPage()
+
+      for (const route of routes) {
+        await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle' })
+        const { overflow, culprits } = await findOverflow(page)
+        checks += 1
+
+        console.log(
+          `  ${(overflow === 0 ? 'PASS' : 'FAIL').padEnd(6)}${width.name.padEnd(11)}${route.padEnd(28)}${
+            overflow === 0 ? '' : `${overflow}px of horizontal scroll`
+          }`
+        )
+        for (const culprit of culprits) {
+          console.log(`         <${culprit.tag}> ${culprit.left}..${culprit.right}  ${culprit.classes}`)
+        }
+        if (overflow > 0) reflowFailures += 1
+      }
+
+      await context.close()
+    }
+
+    console.log('')
+
+    const reducedContext = await browser.newContext({
+      viewport: { width: 1280, height: 900 },
+      reducedMotion: 'reduce',
+    })
+    const reducedPage = await reducedContext.newPage()
+
+    for (const route of routes) {
+      await reducedPage.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle' })
+      const stuck = await findStuckAnimations(reducedPage)
+      checks += 1
+
+      console.log(
+        `  ${(stuck.length === 0 ? 'PASS' : 'FAIL').padEnd(6)}${'reduced'.padEnd(11)}${route.padEnd(28)}${
+          stuck.length === 0 ? '' : `${stuck.length} element(s) stuck below opacity 1`
+        }`
+      )
+      for (const element of stuck) {
+        console.log(`         <${element.tag}> opacity ${element.opacity}  ${element.classes}`)
+      }
+      if (stuck.length > 0) motionFailures += 1
+    }
+
+    await reducedContext.close()
+
+    console.log(`\n  ${checks} checks across ${routes.length} routes`)
+
+    if (reflowFailures > 0) {
+      console.log(`\n  ${reflowFailures} route(s) scroll horizontally. WCAG 1.4.10 Reflow.`)
+      process.exitCode = 1
+    }
+
+    if (motionFailures > 0) {
+      console.log(
+        `\n  ${motionFailures} route(s) leave content invisible with reduced motion on.`
+      )
+      process.exitCode = 1
+    }
 
     if (failures.length > 0) {
       console.log('\n  Violations\n')
@@ -154,7 +333,12 @@ const run = async () => {
       return
     }
 
-    console.log('  No WCAG A or AA violations.\n')
+    if (process.exitCode) {
+      console.log('')
+      return
+    }
+
+    console.log('  No WCAG A or AA violations, no reflow failures, nothing stuck.\n')
   } finally {
     if (browser) await browser.close()
     server.kill()
