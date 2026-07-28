@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { bark, caramel, semantic } from '@/design/tokens'
 
 export const runtime = 'edge'
 export const alt = 'VEMCO — Furniture for considered spaces'
@@ -9,9 +10,11 @@ export const contentType = 'image/png'
  * Share card, generated at request time.
  *
  * Every shared link previously rendered as a blank card. Drawn rather than
- * shipped as a PNG so it stays on the design tokens automatically — the
- * values here are bark-900, caramel-600 and canvas from src/design/tokens.ts,
- * inlined because the edge runtime cannot import the TS module.
+ * shipped as a PNG so it stays on the design tokens automatically — which
+ * only works if it actually reads them. The values were pasted in as hex on
+ * the assumption the edge runtime could not import the module; it can, since
+ * tokens.ts is plain constants. Two of the pasted values had already drifted
+ * a shade off the real ones by the time anyone checked.
  */
 export default async function OpengraphImage() {
   return new ImageResponse(
@@ -23,7 +26,7 @@ export default async function OpengraphImage() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#221E19',
+          background: bark[900],
           padding: '72px',
           fontFamily: 'sans-serif',
         }}
@@ -34,19 +37,19 @@ export default async function OpengraphImage() {
               width: 56,
               height: 56,
               borderRadius: 13,
-              background: '#9E6728',
+              background: caramel[600],
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           />
-          <span style={{ color: '#FAF8F5', fontSize: 34, letterSpacing: '-0.01em' }}>VEMCO</span>
+          <span style={{ color: semantic.canvas, fontSize: 34, letterSpacing: '-0.01em' }}>VEMCO</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span
             style={{
-              color: '#FAF8F5',
+              color: semantic.canvas,
               fontSize: 78,
               lineHeight: 1.05,
               letterSpacing: '-0.03em',
@@ -55,7 +58,7 @@ export default async function OpengraphImage() {
           >
             Furniture for considered spaces
           </span>
-          <span style={{ color: '#94897A', fontSize: 30, marginTop: 26 }}>
+          <span style={{ color: bark[400], fontSize: 30, marginTop: 26 }}>
             Solid wood, honest joinery, delivered across Pakistan
           </span>
         </div>

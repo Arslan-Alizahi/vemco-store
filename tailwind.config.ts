@@ -2,6 +2,7 @@ import type { Config } from 'tailwindcss'
 import defaultTheme from 'tailwindcss/defaultTheme'
 import { bark, caramel, sage, success, warning, danger, semantic } from './src/design/tokens'
 import { durationCss, easing } from './src/design/motion'
+import { fontSize } from './src/design/typography'
 
 const config: Config = {
   // Architecture only -- no dark theme ships in this phase. Committing to the
@@ -29,23 +30,10 @@ const config: Config = {
         serif: ['var(--font-serif)', ...defaultTheme.fontFamily.serif],
         mono: ['var(--font-mono)', ...defaultTheme.fontFamily.mono],
       },
-      // Role-named, with leading/tracking/weight baked in so a heading cannot
-      // ship untuned. Replaces 53 distinct heading class strings across three
-      // semantic levels. Negative tracking at display sizes is the single
-      // highest-yield typographic change here -- the codebase currently has
-      // zero uses of tracking-tight and 55 uses of leading-relaxed applied
-      // uniformly, including to 36-60px headings that want 1.05-1.15.
-      fontSize: {
-        display: ['3.5rem', { lineHeight: '1.05', letterSpacing: '-0.030em', fontWeight: '600' }],
-        h1: ['2.25rem', { lineHeight: '1.15', letterSpacing: '-0.022em', fontWeight: '600' }],
-        h2: ['1.5rem', { lineHeight: '1.25', letterSpacing: '-0.017em', fontWeight: '600' }],
-        h3: ['1.125rem', { lineHeight: '1.40', letterSpacing: '-0.011em', fontWeight: '600' }],
-        'body-lg': ['1.0625rem', { lineHeight: '1.60', letterSpacing: '0em', fontWeight: '400' }],
-        body: ['0.9375rem', { lineHeight: '1.55', letterSpacing: '0em', fontWeight: '400' }],
-        ui: ['0.875rem', { lineHeight: '1.45', letterSpacing: '0em', fontWeight: '400' }],
-        caption: ['0.75rem', { lineHeight: '1.40', letterSpacing: '0.005em', fontWeight: '500' }],
-        overline: ['0.6875rem', { lineHeight: '1.30', letterSpacing: '0.060em', fontWeight: '600' }],
-      },
+      // Defined in src/design/typography.ts, because src/lib/cn.ts has to read
+      // the same list -- see the note there on why tailwind-merge needs to be
+      // told these are sizes and not colours.
+      fontSize,
       // Scaled to element size. Card, Modal and a small Button all use
       // rounded-lg (8px) today, and rounded-xl and above have zero uses -- so
       // nothing nests. The nesting is what reads as expensive.

@@ -29,5 +29,19 @@ jobs:
       - name: WCAG AA contrast gate
         run: npm run verify:contrast
 
+      # Refuses hand-written colours, so the token migration cannot unwind.
+      - name: Raw colour gate
+        run: npm run verify:tokens
+
       - name: Production build
         run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # axe over the assembled pages, at desktop and phone widths. The contrast
+      # gate proves the palette is sound; this proves the pages are. It is what
+      # caught the primary button shipping at 3.49:1 -- a class that existed in
+      # the source but had been dropped before it reached the DOM.
+      - name: Accessibility gate
+        run: npm run verify:a11y

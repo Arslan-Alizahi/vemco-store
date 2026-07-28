@@ -125,29 +125,10 @@ export const getProductImageUrl = (product: any): string => {
   return '/placeholder.png'
 }
 
-// Stock utilities
-export const getStockStatus = (quantity: number, threshold?: number): string => {
-  const lowStockThreshold = threshold || parseInt(process.env.NEXT_PUBLIC_LOW_STOCK_THRESHOLD || '5')
-
-  if (quantity <= 0) return 'Out of Stock'
-  if (quantity <= lowStockThreshold) return 'Low Stock'
-  return 'In Stock'
-}
-
-export const getStockStatusColor = (quantity: number, threshold?: number): string => {
-  const status = getStockStatus(quantity, threshold)
-
-  switch (status) {
-    case 'Out of Stock':
-      return 'text-red-600 bg-red-50'
-    case 'Low Stock':
-      return 'text-yellow-600 bg-yellow-50'
-    case 'In Stock':
-      return 'text-green-600 bg-green-50'
-    default:
-      return 'text-text-secondary bg-canvas'
-  }
-}
+// Stock status lived here as getStockStatus/getStockStatusColor, returning
+// hardcoded Tailwind default-palette classes. StockBadge owns both the wording
+// and the colour now, so a stock state cannot be styled two different ways in
+// two different places. Neither function had a caller left.
 
 // Pagination utilities
 export const calculatePagination = (
