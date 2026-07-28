@@ -1,20 +1,53 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { CheckCircle, Package, Truck, Clock } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { CheckCircle, Mail, Package, Truck } from 'lucide-react'
+import Container from '@/components/layout/Container'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { formatCurrency } from '@/lib/utils'
+import Money from '@/components/ui/Money'
+import Spinner from '@/components/ui/Spinner'
+import ErrorState from '@/components/ui/ErrorState'
+import { useCart } from '@/hooks/useCart'
+
+const NEXT_STEPS = [
+  {
+    icon: Mail,
+    title: 'Confirmation email',
+    body: 'On its way now, with your order number and everything you ordered.',
+  },
+  {
+    icon: Package,
+    title: 'We pick your order',
+    body: 'Same day if you ordered before 3 PM, otherwise the next working day.',
+  },
+  {
+    icon: Truck,
+    title: 'Delivery call',
+    body: 'We ring the day before with a two-hour window, and again when the team sets off.',
+  },
+]
 
 function OrderSuccessContent() {
-  const searchParams = useSearchParams()
+  const params = useSearchParams()
   const router = useRouter()
-  const [order, setOrder] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const orderId = params.get('orderId')
 
-  const orderId = searchParams.get('orderId')
+  const { clearCart } = useCart()
+  const [order, setOrder] = useState<any>(null)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const cleared = useRef(false)
+
+  // The cart is emptied here, not before the redirect to payment. Clearing it
+  // early meant an abandoned payment left the customer with an empty cart and
+  // no way to resume -- the single worst moment to lose a basket.
+  useEffect(() => {
+    if (cleared.current) return
+    cleared.current = true
+    clearCart()
+  }, [clearCart])
 
   useEffect(() => {
     if (!orderId) {
@@ -22,120 +55,101 @@ function OrderSuccessContent() {
       return
     }
 
-    // Fetch order details
     fetch(`/api/stripe/check-payment?orderId=${orderId}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setOrder(data.data)
-        }
-        setLoading(false)
+        if (!data.success) throw new Error('Not found')
+        setOrder(data.data)
+        setStatus('ready')
       })
-      .catch(error => {
-        console.error('Error fetching order:', error)
-        setLoading(false)
-      })
+      .catch(() => setStatus('error'))
   }, [orderId, router])
 
-  if (loading) {
+  if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
-      </div>
+      <Container className="flex min-h-[50vh] items-center justify-center">
+        <Spinner size="lg" label="Confirming your order" showLabel />
+      </Container>
     )
   }
 
-  if (!order) {
+  if (status === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md w-full p-8 text-center">
-          <h1 className="text-2xl font-bold text-text-primary mb-4">Order Not Found</h1>
-          <p className="text-text-secondary mb-6">We couldn't find your order. Please check your email for order confirmation.</p>
-          <Button asChild>
-            <Link href="/">Go to home</Link>
+      <Container size="prose" className="py-section-md">
+        <ErrorState
+          title="We could not find that order"
+          description="Your payment may still have gone through. Check your email for a confirmation, or contact us with the reference and we will look it up."
+        />
+        <div className="text-center">
+          <Button asChild variant="outline">
+            <Link href="/contact">Contact support</Link>
           </Button>
-        </Card>
-      </div>
+        </div>
+      </Container>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        {/* Success Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-            <CheckCircle className="w-12 h-12 text-green-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-text-primary mb-2">Order Confirmed!</h1>
-          <p className="text-xl text-text-secondary">Thank you for your purchase</p>
+    <Container size="prose" className="py-section-md">
+      <div className="mb-10 text-center">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-success-50">
+          <CheckCircle className="h-8 w-8 text-success-600" aria-hidden="true" />
         </div>
-
-        {/* Order Details Card */}
-        <Card className="p-8 mb-6">
-          <div className="border-b border-border-subtle pb-6 mb-6">
-            <h2 className="text-2xl font-semibold text-text-primary mb-4">Order Details</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-text-tertiary">Order Number</p>
-                <p className="text-lg font-semibold text-text-primary">{order.orderNumber}</p>
-              </div>
-              <div>
-                <p className="text-sm text-text-tertiary">Total Amount</p>
-                <p className="text-lg font-semibold tabular-nums text-text-primary">
-                  {formatCurrency(order.total ?? 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Delivery Information */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-text-primary">What's Next?</h3>
-            
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Package className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-text-primary">Order Processing</h4>
-                <p className="text-sm text-text-secondary">We're preparing your order for shipment</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <Truck className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-text-primary">Estimated Delivery</h4>
-                <p className="text-sm text-text-secondary">Your order will be delivered within 3-5 business days</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <Clock className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-text-primary">Order Confirmation</h4>
-                <p className="text-sm text-text-secondary">A confirmation email has been sent to your email address</p>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild variant="primary" size="lg" className="w-full sm:w-auto">
-            <Link href="/products">Continue shopping</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-            <Link href="/">Go to home</Link>
-          </Button>
-        </div>
+        <h1 className="mb-2 font-serif text-h1 text-text-primary">Order confirmed</h1>
+        <p className="text-body-lg text-text-secondary">
+          Thank you. We have started picking it already.
+        </p>
       </div>
-    </div>
+
+      <Card className="mb-8">
+        <dl className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <dt className="text-caption uppercase tracking-[0.06em] text-text-tertiary">
+              Order number
+            </dt>
+            <dd className="mt-1 font-mono text-body font-medium text-text-primary">
+              {order.orderNumber}
+            </dd>
+          </div>
+          <div className="sm:text-right">
+            <dt className="text-caption uppercase tracking-[0.06em] text-text-tertiary">
+              Total paid
+            </dt>
+            <dd className="mt-1">
+              <Money amount={order.total ?? 0} className="text-h3 text-text-primary" />
+            </dd>
+          </div>
+        </dl>
+      </Card>
+
+      <section aria-labelledby="next" className="mb-10">
+        <h2 id="next" className="mb-5 text-h3 text-text-primary">
+          What happens next
+        </h2>
+        <ol className="space-y-5">
+          {NEXT_STEPS.map(step => (
+            <li key={step.title} className="flex gap-4">
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-caramel-100">
+                <step.icon className="h-4 w-4 text-caramel-700" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-body font-medium text-text-primary">{step.title}</p>
+                <p className="text-ui text-text-secondary">{step.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div className="flex flex-col justify-center gap-3 sm:flex-row">
+        <Button asChild size="lg">
+          <Link href="/products">Continue shopping</Link>
+        </Button>
+        <Button asChild size="lg" variant="outline">
+          <Link href="/contact">Question about this order</Link>
+        </Button>
+      </div>
+    </Container>
   )
 }
 
@@ -143,13 +157,12 @@ export default function OrderSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
-        </div>
+        <Container className="flex min-h-[50vh] items-center justify-center">
+          <Spinner size="lg" />
+        </Container>
       }
     >
       <OrderSuccessContent />
     </Suspense>
   )
 }
-

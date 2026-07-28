@@ -25,6 +25,7 @@ export type { ControlSize, FieldProps } from './FormField'
 export { default as Badge, badgeVariants, StatusBadge, StockBadge } from './Badge'
 export { default as Money, Numeric } from './Money'
 export { Carousel } from './Carousel'
+export { default as Pagination } from './Pagination'
 
 // Feedback
 export { default as Spinner, LoadingDots, FullPageSpinner } from './Spinner'

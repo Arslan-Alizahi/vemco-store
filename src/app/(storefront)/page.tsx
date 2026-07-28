@@ -7,7 +7,10 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { Trees, Ruler, Truck, Hammer, ArrowRight } from 'lucide-react'
-import Badge from '@/components/ui/Badge'
+import { Carousel } from '@/components/ui/Carousel'
+import EmptyState from '@/components/ui/EmptyState'
+import { ProductCardSkeleton } from '@/components/ui/Skeleton'
+import ProductCard from '@/components/storefront/ProductCard'
 import { formatCurrency } from '@/lib/utils'
 import { Product } from '@/types/product'
 
@@ -52,7 +55,7 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100">
+    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100">
       {/* Hero Section */}
       <motion.section
         initial={{ opacity: 0 }}
@@ -173,62 +176,35 @@ export default function HomePage() {
           </motion.div>
 
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Spinner size="lg" label="Loading products..." />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                  viewport={{ once: true }}
-                >
-                  <Card interactive noPadding className="group h-full">
-                    <Link href={`/products/${product.slug}`} className="block">
-                      {/* 4:5 portrait -- furniture reads taller than it does
-                          square. The transform is on the image inside its own
-                          clipped frame, never on the card, so type stays sharp
-                          and nothing spills into the grid gutter. */}
-                      <div className="relative aspect-[4/5] overflow-hidden bg-surface-subtle">
-                        <img
-                          src={product.primary_image || '/placeholder.png'}
-                          alt={product.name}
-                          className="h-full w-full object-cover transition-transform duration-slow ease-standard group-hover:scale-[1.04]"
-                        />
-                        {product.compare_at_price && (
-                          <div className="absolute left-3 top-3">
-                            <Badge variant="sale" size="sm">
-                              Sale
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-5">
-                        <h3 className="mb-1 text-h3 text-text-primary">{product.name}</h3>
-                        <p className="mb-4 line-clamp-2 text-ui text-text-secondary">
-                          {product.description}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                          {/* Price is neutral, not brand. Colouring the base
-                              price leaves nothing louder for a markdown. */}
-                          <span className="text-h3 tabular-nums text-text-primary">
-                            {formatCurrency(product.price)}
-                          </span>
-                          {product.compare_at_price && (
-                            <span className="text-ui tabular-nums text-text-tertiary line-through">
-                              {formatCurrency(product.compare_at_price)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  </Card>
-                </motion.div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }, (_, index) => (
+                <ProductCardSkeleton key={index} />
               ))}
             </div>
+          ) : featuredProducts.length === 0 ? (
+            <EmptyState
+              title="Nothing featured just now"
+              description="The full catalogue is still there."
+              action={
+                <Button asChild>
+                  <Link href="/products">Browse everything</Link>
+                </Button>
+              }
+            />
+          ) : (
+            /* A carousel rather than a grid: the featured list is a short
+               curated run, and letting it scroll horizontally keeps the page
+               from turning into a wall of cards. Manual only -- nothing
+               autoplays on a page the visitor is reading. */
+            <Carousel
+              label="Featured furniture"
+              perView={{ base: 1, sm: 2, lg: 4 }}
+              loop={false}
+            >
+              {featuredProducts.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </Carousel>
           )}
 
           <div className="text-center mt-12">

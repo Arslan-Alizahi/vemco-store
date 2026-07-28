@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import LegalPage from '@/components/layout/LegalPage'
 
 export const metadata: Metadata = {
@@ -82,7 +83,7 @@ export default function TermsPage() {
           body: (
             <p>
               You can cancel a stock item any time before dispatch, and within 14 days of
-              delivery under our <a href="/policies/returns">returns policy</a>. Made-to-order
+              delivery under our <Link href="/policies/returns">returns policy</Link>. Made-to-order
               pieces can be cancelled free of charge until production starts.
             </p>
           ),

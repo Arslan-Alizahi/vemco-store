@@ -2,57 +2,91 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { ArrowLeft, Minus, Plus, ShieldCheck, ShoppingBag, Trash2, Truck } from 'lucide-react'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
-import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react'
-import { formatCurrency, calculateTax, calculateTotal } from '@/lib/utils'
-import { useCart } from '@/hooks/useCart'
+import Textarea from '@/components/ui/Textarea'
+import IconButton from '@/components/ui/IconButton'
+import Money from '@/components/ui/Money'
+import EmptyState from '@/components/ui/EmptyState'
+import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/ui/Toast'
-import { motion } from 'framer-motion'
+import { useCart } from '@/hooks/useCart'
+import { calculateTax, calculateTotal, validateEmail } from '@/lib/utils'
+
+interface Fields {
+  name: string
+  email: string
+  phone: string
+  address: string
+  city: string
+}
+
+const EMPTY: Fields = { name: '', email: '', phone: '', address: '', city: '' }
 
 export default function CartPage() {
   const router = useRouter()
-  const { cart, updateQuantity, removeFromCart, clearCart, subtotal } = useCart()
+  // isLoading was previously discarded, so on every single load the page
+  // rendered "Your cart is empty" for a frame before localStorage was read --
+  // including for people who had a full cart.
+  const { cart, isLoading, updateQuantity, removeFromCart, addToCart, subtotal } = useCart()
   const { addToast } = useToast()
 
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-  })
-
-  const tax = calculateTax(subtotal)
-  const shipping = 0 // Free shipping for now
-  const total = calculateTotal(subtotal, tax, shipping, 0)
-
+  const [values, setValues] = useState<Fields>(EMPTY)
+  const [errors, setErrors] = useState<Partial<Fields>>({})
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const handleCheckout = async () => {
-    if (cart.length === 0) {
-      addToast('Your cart is empty', 'error')
-      return
+  const tax = calculateTax(subtotal)
+  const shipping = subtotal >= 100000 ? 0 : 2500
+  const total = calculateTotal(subtotal, tax, shipping, 0)
+
+  const set =
+    (field: keyof Fields) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setValues(current => ({ ...current, [field]: event.target.value }))
+      setErrors(current => ({ ...current, [field]: undefined }))
     }
 
-    if (!customerInfo.name || !customerInfo.email) {
-      addToast('Please fill in your name and email', 'error')
-      return
-    }
+  const validate = () => {
+    const next: Partial<Fields> = {}
+    if (!values.name.trim()) next.name = 'We need a name for the delivery'
+    if (!values.email.trim()) next.email = 'We send the order confirmation here'
+    else if (!validateEmail(values.email)) next.email = 'That does not look like an email address'
+    if (!values.phone.trim()) next.phone = 'The delivery team calls before they set off'
+    if (!values.address.trim()) next.address = 'We need somewhere to deliver to'
+    if (!values.city.trim()) next.city = 'City decides the delivery rate'
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
+
+  const handleRemove = (productId: number) => {
+    const removed = cart.find(item => item.product_id === productId)
+    removeFromCart(productId)
+    addToast(`${removed?.product_name ?? 'Item'} removed`, 'info', 6000, {
+      label: 'Undo',
+      onClick: () => removed && addToCart(removed),
+    })
+  }
+
+  const handleCheckout = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!validate()) return
 
     setIsProcessing(true)
-
     try {
-      // Step 1: Create order with pending payment status
       const orderRes = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: customerInfo.name,
-          customer_email: customerInfo.email,
-          customer_phone: customerInfo.phone,
-          shipping_address: customerInfo.address,
+          customer_name: values.name,
+          customer_email: values.email,
+          customer_phone: values.phone,
+          shipping_address: `${values.address}, ${values.city}`,
           items: cart.map(item => ({
             product_id: item.product_id,
             product_name: item.product_name,
@@ -63,230 +97,275 @@ export default function CartPage() {
           })),
           tax,
           shipping_cost: shipping,
-          payment_method: 'stripe', // Stripe payment
+          payment_method: 'stripe',
         }),
       })
 
       const orderData = await orderRes.json()
-
       if (!orderData.success) {
-        addToast(orderData.message || 'Failed to create order', 'error')
+        addToast(orderData.message || 'We could not create the order', 'error')
         setIsProcessing(false)
         return
       }
 
       const order = orderData.data
 
-      // Step 2: Create Stripe payment link
-      addToast('Order created! Creating payment link...', 'success')
-
       const paymentRes = await fetch('/api/stripe/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: order.id
-        }),
+        body: JSON.stringify({ orderId: order.id }),
       })
-
       const paymentData = await paymentRes.json()
 
       if (!paymentData.success) {
-        addToast(paymentData.message || 'Failed to create payment link', 'error')
+        addToast(paymentData.message || 'We could not start the payment', 'error')
         setIsProcessing(false)
         return
       }
 
-      // Clear cart before redirecting to payment
-      clearCart()
-
-      // Step 3: Redirect to Stripe payment page
+      // The cart is deliberately NOT cleared here. It used to be emptied before
+      // the redirect, so anyone who abandoned payment came back to an empty
+      // cart with nothing to resume. It is cleared on the success page instead.
       if (paymentData.data.paymentUrl) {
-        addToast('Redirecting to Stripe payment...', 'success')
-        // Redirect to Stripe payment link
         window.location.href = paymentData.data.paymentUrl
       } else {
-        // Fallback: redirect to success page if no payment URL
-        addToast('Payment link not available, redirecting...', 'info')
-        setTimeout(() => {
-          router.push(`/order/success?orderId=${order.id}`)
-        }, 1500)
+        router.push(`/order/success?orderId=${order.id}`)
       }
-
     } catch (error) {
-      console.error('Error placing order:', error)
-      addToast('Failed to place order', 'error')
+      console.error('Checkout failed:', error)
+      addToast('Checkout failed. Nothing has been charged.', 'error')
       setIsProcessing(false)
     }
   }
 
+  if (isLoading) {
+    return (
+      <Container className="py-section-md">
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            <ProductCardSkeleton />
+          </div>
+        </div>
+      </Container>
+    )
+  }
+
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-canvas">        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <ShoppingBag className="h-24 w-24 text-bark-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-text-primary mb-2">Your cart is empty</h2>
-            <p className="text-text-secondary mb-8">Add some products to get started</p>
-            <Button asChild variant="primary" size="lg">
-              <Link href="/products">Continue shopping</Link>
+      <Container className="py-section-md">
+        <EmptyState
+          icon={ShoppingBag}
+          title="Your cart is empty"
+          description="Nothing saved for checkout yet. Everything in the catalogue lists full dimensions, so you can check it fits before you commit."
+          action={
+            <Button asChild size="lg">
+              <Link href="/products">Browse furniture</Link>
             </Button>
-          </motion.div>
-        </div>
-      </div>
+          }
+        />
+      </Container>
     )
   }
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text-primary">Shopping Cart</h1>
-          <p className="text-text-secondary mt-2">{cart.length} items in your cart</p>
-        </div>
+    <Container className="py-section-md">
+      <PageHeader
+        title="Your cart"
+        lead={`${cart.length} ${cart.length === 1 ? 'piece' : 'pieces'} ready for checkout.`}
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
-            {cart.map((item, index) => (
-              <motion.div
-                key={item.product_id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card>
-                  <div className="flex gap-3 sm:gap-4">
-                    <img
-                      src={item.product_image || '/placeholder.svg'}
+      <div className="grid gap-8 lg:grid-cols-3">
+        <section aria-label="Cart items" className="space-y-4 lg:col-span-2">
+          {cart.map(item => (
+            <Card key={item.product_id} noPadding className="p-4 sm:p-5">
+              {/* Two rows on narrow screens: details above, controls below.
+                  A single row pushed the delete button off the edge on any
+                  realistic product name. */}
+              <div className="flex gap-4">
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-sm bg-surface-subtle sm:h-28 sm:w-28">
+                  {item.product_image && (
+                    <Image
+                      src={item.product_image}
                       alt={item.product_name}
-                      className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-lg flex-shrink-0"
+                      fill
+                      sizes="112px"
+                      className="object-cover"
                     />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-base sm:text-lg truncate">{item.product_name}</h3>
-                      <p className="text-xs sm:text-sm text-text-tertiary mb-2">SKU: {item.product_sku}</p>
-                      <p className="text-base sm:text-lg font-bold text-caramel-600">
-                        {formatCurrency(item.unit_price)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => removeFromCart(item.product_id)}
-                        className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors touch-manipulation"
-                        aria-label="Remove item"
+                  )}
+                </div>
+
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <Link
+                    href={`/products/${item.product_slug}`}
+                    className="truncate rounded-sm text-body font-medium text-text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {item.product_name}
+                  </Link>
+                  <p className="mt-0.5 font-mono text-caption text-text-tertiary">
+                    {item.product_sku}
+                  </p>
+                  <Money amount={item.unit_price} className="mt-1 text-body text-text-primary" />
+
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1 rounded-sm border border-border-subtle">
+                      <IconButton
+                        label={`Decrease quantity of ${item.product_name}`}
+                        size="sm"
+                        onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
                       >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <button
-                          onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                          className="p-2 hover:bg-surface-subtle rounded transition-colors touch-manipulation"
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-10 sm:w-12 text-center font-medium text-sm sm:text-base">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
-                          disabled={item.quantity >= item.stock_quantity}
-                          className="p-2 hover:bg-surface-subtle rounded transition-colors disabled:opacity-50 touch-manipulation"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <p className="text-sm text-text-secondary">
-                        Subtotal: <span className="font-semibold">{formatCurrency(item.unit_price * item.quantity)}</span>
-                      </p>
+                        <Minus />
+                      </IconButton>
+                      <span className="w-8 text-center text-ui font-medium tabular-nums">
+                        {item.quantity}
+                      </span>
+                      <IconButton
+                        label={`Increase quantity of ${item.product_name}`}
+                        size="sm"
+                        disabled={item.quantity >= item.stock_quantity}
+                        onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                      >
+                        <Plus />
+                      </IconButton>
                     </div>
+
+                    <IconButton
+                      label={`Remove ${item.product_name} from cart`}
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleRemove(item.product_id)}
+                    >
+                      <Trash2 />
+                    </IconButton>
                   </div>
-                </Card>
-              </motion.div>
-            ))}
+                </div>
+              </div>
+            </Card>
+          ))}
 
-            <div className="flex justify-between pt-4">
-              <Button asChild variant="outline" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-                <Link href="/products">Continue shopping</Link>
-              </Button>
-              <Button variant="ghost" onClick={clearCart}>
-                Clear Cart
-              </Button>
+          <Button asChild variant="outline" leftIcon={<ArrowLeft className="h-4 w-4" />}>
+            <Link href="/products">Continue shopping</Link>
+          </Button>
+        </section>
+
+        <div className="space-y-6">
+          <Card>
+            <h2 className="mb-4 text-h3 text-text-primary">Order summary</h2>
+            <dl className="space-y-2 border-b border-border-subtle pb-4 text-ui">
+              <div className="flex justify-between">
+                <dt className="text-text-secondary">Subtotal</dt>
+                <dd>
+                  <Money amount={subtotal} />
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-text-secondary">Sales tax</dt>
+                <dd>
+                  <Money amount={tax} />
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-text-secondary">Delivery</dt>
+                <dd>{shipping === 0 ? 'Free' : <Money amount={shipping} />}</dd>
+              </div>
+            </dl>
+            <div className="flex items-baseline justify-between pt-4">
+              <span className="text-body font-medium text-text-primary">Total</span>
+              <Money amount={total} className="text-h2 text-text-primary" />
             </div>
-          </div>
-
-          {/* Order Summary & Checkout */}
-          <div className="space-y-6">
-            <Card>
-              <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-              <div className="space-y-2 pb-4 border-b">
-                <div className="flex justify-between text-text-secondary">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-text-secondary">
-                  <span>Tax (18%)</span>
-                  <span>{formatCurrency(tax)}</span>
-                </div>
-                <div className="flex justify-between text-text-secondary">
-                  <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
-                </div>
-              </div>
-              <div className="flex justify-between text-lg font-semibold pt-4">
-                <span>Total</span>
-                <span className="text-caramel-600">{formatCurrency(total)}</span>
-              </div>
-            </Card>
-
-            <Card>
-              <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
-              <div className="space-y-3">
-                <Input
-                  label="Name"
-                  value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Email"
-                  type="email"
-                  value={customerInfo.email}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Phone"
-                  type="tel"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-                />
-                <Input
-                  label="Shipping Address"
-                  value={customerInfo.address}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
-                />
-              </div>
-
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                className="mt-6"
-                onClick={handleCheckout}
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Processing...' : 'Place Order & Pay'}
-              </Button>
-              <p className="text-xs text-center text-text-tertiary mt-3">
-                By placing this order, you agree to our terms and conditions
+            {shipping > 0 && (
+              <p className="mt-3 text-caption text-text-tertiary">
+                Free city delivery on orders over <Money amount={100000} bare />.
               </p>
-            </Card>
-          </div>
+            )}
+          </Card>
+
+          <Card>
+            <h2 className="mb-4 text-h3 text-text-primary">Delivery details</h2>
+
+            {/* A real form: submits on Enter, and every field carries an
+                autocomplete token so the browser can fill it. Previously this
+                was loose inputs in a div with no autocomplete at all. */}
+            <form onSubmit={handleCheckout} noValidate className="space-y-4">
+              <Input
+                label="Full name"
+                name="name"
+                autoComplete="name"
+                value={values.name}
+                onChange={set('name')}
+                error={errors.name}
+                required
+              />
+              <Input
+                label="Email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={values.email}
+                onChange={set('email')}
+                error={errors.email}
+                required
+              />
+              <Input
+                label="Phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                value={values.phone}
+                onChange={set('phone')}
+                error={errors.phone}
+                required
+              />
+              <Textarea
+                label="Address"
+                name="address"
+                rows={3}
+                autoComplete="street-address"
+                placeholder="House and street, plus any access notes"
+                value={values.address}
+                onChange={set('address')}
+                error={errors.address}
+                required
+              />
+              <Input
+                label="City"
+                name="city"
+                autoComplete="address-level2"
+                value={values.city}
+                onChange={set('city')}
+                error={errors.city}
+                required
+              />
+
+              <Button type="submit" size="lg" fullWidth isLoading={isProcessing}>
+                {isProcessing ? 'Starting payment' : 'Continue to payment'}
+              </Button>
+            </form>
+
+            <ul className="mt-5 space-y-2 border-t border-border-subtle pt-5">
+              <li className="flex items-center gap-2 text-caption text-text-secondary">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
+                Card details never touch our servers
+              </li>
+              <li className="flex items-center gap-2 text-caption text-text-secondary">
+                <Truck className="h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
+                Delivered in 3-5 working days
+              </li>
+            </ul>
+
+            <p className="mt-4 text-caption text-text-tertiary">
+              By continuing you agree to our{' '}
+              <Link href="/policies/terms" className="underline underline-offset-4">
+                terms
+              </Link>{' '}
+              and{' '}
+              <Link href="/policies/returns" className="underline underline-offset-4">
+                returns policy
+              </Link>
+              .
+            </p>
+          </Card>
         </div>
       </div>
-    </div>
+    </Container>
   )
 }

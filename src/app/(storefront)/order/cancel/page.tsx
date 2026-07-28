@@ -1,154 +1,133 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { XCircle, AlertTriangle, ShoppingCart, Home } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { CreditCard, XCircle } from 'lucide-react'
+import Container from '@/components/layout/Container'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { formatCurrency } from '@/lib/utils'
+import Money from '@/components/ui/Money'
+import Spinner from '@/components/ui/Spinner'
+import { useToast } from '@/components/ui/Toast'
 
 function OrderCancelContent() {
-  const searchParams = useSearchParams()
+  const params = useSearchParams()
   const router = useRouter()
+  const orderId = params.get('orderId')
+  const { addToast } = useToast()
+
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-
-  const orderId = searchParams.get('orderId')
+  const [resuming, setResuming] = useState(false)
 
   useEffect(() => {
     if (!orderId) {
       router.push('/')
       return
     }
-
-    // Fetch order details
     fetch(`/api/stripe/check-payment?orderId=${orderId}`)
       .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setOrder(data.data)
-        }
-        setLoading(false)
-      })
-      .catch(error => {
-        console.error('Error fetching order:', error)
-        setLoading(false)
-      })
+      .then(data => setOrder(data.success ? data.data : null))
+      .catch(() => setOrder(null))
+      .finally(() => setLoading(false))
   }, [orderId, router])
+
+  /**
+   * Resume the payment on the order that already exists.
+   *
+   * The primary action here used to be "Back to Cart" — pointing at a cart
+   * that checkout had already emptied before the redirect. The most valuable
+   * recovery moment in the whole funnel led to an empty page.
+   */
+  const resume = async () => {
+    setResuming(true)
+    try {
+      const res = await fetch('/api/stripe/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      })
+      const data = await res.json()
+
+      if (data.success && data.data?.paymentUrl) {
+        window.location.href = data.data.paymentUrl
+        return
+      }
+      addToast(data.message || 'We could not restart the payment', 'error')
+    } catch (error) {
+      console.error('Failed to resume payment:', error)
+      addToast('We could not restart the payment', 'error')
+    } finally {
+      setResuming(false)
+    }
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
-      </div>
+      <Container className="flex min-h-[50vh] items-center justify-center">
+        <Spinner size="lg" />
+      </Container>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Cancel Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-4">
-            <XCircle className="w-12 h-12 text-red-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-text-primary mb-2">Payment Cancelled</h1>
-          <p className="text-xl text-text-secondary">Your payment was not completed</p>
+    <Container size="prose" className="py-section-md">
+      <div className="mb-8 text-center">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
+          <XCircle className="h-8 w-8 text-text-tertiary" aria-hidden="true" />
         </div>
-
-        {/* Information Card */}
-        <Card className="p-8 mb-6">
-          <div className="flex items-start space-x-4 mb-6">
-            <div className="flex-shrink-0">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-text-primary mb-2">Your Order is Saved</h2>
-              <p className="text-text-secondary mb-4">
-                Don't worry! Your order has been saved and is waiting for payment. 
-                You can complete the payment anytime.
-              </p>
-            </div>
-          </div>
-
-          {order && (
-            <div className="bg-canvas rounded-lg p-4 mb-6">
-              <h3 className="text-sm font-medium text-bark-700 mb-2">Order Information</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-text-secondary">Order Number:</span>
-                  <span className="text-sm font-medium text-text-primary">{order.orderNumber}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-text-secondary">Total Amount:</span>
-                  <span className="text-sm font-medium tabular-nums text-text-primary">
-                    {formatCurrency(order.total ?? 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-text-secondary">Payment Status:</span>
-                  <span className="text-sm font-medium text-amber-600">Pending</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">What can you do?</h3>
-            <ul className="space-y-2 text-sm text-blue-800">
-              <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>Complete the payment by contacting our support team</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>Continue shopping and place a new order</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>Check your email for order details and payment instructions</span>
-              </li>
-            </ul>
-          </div>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            asChild
-            variant="primary"
-            size="lg"
-            className="w-full sm:w-auto"
-            leftIcon={<ShoppingCart className="h-4 w-4" />}
-          >
-            <Link href="/cart">Back to cart</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-            <Link href="/products">Continue shopping</Link>
-          </Button>
-          <Button
-            asChild
-            variant="ghost"
-            size="lg"
-            className="w-full sm:w-auto"
-            leftIcon={<Home className="h-4 w-4" />}
-          >
-            <Link href="/">Go to home</Link>
-          </Button>
-        </div>
-
-        {/* Support Information */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-text-secondary">
-            Need help? Contact our support team at{' '}
-            <a href="mailto:support@vemco.pk" className="text-caramel-600 hover:text-caramel-700 font-medium">
-              support@vemco.pk
-            </a>
-          </p>
-        </div>
+        <h1 className="mb-2 font-serif text-h1 text-text-primary">Payment not completed</h1>
+        <p className="text-body-lg text-text-secondary">
+          Nothing has been charged, and your order is still here waiting.
+        </p>
       </div>
-    </div>
+
+      {order && (
+        <Card className="mb-8">
+          <dl className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <dt className="text-caption uppercase tracking-[0.06em] text-text-tertiary">
+                Order number
+              </dt>
+              <dd className="mt-1 font-mono text-body font-medium text-text-primary">
+                {order.orderNumber}
+              </dd>
+            </div>
+            <div className="sm:text-right">
+              <dt className="text-caption uppercase tracking-[0.06em] text-text-tertiary">
+                Amount due
+              </dt>
+              <dd className="mt-1">
+                <Money amount={order.total ?? 0} className="text-h3 text-text-primary" />
+              </dd>
+            </div>
+          </dl>
+        </Card>
+      )}
+
+      <div className="flex flex-col justify-center gap-3 sm:flex-row">
+        <Button
+          size="lg"
+          onClick={resume}
+          isLoading={resuming}
+          leftIcon={<CreditCard className="h-4 w-4" />}
+        >
+          Resume payment
+        </Button>
+        <Button asChild size="lg" variant="outline">
+          <Link href="/products">Keep browsing</Link>
+        </Button>
+      </div>
+
+      <p className="mt-8 text-center text-ui text-text-secondary">
+        Prefer to pay another way, or want to change something?{' '}
+        <Link href="/contact" className="underline underline-offset-4">
+          Talk to us
+        </Link>{' '}
+        and quote your order number.
+      </p>
+    </Container>
   )
 }
 
@@ -156,13 +135,12 @@ export default function OrderCancelPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
-        </div>
+        <Container className="flex min-h-[50vh] items-center justify-center">
+          <Spinner size="lg" />
+        </Container>
       }
     >
       <OrderCancelContent />
     </Suspense>
   )
 }
-

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import LegalPage from '@/components/layout/LegalPage'
 
 export const metadata: Metadata = {
@@ -79,7 +80,7 @@ export default function CookiePolicyPage() {
           body: (
             <p>
               Questions go to <a href="mailto:privacy@vemco.pk">privacy@vemco.pk</a>. See also
-              our <a href="/policies/privacy">privacy policy</a>.
+              our <Link href="/policies/privacy">privacy policy</Link>.
             </p>
           ),
         },
