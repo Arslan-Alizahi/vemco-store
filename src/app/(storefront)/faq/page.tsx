@@ -81,7 +81,7 @@ export default function FAQPage() {
     {
       category: 'shipping',
       question: 'Do you offer free shipping?',
-      answer: 'Yes! We offer free standard shipping on all orders over $50 within the United States. No code needed - the discount is applied automatically at checkout.'
+      answer: 'Yes — free city delivery on orders over Rs 100,000 in Lahore, Karachi and Islamabad. No code needed; it is applied automatically at checkout. Upcountry delivery is charged at a flat Rs 7,500.'
     },
     {
       category: 'shipping',

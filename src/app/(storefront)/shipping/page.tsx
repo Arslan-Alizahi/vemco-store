@@ -40,10 +40,10 @@ export default function ShippingPage() {
                   <Truck className="h-8 w-8 text-blue-600" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Standard Shipping</h3>
-              <p className="text-gray-600 mb-2">5-7 Business Days</p>
-              <p className="text-2xl font-bold text-primary-600">$5.99</p>
-              <p className="text-sm text-gray-500 mt-2">Free on orders over $50</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">City Delivery</h3>
+              <p className="text-gray-600 mb-2">3-5 working days</p>
+              <p className="text-h2 tabular-nums text-text-primary">Rs 2,500</p>
+              <p className="text-sm text-gray-500 mt-2">Free over Rs 100,000</p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow border-2 border-primary-500">
@@ -52,10 +52,10 @@ export default function ShippingPage() {
                   <Package className="h-8 w-8 text-primary-600" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Express Shipping</h3>
-              <p className="text-gray-600 mb-2">2-3 Business Days</p>
-              <p className="text-2xl font-bold text-primary-600">$12.99</p>
-              <p className="text-sm text-gray-500 mt-2">Most popular</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Room of Choice</h3>
+              <p className="text-gray-600 mb-2">3-5 working days</p>
+              <p className="text-h2 tabular-nums text-text-primary">Rs 4,500</p>
+              <p className="text-sm text-gray-500 mt-2">Carried in, unwrapped, packaging taken away</p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
@@ -64,10 +64,10 @@ export default function ShippingPage() {
                   <Clock className="h-8 w-8 text-green-600" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Overnight</h3>
-              <p className="text-gray-600 mb-2">Next Business Day</p>
-              <p className="text-2xl font-bold text-primary-600">$24.99</p>
-              <p className="text-sm text-gray-500 mt-2">Order before 2 PM</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Upcountry</h3>
+              <p className="text-gray-600 mb-2">7-10 working days</p>
+              <p className="text-h2 tabular-nums text-text-primary">Rs 7,500</p>
+              <p className="text-sm text-gray-500 mt-2">Outside Lahore, Karachi and Islamabad</p>
             </Card>
           </div>
         </motion.div>
@@ -147,7 +147,7 @@ export default function ShippingPage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Free Shipping</h2>
             </div>
             <p className="text-gray-600 text-base sm:text-lg">
-              <strong>Get FREE Standard Shipping on all orders over $50!</strong>
+              <strong>Free city delivery on orders over Rs 100,000.</strong>
             </p>
             <p className="text-gray-600 mt-2">
               No code needed. Discount applied automatically at checkout.

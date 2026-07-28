@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/Toast'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { AdminAuth } from '@/components/ui/AdminAuth'
 import {
-  Package, ShoppingCart, DollarSign, TrendingUp,
+  Package, ShoppingCart, Wallet, TrendingUp,
   Plus, Edit2, Trash2, Eye, Settings, Share2, Menu
 } from 'lucide-react'
 import { formatCurrency, slugify, generateSKU } from '@/lib/utils'
@@ -571,7 +571,7 @@ export default function AdminPage() {
                     </p>
                   </div>
                   <div className="p-4 bg-primary-100 rounded-lg">
-                    <DollarSign className="h-10 w-10 text-primary-600" />
+                    <Wallet className="h-10 w-10 text-primary-600" />
                   </div>
                 </div>
 
@@ -592,7 +592,7 @@ export default function AdminPage() {
 
                 <Link href="/admin/revenue">
                   <Button variant="primary" size="lg" fullWidth>
-                    <DollarSign className="h-5 w-5 mr-2" />
+                    <Wallet className="h-5 w-5 mr-2" />
                     Open Revenue Dashboard
                   </Button>
                 </Link>
@@ -609,7 +609,7 @@ export default function AdminPage() {
                       {demoData === null
                         ? 'Checking…'
                         : demoData.present
-                          ? 'Sample furniture products, categories, navigation and social links are loaded, with illustrations that ship in the repo. Clearing removes only these — anything you added yourself is kept.'
+                          ? 'Twenty sample products across five categories, with navigation, social links and photography. Clearing removes only these — anything you added yourself is kept.'
                           : 'No demo data is loaded. Seeding adds a sample furniture catalogue so the storefront has something to show.'}
                     </p>
                   </div>

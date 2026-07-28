@@ -9,7 +9,7 @@ import Select from '@/components/ui/Select'
 import Input from '@/components/ui/Input'
 import { AdminAuth } from '@/components/ui/AdminAuth'
 import {
-  DollarSign, TrendingUp, TrendingDown, ShoppingBag,
+  Wallet, TrendingUp, TrendingDown, ShoppingBag,
   Download, Calendar, Store, Receipt, ArrowLeft,
   BarChart3, Filter
 } from 'lucide-react'
@@ -188,7 +188,7 @@ export default function RevenuePage() {
                     </p>
                   </div>
                   <div className="p-3 bg-primary-100 rounded-lg">
-                    <DollarSign className="h-8 w-8 text-primary-600" />
+                    <Wallet className="h-8 w-8 text-primary-600" />
                   </div>
                 </div>
               </CardContent>

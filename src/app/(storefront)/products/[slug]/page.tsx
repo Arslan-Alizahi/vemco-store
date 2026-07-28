@@ -9,6 +9,7 @@ import { ShoppingCart, Heart, Share2, ChevronRight, Minus, Plus, Check, X } from
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { formatCurrency } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useToast } from '@/components/ui/Toast'
@@ -242,15 +243,21 @@ export default function ProductDetailPage() {
               <p className="text-gray-600 text-sm sm:text-base">{product.description}</p>
             </div>
 
-            {/* Price */}
-            <div className="flex items-baseline space-x-4">
-              <span className="text-4xl font-bold text-primary-600">
-                ${product.price.toFixed(2)}
+            {/* Price. Neutral, not brand -- the accent is reserved for the
+                markdown, which is the thing worth noticing. */}
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="text-h1 tabular-nums text-text-primary">
+                {formatCurrency(product.price)}
               </span>
               {product.compare_at_price && product.compare_at_price > product.price && (
-                <span className="text-2xl text-gray-400 line-through">
-                  ${product.compare_at_price.toFixed(2)}
-                </span>
+                <>
+                  <span className="text-body-lg tabular-nums text-text-tertiary line-through">
+                    {formatCurrency(product.compare_at_price)}
+                  </span>
+                  <Badge variant="sale" size="sm">
+                    Save {formatCurrency(product.compare_at_price - product.price)}
+                  </Badge>
+                </>
               )}
             </div>
 
@@ -370,13 +377,13 @@ export default function ProductDetailPage() {
                       <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                         {relatedProduct.name}
                       </h3>
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-lg font-bold text-primary-600">
-                          ${relatedProduct.price.toFixed(2)}
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-h3 tabular-nums text-text-primary">
+                          {formatCurrency(relatedProduct.price)}
                         </span>
                         {relatedProduct.compare_at_price && (
-                          <span className="text-sm text-gray-400 line-through">
-                            ${relatedProduct.compare_at_price.toFixed(2)}
+                          <span className="text-ui tabular-nums text-text-tertiary line-through">
+                            {formatCurrency(relatedProduct.compare_at_price)}
                           </span>
                         )}
                       </div>
