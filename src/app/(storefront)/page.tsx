@@ -1,35 +1,42 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
 import { Trees, Ruler, Truck, Hammer, ArrowRight } from 'lucide-react'
 import { Carousel } from '@/components/ui/Carousel'
 import EmptyState from '@/components/ui/EmptyState'
+import ErrorState from '@/components/ui/ErrorState'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import ProductCard from '@/components/storefront/ProductCard'
-import { formatCurrency } from '@/lib/utils'
 import { Product } from '@/types/product'
 
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  // A failed request and an empty shelf are not the same thing. This used to
+  // swallow the error and fall through to "Nothing featured just now", which
+  // tells the visitor the shop has nothing to show when in fact the page
+  // could not ask -- and offers no way to try again.
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
-  useEffect(() => {
-    // Fetch featured products
+  const loadFeatured = useCallback(() => {
+    setStatus('loading')
     fetch('/api/products?is_featured=true&limit=6')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setFeaturedProducts(data.data.products || [])
-        }
+      .then(res => {
+        if (!res.ok) throw new Error('Request failed')
+        return res.json()
       })
-      .catch(error => console.error('Error fetching products:', error))
-      .finally(() => setIsLoading(false))
+      .then(data => {
+        if (!data.success) throw new Error(data.message || 'Request failed')
+        setFeaturedProducts(data.data.products || [])
+        setStatus('ready')
+      })
+      .catch(() => setStatus('error'))
   }, [])
+
+  useEffect(loadFeatured, [loadFeatured])
 
   const features = [
     {
@@ -175,12 +182,18 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          {isLoading ? (
+          {status === 'loading' ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 4 }, (_, index) => (
                 <ProductCardSkeleton key={index} />
               ))}
             </div>
+          ) : status === 'error' ? (
+            <ErrorState
+              title="We could not load this season's picks"
+              description="The catalogue is still there, and this usually clears on a second try."
+              onRetry={loadFeatured}
+            />
           ) : featuredProducts.length === 0 ? (
             <EmptyState
               title="Nothing featured just now"

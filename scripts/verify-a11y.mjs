@@ -62,6 +62,30 @@ const STATIC_ROUTES = [
   '/policies/cookies',
 ]
 
+/**
+ * Refuses to run if something already holds the port.
+ *
+ * Otherwise the gate quietly tests whatever is already listening. A leftover
+ * server from an earlier build serves HTML referencing chunk hashes that no
+ * longer exist on disk, every page 400s on its own JavaScript, nothing
+ * hydrates, and framer-motion never runs -- so the whole storefront reports
+ * as stuck at opacity 0. A believable-looking failure, in a build that is
+ * completely fine.
+ */
+const requireFreePort = async () => {
+  try {
+    await fetch(ORIGIN, { signal: AbortSignal.timeout(2000) })
+  } catch {
+    return
+  }
+  console.error(
+    `  Something is already listening on ${ORIGIN}.\n` +
+      '  Stop it first — otherwise this gate tests that server, not this build.\n' +
+      '  Set A11Y_PORT to use a different port.\n'
+  )
+  process.exit(1)
+}
+
 const waitForServer = async (url, timeoutMs = 90_000) => {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
@@ -261,6 +285,7 @@ const findUnfocusableStops = async (page, limit = 25) => {
 
 const run = async () => {
   requireBuild()
+  await requireFreePort()
   const server = startServer()
   let browser
 
