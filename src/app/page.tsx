@@ -107,21 +107,18 @@ export default function HomePage() {
               transition={{ delay: 0.26, duration: 0.5 }}
               className="flex flex-col justify-center gap-3 sm:flex-row"
             >
-              <Link href="/products">
-                <Button size="lg" rightIcon={<ArrowRight className="h-4 w-4" />} fullWidth>
-                  Shop the collection
-                </Button>
-              </Link>
-              <Link href="/about">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  fullWidth
-                  className="border-white/25 text-white hover:bg-surface/10"
-                >
-                  Our story
-                </Button>
-              </Link>
+              <Button asChild size="lg" rightIcon={<ArrowRight className="h-4 w-4" />} fullWidth>
+                <Link href="/products">Shop the collection</Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                fullWidth
+                className="border-white/25 text-white hover:bg-surface/10"
+              >
+                <Link href="/about">Our story</Link>
+              </Button>
             </motion.div>
           </div>
         </div>
@@ -239,11 +236,9 @@ export default function HomePage() {
           )}
 
           <div className="text-center mt-12">
-            <Link href="/products">
-              <Button size="lg" variant="outline" rightIcon={<ArrowRight />}>
-                View All Products
-              </Button>
-            </Link>
+            <Button asChild size="lg" variant="outline" rightIcon={<ArrowRight className="h-4 w-4" />}>
+              <Link href="/products">View all products</Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -262,15 +257,14 @@ export default function HomePage() {
               Tell us about the room and we will put a shortlist together. No
               obligation, no showroom pressure.
             </p>
-            <Link href="/contact">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/30 text-white hover:bg-surface/10"
-              >
-                Talk to us
-              </Button>
-            </Link>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/30 text-white hover:bg-surface/10"
+            >
+              <Link href="/contact">Talk to us</Link>
+            </Button>
           </motion.div>
         </div>
       </section>

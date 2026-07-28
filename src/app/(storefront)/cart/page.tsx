@@ -133,11 +133,9 @@ export default function CartPage() {
             <ShoppingBag className="h-24 w-24 text-bark-300 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-text-primary mb-2">Your cart is empty</h2>
             <p className="text-text-secondary mb-8">Add some products to get started</p>
-            <Link href="/products">
-              <Button variant="primary" size="lg">
-                Continue Shopping
-              </Button>
-            </Link>
+            <Button asChild variant="primary" size="lg">
+              <Link href="/products">Continue shopping</Link>
+            </Button>
           </motion.div>
         </div>
       </div>
@@ -215,11 +213,9 @@ export default function CartPage() {
             ))}
 
             <div className="flex justify-between pt-4">
-              <Link href="/products">
-                <Button variant="outline" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-                  Continue Shopping
-                </Button>
-              </Link>
+              <Button asChild variant="outline" leftIcon={<ArrowLeft className="h-4 w-4" />}>
+                <Link href="/products">Continue shopping</Link>
+              </Button>
               <Button variant="ghost" onClick={clearCart}>
                 Clear Cart
               </Button>

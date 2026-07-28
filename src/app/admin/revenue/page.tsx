@@ -364,11 +364,9 @@ export default function RevenuePage() {
             <CardHeader className="px-6 pt-6">
               <div className="flex justify-between items-center">
                 <CardTitle>Recent Transactions</CardTitle>
-                <Link href="/admin/revenue/transactions">
-                  <Button variant="outline" size="sm">
-                    View All
-                  </Button>
-                </Link>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/admin/revenue/transactions">View all</Link>
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="pt-0">

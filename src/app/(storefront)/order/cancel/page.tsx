@@ -115,23 +115,27 @@ function OrderCancelContent() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/cart">
-            <Button variant="primary" size="lg" className="w-full sm:w-auto">
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Back to Cart
-            </Button>
-          </Link>
-          <Link href="/products">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              Continue Shopping
-            </Button>
-          </Link>
-          <Link href="/">
-            <Button variant="ghost" size="lg" className="w-full sm:w-auto">
-              <Home className="w-5 h-5 mr-2" />
-              Go to Home
-            </Button>
-          </Link>
+          <Button
+            asChild
+            variant="primary"
+            size="lg"
+            className="w-full sm:w-auto"
+            leftIcon={<ShoppingCart className="h-4 w-4" />}
+          >
+            <Link href="/cart">Back to cart</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Link href="/products">Continue shopping</Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            size="lg"
+            className="w-full sm:w-auto"
+            leftIcon={<Home className="h-4 w-4" />}
+          >
+            <Link href="/">Go to home</Link>
+          </Button>
         </div>
 
         {/* Support Information */}

@@ -12,6 +12,7 @@ import Badge, { StatusBadge, StockBadge } from '@/components/ui/Badge'
 import { useToast } from '@/components/ui/Toast'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { AdminAuth } from '@/components/ui/AdminAuth'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import {
   Package, ShoppingCart, Wallet, TrendingUp,
   Plus, Edit2, Trash2, Eye, Settings, Share2, Menu
@@ -39,6 +40,15 @@ export default function AdminPage() {
   const [editingNav, setEditingNav] = useState<any | null>(null)
   const [demoData, setDemoData] = useState<{ present: boolean; productCount: number } | null>(null)
   const [demoBusy, setDemoBusy] = useState(false)
+  // One dialog serves every destructive action on this screen. Each handler
+  // describes what it is about to do; the dialog just renders it.
+  const [confirmState, setConfirmState] = useState<{
+    title: string
+    description: string
+    confirmLabel: string
+    destructive?: boolean
+    onConfirm: () => void | Promise<void>
+  } | null>(null)
   const { addToast } = useToast()
 
   // Form states
@@ -156,27 +166,28 @@ export default function AdminPage() {
     }
   }
 
-  const handleClearDemo = async () => {
-    if (
-      !confirm(
-        'Remove the demo catalogue?\n\nThis deletes only the products, categories, navigation and social links that were seeded. Anything you added yourself is kept.'
-      )
-    )
-      return
-
-    setDemoBusy(true)
-    try {
-      const res = await fetch('/api/admin/demo-data', { method: 'DELETE' })
-      const data = await res.json()
-      addToast(data.message || 'Demo data cleared', data.success ? 'success' : 'error')
-      fetchData()
-    } catch (error) {
-      console.error('Error clearing demo data:', error)
-      addToast('Failed to clear demo data', 'error')
-    } finally {
-      setDemoBusy(false)
-    }
-  }
+  const handleClearDemo = () =>
+    setConfirmState({
+      title: 'Remove the demo catalogue?',
+      description:
+        'This deletes only the products, categories, navigation and social links that were seeded. Anything you added yourself is kept.',
+      confirmLabel: 'Remove demo data',
+      destructive: true,
+      onConfirm: async () => {
+        setDemoBusy(true)
+        try {
+          const res = await fetch('/api/admin/demo-data', { method: 'DELETE' })
+          const data = await res.json()
+          addToast(data.message || 'Demo data cleared', data.success ? 'success' : 'error')
+          fetchData()
+        } catch (error) {
+          console.error('Error clearing demo data:', error)
+          addToast('Failed to clear demo data', 'error')
+        } finally {
+          setDemoBusy(false)
+        }
+      },
+    })
 
   const saveProduct = async () => {
     try {
@@ -236,24 +247,31 @@ export default function AdminPage() {
     }
   }
 
-  const deleteProduct = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+  const deleteProduct = (product: Product) =>
+    setConfirmState({
+      title: 'Delete this product?',
+      // Name the record. "Delete this product?" alone tells the operator
+      // nothing about which row they clicked.
+      description: `${product.name} (${product.sku}) will be removed from the store, along with its images. Orders that already reference it keep their line items.`,
+      confirmLabel: 'Delete product',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/products/${product.id}`, { method: 'DELETE' })
+          const data = await res.json()
 
-    try {
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
-      const data = await res.json()
-
-      if (data.success) {
-        addToast('Product deleted', 'success')
-        fetchData()
-      } else {
-        addToast('Failed to delete product', 'error')
-      }
-    } catch (error) {
-      console.error('Error deleting product:', error)
-      addToast('Failed to delete product', 'error')
-    }
-  }
+          if (data.success) {
+            addToast('Product deleted', 'success')
+            fetchData()
+          } else {
+            addToast('Failed to delete product', 'error')
+          }
+        } catch (error) {
+          console.error('Error deleting product:', error)
+          addToast('Failed to delete product', 'error')
+        }
+      },
+    })
 
   const saveCategory = async () => {
     try {
@@ -334,9 +352,16 @@ export default function AdminPage() {
     }
   }
 
-  const deleteSocial = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this social media link?')) return
+  const deleteSocial = (link: SocialMediaLink) =>
+    setConfirmState({
+      title: 'Delete this social link?',
+      description: `The ${link.platform} link will stop appearing in the footer.`,
+      confirmLabel: 'Delete link',
+      destructive: true,
+      onConfirm: () => runDeleteSocial(link.id),
+    })
 
+  const runDeleteSocial = async (id: number) => {
     try {
       const res = await fetch(`/api/social-media/${id}`, { method: 'DELETE' })
       const data = await res.json()
@@ -398,9 +423,16 @@ export default function AdminPage() {
     }
   }
 
-  const deleteNav = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this navigation item?')) return
+  const deleteNav = (item: any) =>
+    setConfirmState({
+      title: 'Delete this navigation item?',
+      description: `"${item.label}" will be removed from the ${item.location} navigation. Any child items are removed with it.`,
+      confirmLabel: 'Delete item',
+      destructive: true,
+      onConfirm: () => runDeleteNav(item.id),
+    })
 
+  const runDeleteNav = async (id: number) => {
     try {
       const res = await fetch(`/api/nav/${id}`, { method: 'DELETE' })
       const data = await res.json()
@@ -417,9 +449,15 @@ export default function AdminPage() {
     }
   }
 
-  const handleMarkAsPaid = async (orderId: number) => {
-    if (!confirm('Mark this order as paid? This will record the revenue.')) return
+  const handleMarkAsPaid = (order: any) =>
+    setConfirmState({
+      title: 'Mark this order as paid?',
+      description: `${order.order_number} for ${formatCurrency(order.total)} will be recorded as revenue. This cannot be undone from here.`,
+      confirmLabel: 'Mark as paid',
+      onConfirm: () => runMarkAsPaid(order.id),
+    })
 
+  const runMarkAsPaid = async (orderId: number) => {
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
@@ -486,6 +524,16 @@ export default function AdminPage() {
 
   return (
     <AdminAuth>
+      <ConfirmDialog
+        isOpen={confirmState !== null}
+        onClose={() => setConfirmState(null)}
+        onConfirm={() => confirmState?.onConfirm()}
+        title={confirmState?.title ?? ''}
+        description={confirmState?.description ?? ''}
+        confirmLabel={confirmState?.confirmLabel}
+        destructive={confirmState?.destructive}
+      />
+
       <div className="min-h-screen bg-canvas">
         <Navbar />
 
@@ -590,12 +638,15 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <Link href="/admin/revenue">
-                  <Button variant="primary" size="lg" fullWidth>
-                    <Wallet className="h-5 w-5 mr-2" />
-                    Open Revenue Dashboard
-                  </Button>
-                </Link>
+                <Button
+                  asChild
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  leftIcon={<Wallet className="h-4 w-4" />}
+                >
+                  <Link href="/admin/revenue">Open revenue dashboard</Link>
+                </Button>
               </CardContent>
             </Card>
 
@@ -744,7 +795,7 @@ export default function AdminPage() {
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => deleteProduct(product.id)}
+                              onClick={() => deleteProduct(product)}
                               className="p-1 text-red-600 hover:bg-red-50 rounded"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -869,7 +920,7 @@ export default function AdminPage() {
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => handleMarkAsPaid(order.id)}
+                            onClick={() => handleMarkAsPaid(order)}
                           >
                             Mark as Paid
                           </Button>
@@ -939,7 +990,7 @@ export default function AdminPage() {
                           <Edit2 className="h-4 w-4 text-blue-600" />
                         </button>
                         <button
-                          onClick={() => deleteSocial(link.id)}
+                          onClick={() => deleteSocial(link)}
                           className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
@@ -1054,7 +1105,7 @@ export default function AdminPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => deleteNav(item.id)}
+                          onClick={() => deleteNav(item)}
                           className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />

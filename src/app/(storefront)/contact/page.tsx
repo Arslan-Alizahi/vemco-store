@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
+import Textarea from '@/components/ui/Textarea'
 import { Mail, Phone, MapPin, Send, Clock, MessageSquare } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
@@ -210,21 +211,15 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-bark-700 mb-2">
-                    Message *
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={6}
-                    className="w-full px-4 py-3 border border-border-strong rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus:border-transparent resize-none"
-                    placeholder="Tell us more about your inquiry..."
-                    required
-                  />
-                </div>
+                <Textarea
+                  label="Message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={6}
+                  placeholder="Which room, roughly what size, and what you have in mind."
+                  required
+                />
 
                 <Button
                   type="submit"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,15 +12,27 @@ import { useCart } from '@/hooks/useCart'
 import { useToast } from '@/components/ui/Toast'
 import { formatCurrency } from '@/lib/utils'
 import { StockBadge } from '@/components/ui/Badge'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 export default function FavoritesPage() {
-  const { favorites, removeFromFavorites, clearFavorites, isLoading } = useFavorites()
+  const { favorites, addToFavorites, removeFromFavorites, clearFavorites, isLoading } =
+    useFavorites()
   const { addToCart } = useCart()
   const { addToast } = useToast()
+  const [confirmClear, setConfirmClear] = useState(false)
 
   const handleRemove = (productId: number, productName: string) => {
+    const removed = favorites.find(f => f.product_id === productId)
     removeFromFavorites(productId)
-    addToast(`${productName} removed from favorites`, 'info')
+
+    // Removing a favourite is trivially reversible, so offer the undo rather
+    // than interrupting with a confirmation.
+    addToast(`${productName} removed`, 'info', 6000, {
+      label: 'Undo',
+      onClick: () => {
+        if (removed) addToFavorites(removed)
+      },
+    })
   }
 
   const handleAddToCart = (item: any) => {
@@ -43,12 +55,7 @@ export default function FavoritesPage() {
     addToast(`${item.product_name} added to cart!`, 'success')
   }
 
-  const handleClearAll = () => {
-    if (confirm('Are you sure you want to clear all favorites?')) {
-      clearFavorites()
-      addToast('All favorites cleared', 'info')
-    }
-  }
+  const handleClearAll = () => setConfirmClear(true)
 
   if (isLoading) {
     return (
@@ -60,6 +67,19 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100 py-8">
+      <ConfirmDialog
+        isOpen={confirmClear}
+        onClose={() => setConfirmClear(false)}
+        onConfirm={() => {
+          clearFavorites()
+          addToast('All favourites cleared', 'info')
+        }}
+        title="Clear all favourites?"
+        description={`All ${favorites.length} saved ${favorites.length === 1 ? 'item' : 'items'} will be removed from your list. Your cart is not affected.`}
+        confirmLabel="Clear all"
+        destructive
+      />
+
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -111,9 +131,9 @@ export default function FavoritesPage() {
               <p className="text-text-secondary mb-6">
                 Browse our products and add your favorites to keep track of items you love!
               </p>
-              <Link href="/products">
-                <Button size="lg">Browse Products</Button>
-              </Link>
+              <Button asChild size="lg">
+                <Link href="/products">Browse products</Link>
+              </Button>
             </Card>
           </motion.div>
         ) : (

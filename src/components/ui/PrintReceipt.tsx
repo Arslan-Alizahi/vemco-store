@@ -44,7 +44,7 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 print:bg-surface print:block print:static print:inset-auto">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-scrim print:static print:inset-auto print:block print:bg-surface">
       <div className="print-receipt-content bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto print:shadow-none print:max-w-full print:max-h-full print:overflow-visible print:rounded-none">
         {/* Print-only header */}
         <div className="hidden print:block text-center mb-6">

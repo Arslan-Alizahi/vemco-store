@@ -51,9 +51,9 @@ function OrderSuccessContent() {
         <Card className="max-w-md w-full p-8 text-center">
           <h1 className="text-2xl font-bold text-text-primary mb-4">Order Not Found</h1>
           <p className="text-text-secondary mb-6">We couldn't find your order. Please check your email for order confirmation.</p>
-          <Link href="/">
-            <Button>Go to Home</Button>
-          </Link>
+          <Button asChild>
+            <Link href="/">Go to home</Link>
+          </Button>
         </Card>
       </div>
     )
@@ -127,16 +127,12 @@ function OrderSuccessContent() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/products">
-            <Button variant="primary" size="lg" className="w-full sm:w-auto">
-              Continue Shopping
-            </Button>
-          </Link>
-          <Link href="/">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              Go to Home
-            </Button>
-          </Link>
+          <Button asChild variant="primary" size="lg" className="w-full sm:w-auto">
+            <Link href="/products">Continue shopping</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Link href="/">Go to home</Link>
+          </Button>
         </div>
       </div>
     </div>
