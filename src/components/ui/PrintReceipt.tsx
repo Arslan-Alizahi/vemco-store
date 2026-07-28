@@ -122,8 +122,10 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
               <span className="text-text-secondary">Tax (18%)</span>
               <span className="font-medium">{formatCurrency(receipt.tax)}</span>
             </div>
+            {/* Sage, the system's markdown colour, rather than a generic
+                green -- a discount is the same idea as a sale tag. */}
             {receipt.discount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
+              <div className="flex justify-between text-sm text-sage-700">
                 <span>Discount</span>
                 <span className="font-medium">-{formatCurrency(receipt.discount)}</span>
               </div>

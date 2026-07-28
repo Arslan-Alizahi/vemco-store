@@ -21,21 +21,14 @@ import { join, relative, sep } from 'node:path'
 const ROOT = process.cwd()
 
 /**
- * The refactored surface. Admin and POS still carry the original styling and
- * were explicitly out of scope for this pass -- listing them here keeps the
- * gate honest rather than permanently red, and the count is printed below so
- * the debt stays visible instead of quietly becoming the status quo.
+ * Nothing is excluded any more.
+ *
+ * Admin, POS and billing were held out while the storefront was refactored,
+ * listed here by name with their literal count printed on every run so the
+ * debt stayed visible rather than quietly becoming the status quo. They have
+ * since been migrated, so the list is empty and the gate covers everything.
  */
-const OUT_OF_SCOPE = [
-  join('src', 'app', 'admin'),
-  join('src', 'app', 'pos'),
-  join('src', 'app', 'billing'),
-  join('src', 'components', 'admin'),
-  join('src', 'components', 'pos'),
-  join('src', 'components', 'ui', 'AdminAuth.tsx'),
-  join('src', 'components', 'ui', 'ImageUpload.tsx'),
-  join('src', 'components', 'ui', 'PrintReceipt.tsx'),
-]
+const OUT_OF_SCOPE = []
 
 /** The one file allowed to state a colour value. */
 const TOKEN_FILE = join('src', 'design', 'tokens.ts')
@@ -139,9 +132,8 @@ for (const failure of failures) {
 }
 
 if (outOfScopeCount > 0) {
-  console.log(
-    `\n  ${outOfScopeCount} literal(s) in admin, POS and billing — not yet refactored, excluded by design.`
-  )
+  console.log(`
+  ${outOfScopeCount} literal(s) in excluded paths.`)
 }
 
 if (failures.length > 0) {
@@ -149,4 +141,4 @@ if (failures.length > 0) {
   process.exit(1)
 }
 
-console.log('  No raw colour literals in the refactored surface.\n')
+console.log('  No raw colour literals anywhere in src.\n')

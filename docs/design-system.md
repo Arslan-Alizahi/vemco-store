@@ -1,6 +1,7 @@
 # VEMCO design system
 
-Everything visual in the storefront comes from four files. If a value is not
+Everything visual comes from four files — storefront, admin and the
+register alike. If a value is not
 in one of them, it should not be in a component.
 
 | File | Owns |
@@ -39,7 +40,7 @@ edit rather than a search.
 
 **Every pairing the app renders is verified against WCAG AA.**
 `npm run verify:contrast` reads `tokens.ts` directly — not a copy — and
-asserts 4.5:1 for text and 3:1 for UI boundaries across 24 pairings.
+asserts 4.5:1 for text and 3:1 for UI boundaries across 33 pairings.
 
 ## Type
 
@@ -144,19 +145,20 @@ Notes that are easy to get wrong:
 
 | Command | Asserts |
 | --- | --- |
-| `verify:contrast` | 24 colour pairings meet AA. Reads `tokens.ts` directly. |
-| `verify:tokens` | No hex, `rgb()`, `hsl()`, Tailwind default palette or bracket colours outside the token file. |
-| `verify:a11y` | 102 checks over 17 routes: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
+| `verify:contrast` | 33 colour pairings meet AA. Reads `tokens.ts` directly. |
+| `verify:tokens` | No hex, `rgb()`, `hsl()`, Tailwind default palette or bracket colours anywhere outside the token file. Nothing is excluded. |
+| `verify:a11y` | 120 checks over 20 routes, storefront and staff screens alike: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
 | `test` | Token, motion and `cn` behaviour. |
 
 `verify:a11y` needs a production build; `next dev` overwrites `.next`, so run
 `npm run build` after any dev session.
 
-Admin, POS and billing keep their original styling and are excluded from
-`verify:tokens` by name. The count of literals in them is printed on every
-run so the debt stays visible rather than becoming the status quo.
+Admin, POS and billing were held out while the storefront was refactored,
+excluded by name with their literal count printed on every run so the debt
+stayed visible. They have since been migrated and the exclusion list is
+empty.
 
-## Three bugs worth remembering
+## Four bugs worth remembering
 
 Each of these was invisible to type checking, to the build, and to review.
 They are the reason the gates exist in the form they do.
@@ -176,6 +178,14 @@ Fixed with a zero-specificity base rule so components still win. Note that
 testing for "has an outline" would not have caught it: Tailwind's
 `outline-none` sets a *transparent* outline rather than removing it. The gate
 compares focused styles against blurred ones instead.
+
+**An unnamed link was the only way out of the register.** The POS header's
+exit carried an `ArrowLeft` marked `aria-hidden` beside a label set to
+`hidden sm:inline`. Above the sm breakpoint it read fine. Below it, the
+label was gone, the icon was hidden from assistive technology, and the link
+announced as nothing at all. The same shape appeared four more times in the
+admin nav. Icon-plus-hidden-label needs an `aria-label`, matching the
+visible text so voice control still works when the text does show.
 
 **Two hex values had drifted.** The share card painted `#FAF8F5` where the
 app paints `#FAF9F6`, and `#94897A` where bark-400 is `#948A76` — both

@@ -196,19 +196,19 @@ export default function RevenuePage() {
                     </p>
                     <div className="flex items-center mt-1">
                       {overview.today.growth >= 0 ? (
-                        <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                        <TrendingUp className="h-4 w-4 text-success-700 mr-1" />
                       ) : (
-                        <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
+                        <TrendingDown className="h-4 w-4 text-danger-700 mr-1" />
                       )}
                       <span className={`text-xs font-medium ${
-                        overview.today.growth >= 0 ? 'text-green-600' : 'text-red-600'
+                        overview.today.growth >= 0 ? 'text-success-700' : 'text-danger-700'
                       }`}>
                         {Math.abs(overview.today.growth).toFixed(1)}% vs yesterday
                       </span>
                     </div>
                   </div>
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <Calendar className="h-8 w-8 text-green-600" />
+                  <div className="rounded-md bg-caramel-100 p-3">
+                    <Calendar className="h-8 w-8 text-success-700" />
                   </div>
                 </div>
               </CardContent>
@@ -225,19 +225,19 @@ export default function RevenuePage() {
                     </p>
                     <div className="flex items-center mt-1">
                       {overview.month.growth >= 0 ? (
-                        <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                        <TrendingUp className="h-4 w-4 text-success-700 mr-1" />
                       ) : (
-                        <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
+                        <TrendingDown className="h-4 w-4 text-danger-700 mr-1" />
                       )}
                       <span className={`text-xs font-medium ${
-                        overview.month.growth >= 0 ? 'text-green-600' : 'text-red-600'
+                        overview.month.growth >= 0 ? 'text-success-700' : 'text-danger-700'
                       }`}>
                         {Math.abs(overview.month.growth).toFixed(1)}% vs last month
                       </span>
                     </div>
                   </div>
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <TrendingUp className="h-8 w-8 text-blue-600" />
+                  <div className="rounded-md bg-caramel-100 p-3">
+                    <TrendingUp className="h-7 w-7 text-caramel-700" />
                   </div>
                 </div>
               </CardContent>
@@ -256,8 +256,8 @@ export default function RevenuePage() {
                       Per transaction
                     </p>
                   </div>
-                  <div className="p-3 bg-purple-100 rounded-lg">
-                    <ShoppingBag className="h-8 w-8 text-purple-600" />
+                  <div className="rounded-md bg-caramel-100 p-3">
+                    <ShoppingBag className="h-7 w-7 text-caramel-700" />
                   </div>
                 </div>
               </CardContent>
@@ -273,10 +273,10 @@ export default function RevenuePage() {
               <CardContent>
                 <div className="space-y-4">
                   {/* Store Revenue */}
-                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-between rounded-md bg-caramel-50 p-4">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Store className="h-6 w-6 text-blue-600" />
+                      <div className="rounded-sm bg-caramel-100 p-2">
+                        <Store className="h-5 w-5 text-caramel-700" />
                       </div>
                       <div>
                         <p className="font-semibold text-text-primary">Online Store</p>
@@ -286,7 +286,7 @@ export default function RevenuePage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-blue-600">
+                      <p className="text-h2 text-text-primary">
                         {formatCurrency(overview.bySource.store?.total || 0)}
                       </p>
                       <p className="text-xs text-text-tertiary">
@@ -298,10 +298,10 @@ export default function RevenuePage() {
                   </div>
 
                   {/* Billing Revenue */}
-                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-between rounded-md bg-sage-50 p-4">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Receipt className="h-6 w-6 text-green-600" />
+                      <div className="rounded-sm bg-sage-100 p-2">
+                        <Receipt className="h-6 w-6 text-success-700" />
                       </div>
                       <div>
                         <p className="font-semibold text-text-primary">Local Shop Billing</p>
@@ -311,7 +311,7 @@ export default function RevenuePage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-green-600">
+                      <p className="text-xl font-bold text-success-700">
                         {formatCurrency(overview.bySource.billing?.total || 0)}
                       </p>
                       <p className="text-xs text-text-tertiary">
@@ -392,8 +392,8 @@ export default function RevenuePage() {
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               transaction.transaction_type === 'store'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-green-100 text-green-800'
+                                ? 'bg-caramel-100 text-caramel-900'
+                                : 'bg-sage-100 text-sage-900'
                             }`}
                           >
                             {transaction.transaction_type === 'store' ? (

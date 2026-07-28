@@ -16,6 +16,7 @@ import {
   Plus, Edit2, Trash2, Eye, Settings, Share2, Menu
 } from 'lucide-react'
 import { formatCurrency, slugify, generateSKU } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 import { Product } from '@/types/product'
 import { Category } from '@/types/category'
 import { SocialMediaLink } from '@/types/social-media'
@@ -532,7 +533,7 @@ export default function AdminPage() {
         destructive={confirmState?.destructive}
       />
 
-      <div className="min-h-screen bg-canvas">
+      <div className="min-h-screen bg-canvas">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
@@ -575,7 +576,7 @@ export default function AdminPage() {
                   <CardTitle>Total Orders</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-600">{totalOrders}</p>
+                  <p className="text-h1 text-text-primary">{totalOrders}</p>
                 </CardContent>
               </Card>
 
@@ -584,7 +585,7 @@ export default function AdminPage() {
                   <CardTitle>Store Revenue</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-blue-600">
+                  <p className="text-h1 text-text-primary">
                     {formatCurrency(totalRevenue)}
                   </p>
                   <p className="text-sm text-text-tertiary">From online orders</p>
@@ -596,14 +597,16 @@ export default function AdminPage() {
                   <CardTitle>Low Stock Alert</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-red-600">{lowStockProducts}</p>
+                  <p className={cn('text-h1', lowStockProducts > 0 ? 'text-danger-700' : 'text-text-primary')}>
+                    {lowStockProducts}
+                  </p>
                   <p className="text-sm text-text-tertiary">Products need restocking</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Revenue Management Card */}
-            <Card interactive className="bg-gradient-to-br from-caramel-50 to-blue-50 border-2 border-caramel-200">
+            <Card interactive className="border border-caramel-200 bg-caramel-50">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -689,7 +692,7 @@ export default function AdminPage() {
                     onClick={handleClearDemo}
                     isLoading={demoBusy}
                     disabled={demoBusy || !demoData?.present}
-                    leftIcon={<Trash2 className="h-4 w-4" />}
+                    leftIcon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
                   >
                     Clear demo data
                   </Button>
@@ -786,15 +789,17 @@ export default function AdminPage() {
                                 })
                                 setProductModal(true)
                               }}
-                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                              aria-label={`Edit ${product.name}`}
+                              className="rounded-sm p-1 text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary"
                             >
-                              <Edit2 className="h-4 w-4" />
+                              <Edit2 className="h-4 w-4" aria-hidden="true" />
                             </button>
                             <button
                               onClick={() => deleteProduct(product)}
-                              className="p-1 text-red-600 hover:bg-red-50 rounded"
+                              aria-label={`Delete ${product.name}`}
+                              className="rounded-sm p-1 text-text-secondary transition-colors duration-fast hover:bg-danger-50 hover:text-danger-700"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
                             </button>
                           </div>
                         </td>
@@ -851,9 +856,10 @@ export default function AdminPage() {
                           })
                           setCategoryModal(true)
                         }}
-                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                        aria-label={`Edit ${category.name}`}
+                        className="rounded-sm p-1 text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary"
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -896,17 +902,10 @@ export default function AdminPage() {
                         <StatusBadge status={order.status} />
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          order.payment_status === 'paid' || order.payment_status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : order.payment_status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : order.payment_status === 'failed'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-surface-subtle text-bark-800'
-                        }`}>
-                          {order.payment_status || 'pending'}
-                        </span>
+                        {/* StatusBadge already maps paid, pending and failed
+                            to the same three states this reimplemented by
+                            hand, one column across from where it is used. */}
+                        <StatusBadge status={order.payment_status || 'pending'} />
                       </td>
                       <td className="px-4 py-3 text-sm text-text-tertiary">
                         {new Date(order.created_at).toLocaleDateString()}
@@ -981,15 +980,17 @@ export default function AdminPage() {
                             })
                             setSocialModal(true)
                           }}
+                          aria-label={`Edit the ${link.platform} link`}
                           className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
-                          <Edit2 className="h-4 w-4 text-blue-600" />
+                          <Edit2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                         <button
                           onClick={() => deleteSocial(link)}
+                          aria-label={`Delete the ${link.platform} link`}
                           className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
-                          <Trash2 className="h-4 w-4 text-red-600" />
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -1014,15 +1015,9 @@ export default function AdminPage() {
                       </div>
                       <div className="flex items-center text-sm">
                         <span className="text-text-tertiary w-16">Status:</span>
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            link.is_active
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-surface-subtle text-text-secondary'
-                          }`}
-                        >
+                        <Badge variant={link.is_active ? 'success' : 'secondary'}>
                           {link.is_active ? 'Active' : 'Inactive'}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
                   </CardContent>
@@ -1095,16 +1090,18 @@ export default function AdminPage() {
                             })
                             setNavModal(true)
                           }}
+                          aria-label={`Edit the ${item.label} nav item`}
                           className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
-                          <Edit2 className="h-4 w-4 text-blue-600" />
+                          <Edit2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteNav(item)}
+                          aria-label={`Delete the ${item.label} nav item`}
                           className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
-                          <Trash2 className="h-4 w-4 text-red-600" />
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -1122,14 +1119,21 @@ export default function AdminPage() {
                       </div>
                       <div className="flex items-center text-sm">
                         <span className="text-text-tertiary w-20">Status:</span>
+                        {/* This one is a control, not a label -- it toggles.
+                            aria-pressed says so; before, the only clue that
+                            it did anything was that the cursor changed. */}
                         <button
                           type="button"
                           onClick={() => toggleNavActive(item)}
-                          className={`px-2 py-1 rounded text-xs font-medium transition-colors hover:opacity-80 ${
+                          aria-pressed={item.is_active}
+                          aria-label={`${item.label} is ${item.is_active ? 'active' : 'inactive'}. Toggle.`}
+                          className={cn(
+                            'rounded-xs px-2 py-1 text-caption font-medium',
+                            'transition-colors duration-fast ease-standard',
                             item.is_active
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              ? 'bg-success-100 text-success-900 hover:bg-success-200'
                               : 'bg-surface-subtle text-text-secondary hover:bg-bark-200'
-                          }`}
+                          )}
                         >
                           {item.is_active ? 'Active' : 'Inactive'}
                         </button>

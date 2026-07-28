@@ -1,15 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Modal from '@/components/ui/Modal'
+import IconButton from '@/components/ui/IconButton'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
+import Money from '@/components/ui/Money'
+import { cn } from '@/lib/cn'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
 import { PrintReceipt } from '@/components/ui/PrintReceipt'
-import { Search, Plus, Minus, Trash2, Receipt, DollarSign, Package } from 'lucide-react'
+import { Search, Plus, Minus, Trash2, Receipt, Package } from 'lucide-react'
 import { formatCurrency, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { Product } from '@/types/product'
 import { BillingCartItem } from '@/types/billing'
@@ -163,22 +169,23 @@ export default function BillingPage() {
   return (
     <div className="min-h-screen bg-canvas" data-print="receipt-host">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-text-primary">Point of Sale</h1>
-          <p className="text-text-secondary">Process billing and manage receipts</p>
-        </div>
+      <Container className="py-section-sm">
+        <PageHeader
+          eyebrow="Counter"
+          title="Point of sale"
+          lead="Ring up a walk-in sale and print the receipt."
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Product Selection */}
           <Card>
-            <h2 className="text-xl font-semibold mb-4">Add Products</h2>
+            <h2 className="mb-4 text-h2 text-text-primary">Add products</h2>
 
             {/* Search */}
             <div className="mb-4">
               <Input
-                placeholder="Search products by name or SKU..."
-                leftIcon={<Search className="h-5 w-5 text-bark-400" />}
+                placeholder="Search by name or SKU"
+                leftIcon={<Search className="h-4 w-4" />}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -187,8 +194,12 @@ export default function BillingPage() {
             {/* Product Dropdown */}
             <div className="flex gap-2">
               <div className="flex-1">
+                {/* A placeholder is not a label. This select had no
+                    accessible name at all -- axe rates it critical, and it is
+                    the control the whole till runs through. */}
                 <Select
-                  placeholder="Select a product"
+                  label="Product"
+                  placeholder="Choose a product"
                   value={selectedProduct}
                   onChange={(e) => setSelectedProduct(e.target.value)}
                   options={filteredProducts.map(p => ({
@@ -210,19 +221,32 @@ export default function BillingPage() {
 
             {/* Quick Add Grid */}
             <div className="mt-6">
-              <h3 className="text-sm font-medium text-bark-700 mb-3">Quick Add</h3>
+              <h3 className="mb-3 text-ui font-medium text-text-secondary">Quick add</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-96 overflow-y-auto">
                 {filteredProducts.slice(0, 12).map(product => (
                   <button
                     key={product.id}
+                    type="button"
                     onClick={() => addProductToCart(product.id.toString())}
                     disabled={product.stock_quantity <= 0}
-                    className="p-3 border rounded-lg hover:bg-canvas disabled:opacity-50 disabled:cursor-not-allowed"
+                    // The visible text is a truncated name, so on a narrow
+                    // tile a screen reader heard "Marigold Accent..." and
+                    // nothing about what pressing it does.
+                    aria-label={`Add ${product.name} to the sale`}
+                    className={cn(
+                      'rounded-md border border-border-subtle bg-surface p-3 text-center',
+                      'transition-colors duration-fast ease-standard hover:border-border-strong hover:bg-surface-subtle',
+                      'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border-subtle disabled:hover:bg-surface'
+                    )}
                   >
-                    <Package className="h-8 w-8 mx-auto mb-1 text-bark-400" />
-                    <p className="text-xs font-medium truncate">{product.name}</p>
-                    <p className="text-xs text-text-tertiary">{formatCurrency(product.price)}</p>
-                    <p className="text-xs text-bark-400">Stock: {product.stock_quantity}</p>
+                    <Package className="mx-auto mb-1 h-7 w-7 text-text-tertiary" aria-hidden="true" />
+                    <span className="block truncate text-caption font-medium text-text-primary">
+                      {product.name}
+                    </span>
+                    <Money amount={product.price} className="block text-caption" />
+                    <span className="block text-caption text-text-tertiary">
+                      {product.stock_quantity} in stock
+                    </span>
                   </button>
                 ))}
               </div>
@@ -232,46 +256,64 @@ export default function BillingPage() {
           {/* Cart & Totals */}
           <div className="space-y-6">
             <Card>
-              <h2 className="text-xl font-semibold mb-4">Cart Items</h2>
+              <h2 className="mb-4 text-h2 text-text-primary">Cart</h2>
 
               {cart.length === 0 ? (
-                <p className="text-text-tertiary text-center py-8">No items in cart</p>
+                <p className="py-8 text-center text-body text-text-tertiary">Nothing in the sale yet</p>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {cart.map(item => (
-                    <div key={item.product_id} className="flex items-center gap-3 p-3 bg-canvas rounded-lg">
-                      <img
-                        src={item.product_image || '/placeholder.svg'}
-                        alt={item.product_name}
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.product_name}</p>
-                        <p className="text-xs text-text-tertiary">{item.product_sku}</p>
+                    <div
+                      key={item.product_id}
+                      className="flex items-center gap-3 rounded-md bg-surface-subtle p-3"
+                    >
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-sm bg-surface">
+                        <Image
+                          src={item.product_image || '/placeholder.png'}
+                          alt=""
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-ui font-medium text-text-primary">
+                          {item.product_name}
+                        </p>
+                        <p className="font-mono text-caption text-text-tertiary">
+                          {item.product_sku}
+                        </p>
+                      </div>
+                      {/* These three carried no accessible name at all -- an
+                          icon with no label, on the only controls that change
+                          what the customer is charged. */}
+                      <div className="flex items-center gap-1">
+                        <IconButton
+                          label={`Reduce ${item.product_name}`}
+                          size="sm"
                           onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                          className="p-1 hover:bg-bark-200 rounded"
                         >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-8 text-center">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                          <Minus />
+                        </IconButton>
+                        <span className="w-8 text-center text-ui tabular-nums">{item.quantity}</span>
+                        <IconButton
+                          label={`Add another ${item.product_name}`}
+                          size="sm"
                           disabled={item.quantity >= item.stock_quantity}
-                          className="p-1 hover:bg-bark-200 rounded disabled:opacity-50"
+                          onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                         >
-                          <Plus className="h-4 w-4" />
-                        </button>
+                          <Plus />
+                        </IconButton>
                       </div>
-                      <p className="font-medium">{formatCurrency(item.subtotal)}</p>
-                      <button
+                      <Money amount={item.subtotal} className="text-ui font-medium" />
+                      <IconButton
+                        label={`Remove ${item.product_name} from the sale`}
+                        size="sm"
                         onClick={() => removeFromCart(item.product_id)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        className="text-text-secondary hover:text-danger-700"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                        <Trash2 />
+                      </IconButton>
                     </div>
                   ))}
                 </div>
@@ -280,23 +322,29 @@ export default function BillingPage() {
 
             {/* Totals */}
             <Card>
-              <h2 className="text-xl font-semibold mb-4">Summary</h2>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+              <h2 className="mb-4 text-h2 text-text-primary">Summary</h2>
+              <dl className="space-y-2">
+                <div className="flex justify-between text-body">
+                  <dt className="text-text-secondary">Subtotal</dt>
+                  <dd>
+                    <Money amount={subtotal} className="font-medium" />
+                  </dd>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">Tax (18%)</span>
-                  <span className="font-medium">{formatCurrency(tax)}</span>
+                <div className="flex justify-between text-body">
+                  <dt className="text-text-secondary">Tax (18%)</dt>
+                  <dd>
+                    <Money amount={tax} className="font-medium" />
+                  </dd>
                 </div>
-                <div className="border-t pt-2">
-                  <div className="flex justify-between text-lg">
-                    <span className="font-semibold">Total</span>
-                    <span className="font-bold text-caramel-600">{formatCurrency(total)}</span>
-                  </div>
+                <div className="flex justify-between border-t border-border-subtle pt-2">
+                  <dt className="text-h3 text-text-primary">Total</dt>
+                  <dd>
+                    {/* Neutral, like every other total in the system. Colouring
+                        it spent the accent on information. */}
+                    <Money amount={total} className="text-h3 text-text-primary" />
+                  </dd>
                 </div>
-              </div>
+              </dl>
 
               <div className="mt-6 flex gap-3">
                 <Button
@@ -314,24 +362,24 @@ export default function BillingPage() {
                   disabled={cart.length === 0}
                   fullWidth
                 >
-                  Process Payment
+                  Take payment
                 </Button>
               </div>
             </Card>
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* Payment Modal */}
       <Modal
         isOpen={paymentModal}
         onClose={() => setPaymentModal(false)}
-        title="Process Payment"
+        title="Take payment"
         size="md"
       >
         <div className="space-y-4">
           <Select
-            label="Payment Method"
+            label="Payment method"
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
             options={[
@@ -342,27 +390,30 @@ export default function BillingPage() {
             ]}
           />
 
+          {/* The currency affix used to be a DollarSign icon, on a shop that
+              prices everything in rupees. */}
           <Input
-            label="Amount Paid"
+            label="Amount paid"
             type="number"
-            step="0.01"
+            step="1"
+            inputMode="numeric"
             value={amountPaid}
             onChange={(e) => setAmountPaid(e.target.value)}
-            placeholder={total.toFixed(2)}
-            leftIcon={<DollarSign className="h-5 w-5 text-bark-400" />}
+            placeholder={String(Math.round(total))}
+            leftIcon={<span className="text-ui text-text-tertiary">Rs</span>}
           />
 
           {amountPaid && parseFloat(amountPaid) >= total && (
-            <div className="p-3 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-800">
-                Change: <span className="font-bold">{formatCurrency(changeAmount)}</span>
+            <div className="rounded-md bg-success-50 p-3">
+              <p className="text-ui text-success-900">
+                Change due: <Money amount={changeAmount} className="font-medium" />
               </p>
             </div>
           )}
 
-          <div className="bg-canvas p-3 rounded-lg">
-            <p className="text-sm text-text-secondary">Total Due</p>
-            <p className="text-2xl font-bold text-caramel-600">{formatCurrency(total)}</p>
+          <div className="rounded-md bg-surface-subtle p-3">
+            <p className="text-ui text-text-secondary">Total due</p>
+            <Money amount={total} className="text-h1 text-text-primary" />
           </div>
 
           <div className="flex gap-3">
@@ -375,7 +426,7 @@ export default function BillingPage() {
               disabled={cart.length === 0}
               fullWidth
             >
-              Complete Transaction
+              Complete sale
             </Button>
           </div>
         </div>

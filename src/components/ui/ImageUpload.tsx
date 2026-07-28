@@ -3,6 +3,9 @@
 import { useState, useRef } from 'react'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
+import { cn } from '@/lib/cn'
+import IconButton from './IconButton'
+import Spinner from './Spinner'
 
 interface ImageUploadProps {
   value?: string
@@ -23,19 +26,17 @@ export function ImageUpload({
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Please select an image file')
+      setError('That file is not an image')
       return
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB')
+      setError('Images have to be under 5MB')
       return
     }
 
@@ -46,26 +47,18 @@ export function ImageUpload({
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
+      const response = await fetch('/api/upload', { method: 'POST', body: formData })
       const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Upload failed')
-      }
+      if (!response.ok) throw new Error(data.error || 'Upload failed')
 
       onChange(data.url)
-    } catch (err) {
-      console.error('Upload error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to upload image')
+    } catch (uploadError) {
+      console.error('Upload error:', uploadError)
+      setError(uploadError instanceof Error ? uploadError.message : 'The upload did not go through')
     } finally {
       setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -73,70 +66,71 @@ export function ImageUpload({
     if (!value || !onRemove) return
 
     try {
-      // Extract filename from URL
       const filename = value.split('/').pop()
       if (filename) {
-        await fetch(`/api/upload?filename=${filename}`, {
-          method: 'DELETE',
-        })
+        await fetch(`/api/upload?filename=${filename}`, { method: 'DELETE' })
       }
       onRemove()
-    } catch (err) {
-      console.error('Error removing image:', err)
+    } catch (removeError) {
+      console.error('Error removing image:', removeError)
+      setError('The image could not be removed')
     }
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={cn('space-y-4', className)}>
       {value ? (
-        <div className="relative group">
-          <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-border-subtle">
-            <Image
-              src={value}
-              alt="Uploaded image"
-              fill
-              className="object-contain"
-            />
+        <div className="group relative">
+          <div className="relative h-64 w-full overflow-hidden rounded-md border border-border-subtle bg-surface-subtle">
+            <Image src={value} alt="" fill sizes="(min-width: 768px) 50vw, 90vw" className="object-contain" />
           </div>
           {!disabled && onRemove && (
-            <button
-              type="button"
+            /* Visible on hover, and on focus. It used to be opacity-0 until
+               the group was hovered, which meant a keyboard user tabbed onto
+               a button they could not see -- the focus ring was drawn on an
+               invisible element. */
+            <IconButton
+              label="Remove image"
+              variant="solid"
+              size="sm"
               onClick={handleRemove}
-              className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-              aria-label="Remove image"
+              className="absolute right-2 top-2 bg-surface/90 text-text-secondary opacity-0 shadow-e1 transition-opacity duration-fast hover:bg-surface hover:text-danger-600 focus-visible:opacity-100 group-hover:opacity-100"
             >
-              <X className="w-4 h-4" />
-            </button>
+              <X />
+            </IconButton>
           )}
         </div>
       ) : (
-        <div
-          onClick={() => !disabled && fileInputRef.current?.click()}
-          className={`
-            relative w-full h-64 border-2 border-dashed border-border-strong rounded-lg
-            flex flex-col items-center justify-center
-            ${!disabled ? 'cursor-pointer hover:border-caramel-500 hover:bg-caramel-50' : 'opacity-50 cursor-not-allowed'}
-            transition-all duration-200
-          `}
+        /* A button, not a div with an onClick. The dropzone was previously
+           unreachable by keyboard entirely: no role, no tabIndex, no key
+           handler. Adding images was mouse-only. */
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || uploading}
+          className={cn(
+            'relative flex h-64 w-full flex-col items-center justify-center gap-2',
+            'rounded-md border-2 border-dashed border-border-strong bg-surface',
+            'transition-colors duration-fast ease-standard',
+            'hover:border-caramel-600 hover:bg-caramel-50',
+            'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border-strong disabled:hover:bg-surface'
+          )}
         >
           {uploading ? (
-            <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600 mb-4"></div>
-              <p className="text-text-secondary">Uploading...</p>
-            </div>
+            <Spinner size="lg" label="Uploading" showLabel />
           ) : (
             <>
-              <div className="p-4 bg-surface-subtle rounded-full mb-4">
-                <ImageIcon className="w-8 h-8 text-bark-400" />
-              </div>
-              <div className="flex items-center space-x-2 text-text-secondary mb-2">
-                <Upload className="w-5 h-5" />
-                <span className="font-medium">Click to upload image</span>
-              </div>
-              <p className="text-sm text-text-tertiary">PNG, JPG, GIF, WEBP up to 5MB</p>
+              <span className="mb-2 rounded-full bg-surface-subtle p-4">
+                <ImageIcon className="h-7 w-7 text-text-tertiary" aria-hidden="true" />
+              </span>
+              <span className="flex items-center gap-2 text-body font-medium text-text-secondary">
+                <Upload className="h-4 w-4" aria-hidden="true" />
+                Choose an image
+              </span>
+              <span className="text-ui text-text-tertiary">PNG, JPG, GIF or WEBP, up to 5MB</span>
             </>
           )}
-        </div>
+        </button>
       )}
 
       <input
@@ -146,12 +140,14 @@ export function ImageUpload({
         onChange={handleFileSelect}
         disabled={disabled || uploading}
         className="hidden"
+        tabIndex={-1}
       />
 
       {error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <p role="alert" className="text-ui text-danger-700">
+          {error}
+        </p>
       )}
     </div>
   )
 }
-

@@ -48,9 +48,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 {SECTIONS.map(section => {
                   const active = isActive(section.href, section.exact)
                   return (
+                    /* The label is hidden under sm and the icon is
+                       decorative, so on a phone every one of these links had
+                       no accessible name -- the whole admin nav announced as
+                       four unlabelled links. aria-label matches the visible
+                       text exactly so voice control still works when it
+                       does show. */
                     <Link
                       key={section.href}
                       href={section.href}
+                      aria-label={section.label}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
                         'flex items-center gap-2 rounded-sm px-3 py-2 text-ui font-medium',
@@ -68,6 +75,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
                 <Link
                   href="/"
+                  aria-label="View store"
                   className="ml-2 flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-tertiary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="hidden sm:inline">View store</span>

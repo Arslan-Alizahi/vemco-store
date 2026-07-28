@@ -294,8 +294,8 @@ export default function TransactionsPage() {
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               transaction.transaction_type === 'store'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-green-100 text-green-800'
+                                ? 'bg-caramel-100 text-caramel-900'
+                                : 'bg-sage-100 text-sage-900'
                             }`}
                           >
                             {transaction.transaction_type === 'store' ? (
@@ -337,7 +337,7 @@ export default function TransactionsPage() {
                             {formatCurrency(transaction.total)}
                           </div>
                           {transaction.discount > 0 && (
-                            <div className="text-xs text-green-600">
+                            <div className="text-xs text-success-700">
                               -{formatCurrency(transaction.discount)} discount
                             </div>
                           )}
@@ -440,8 +440,8 @@ export default function TransactionsPage() {
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                       selectedTransaction.transaction_type === 'store'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-green-100 text-green-800'
+                        ? 'bg-caramel-100 text-caramel-900'
+                        : 'bg-sage-100 text-sage-900'
                     }`}
                   >
                     {selectedTransaction.transaction_type === 'store' ? (
@@ -511,7 +511,7 @@ export default function TransactionsPage() {
                   {selectedTransaction.discount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-text-secondary">Discount</span>
-                      <span className="font-medium text-green-600">
+                      <span className="font-medium text-success-700">
                         -{formatCurrency(selectedTransaction.discount)}
                       </span>
                     </div>
@@ -545,7 +545,7 @@ export default function TransactionsPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Payment Status:</span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sage-100 text-sage-900">
                       {selectedTransaction.payment_status}
                     </span>
                   </div>

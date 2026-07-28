@@ -78,6 +78,9 @@ export const sage: Record<string, string> = {
 export const success: Record<string, string> = {
   50: '#F1F7F2',
   100: '#DFEDE2',
+  // 200 exists so a 100-tinted chip has somewhere to go on hover. Without it
+  // the admin toggles had no hover state at all inside their own hue.
+  200: '#C4E0CB',
   600: '#2F7D4A',
   700: '#246239',
   900: '#173D24',

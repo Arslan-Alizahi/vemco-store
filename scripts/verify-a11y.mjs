@@ -60,6 +60,13 @@ const STATIC_ROUTES = [
   '/policies/terms',
   '/policies/returns',
   '/policies/cookies',
+  // The staff screens too, now that they have been migrated. They are behind
+  // a client-side gate that renders the login form rather than redirecting,
+  // so what gets audited here is that form -- worth covering in its own
+  // right, since it is the first thing an admin ever meets.
+  '/admin',
+  '/billing',
+  '/admin/revenue',
 ]
 
 /**
@@ -127,6 +134,27 @@ const startServer = () => {
     console.error('Could not start the server:', error.message)
     process.exit(1)
   })
+
+  // The `finally` block does not run if this process dies abruptly, and a
+  // truncating pipe -- `npm run verify:a11y | head` -- does exactly that.
+  // The server survives, and the next run trips the port guard instead of
+  // testing anything.
+  const stop = () => {
+    try {
+      server.kill()
+    } catch {
+      // Already gone.
+    }
+  }
+  process.on('exit', stop)
+  process.on('SIGINT', () => { stop(); process.exit(130) })
+  process.on('SIGTERM', () => { stop(); process.exit(143) })
+  process.on('uncaughtException', error => {
+    stop()
+    console.error(error)
+    process.exit(1)
+  })
+
   return server
 }
 

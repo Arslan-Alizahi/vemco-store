@@ -34,8 +34,14 @@ export default function PosShell({ children }: { children: React.ReactNode }) {
                 </span>
               </div>
 
+              {/* The label is hidden under sm and the arrow is decorative, so
+                  on a phone this link had no accessible name whatsoever --
+                  and it is the only way out of the register. aria-label
+                  matches the visible text exactly, so a voice-control user
+                  saying what they can see still hits it. */}
               <Link
                 href="/admin"
+                aria-label="Exit to admin"
                 className="flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-tertiary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
