@@ -1,66 +1,77 @@
-'use client'
-
-import { motion } from 'framer-motion'
+import type { Metadata } from 'next'
+import { Hammer, Truck, Users } from 'lucide-react'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
+import Prose from '@/components/layout/Prose'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Briefcase, Users, TrendingUp, Heart, Coffee, Award } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Careers',
+  description:
+    'VEMCO is not hiring right now. What we look for when we are, and how to reach us in the meantime.',
+}
+
+const TEAMS = [
+  {
+    icon: Hammer,
+    title: 'Workshop',
+    body: 'Carpenters and finishers. We hire on the work, not the CV — bring photographs of something you have made.',
+  },
+  {
+    icon: Truck,
+    title: 'Delivery',
+    body: 'Two-person teams who carry furniture into homes and leave the place tidy. Careful beats fast.',
+  },
+  {
+    icon: Users,
+    title: 'Showroom',
+    body: 'People who would rather talk someone out of the wrong sofa than sell it to them.',
+  },
+]
 
 export default function CareersPage() {
   return (
-    <div className="min-h-screen bg-canvas">
+    <Container className="py-section-md">
+      {/* Leads with the honest status rather than burying it under a wall of
+          perks for jobs that do not exist. */}
+      <PageHeader
+        eyebrow="Careers"
+        title="We are not hiring at the moment"
+        lead="No open roles today. When that changes we list them here first, before any job board."
+        align="center"
+      />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Join Our Team</h1>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto">
-            Build your career with VEMCO and help us create amazing shopping experiences
-          </p>
-        </motion.div>
+      <Prose className="mx-auto mb-14 text-center">
+        <p>
+          If you want to be considered when something opens, send us your work and a line about
+          what you would like to do. We keep applications on file for a year and we do read
+          them.
+        </p>
+      </Prose>
 
-        {/* Benefits */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
-          {[
-            { icon: Users, title: 'Great Team', desc: 'Work with talented people' },
-            { icon: TrendingUp, title: 'Growth', desc: 'Opportunities to advance' },
-            { icon: Heart, title: 'Work-Life Balance', desc: 'Flexible schedules' },
-            { icon: Coffee, title: 'Remote Options', desc: 'Work from anywhere' },
-            { icon: Award, title: 'Competitive Pay', desc: 'Market-leading salaries' },
-            { icon: Briefcase, title: 'Benefits', desc: 'Health, dental, and more' },
-          ].map((benefit, index) => (
-            <motion.div
-              key={benefit.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="p-6 text-center h-full">
-                <benefit.icon className="h-12 w-12 text-caramel-600 mx-auto mb-4" />
-                <h3 className="font-semibold text-text-primary mb-2">{benefit.title}</h3>
-                <p className="text-text-secondary text-sm">{benefit.desc}</p>
-              </Card>
-            </motion.div>
+      <div className="mb-14 text-center">
+        <Button asChild size="lg">
+          <a href="mailto:careers@vemco.pk">Email careers@vemco.pk</a>
+        </Button>
+      </div>
+
+      <section aria-labelledby="teams">
+        <h2 id="teams" className="mb-8 text-center font-serif text-h2 text-text-primary">
+          The teams we hire into
+        </h2>
+        <div className="grid gap-6 sm:grid-cols-3">
+          {TEAMS.map(team => (
+            <Card key={team.title} className="h-full">
+              <div className="mb-4 inline-flex rounded-full bg-caramel-100 p-3">
+                <team.icon className="h-5 w-5 text-caramel-700" aria-hidden="true" />
+              </div>
+              <h3 className="mb-2 text-h3 text-text-primary">{team.title}</h3>
+              <p className="text-body text-text-secondary">{team.body}</p>
+            </Card>
           ))}
         </div>
-
-        {/* Open Positions */}
-        <Card className="p-8 text-center">
-          <Briefcase className="h-16 w-16 text-caramel-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-text-primary mb-4">Current Openings</h2>
-          <p className="text-text-secondary mb-6">
-            We're currently not hiring but we're always looking for talented individuals to join our team.
-            Send us your resume and we'll keep you in mind for future opportunities.
-          </p>
-          <a href="/contact">
-            <Button variant="primary" size="lg">
-              Send Your Resume
-            </Button>
-          </a>
-        </Card>
-      </div>
-    </div>
+      </section>
+    </Container>
   )
 }

@@ -1,68 +1,43 @@
-'use client'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
+import Prose from '@/components/layout/Prose'
+import Button from '@/components/ui/Button'
 
-import { motion } from 'framer-motion'
-import Card from '@/components/ui/Card'
-import { BookOpen, Calendar, User } from 'lucide-react'
+export const metadata: Metadata = {
+  title: 'Journal',
+  description:
+    'Not published yet. What the VEMCO journal will cover — materials, joinery and buying furniture that lasts.',
+}
 
 export default function BlogPage() {
   return (
-    <div className="min-h-screen bg-canvas">
+    <Container size="prose" className="py-section-md">
+      {/* The old page showed three half-opacity placeholder cards with invented
+          titles, which reads as broken content rather than as "not yet". */}
+      <PageHeader
+        eyebrow="Journal"
+        title="Nothing published yet"
+        lead="We would rather have no journal than one padded with filler."
+        align="center"
+      />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-caramel-600 mx-auto mb-4" />
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Our Blog</h1>
-          <p className="text-lg sm:text-xl text-text-secondary">
-            Tips, trends, and stories from the world of e-commerce
-          </p>
-        </motion.div>
+      <Prose className="mx-auto text-center">
+        <p>When it does start, it will cover the things that actually decide whether furniture lasts:</p>
+        <ul className="text-left">
+          <li>How to read a specification — what solid wood, veneer and engineered board each mean</li>
+          <li>Joinery worth paying for, and where it does not matter</li>
+          <li>Measuring a room and a stairwell before you order</li>
+          <li>Caring for oiled timber and natural fabrics in a Pakistani climate</li>
+        </ul>
+      </Prose>
 
-        {/* Coming Soon */}
-        <Card className="p-12 text-center">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-semibold text-text-primary mb-4">Coming Soon</h2>
-            <p className="text-text-secondary text-lg mb-6">
-              We're working on bringing you exciting content about shopping trends, product guides, and company updates. Stay tuned!
-            </p>
-            <div className="bg-caramel-50 p-6 rounded-lg">
-              <p className="text-bark-700 mb-4">Want to be notified when we launch our blog?</p>
-              <a href="/contact" className="inline-block px-6 py-3 bg-caramel-600 text-white rounded-lg font-semibold hover:bg-caramel-700 transition-colors">
-                Subscribe for Updates
-              </a>
-            </div>
-          </div>
-        </Card>
-
-        {/* Placeholder Blog Posts */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {[
-            { title: 'Shopping Guide 2024', category: 'Guides' },
-            { title: 'Product Care Tips', category: 'Tips' },
-            { title: 'Company News', category: 'News' },
-          ].map((post, index) => (
-            <motion.div
-              key={post.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 + 0.2 }}
-            >
-              <Card className="p-6 opacity-50">
-                <div className="bg-bark-200 h-40 rounded mb-4"></div>
-                <div className="flex items-center text-sm text-text-tertiary mb-2">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  <span>Coming Soon</span>
-                </div>
-                <h3 className="font-semibold text-text-primary mb-2">{post.title}</h3>
-                <span className="text-sm text-caramel-600">{post.category}</span>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+      <div className="mt-10 text-center">
+        <Button asChild variant="outline">
+          <Link href="/contact">Ask us something instead</Link>
+        </Button>
       </div>
-    </div>
+    </Container>
   )
 }

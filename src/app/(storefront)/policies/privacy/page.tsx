@@ -1,141 +1,124 @@
-'use client'
+import type { Metadata } from 'next'
+import LegalPage from '@/components/layout/LegalPage'
 
-import { motion } from 'framer-motion'
-import Card from '@/components/ui/Card'
+export const metadata: Metadata = {
+  title: 'Privacy policy',
+  description:
+    'What VEMCO collects, why, who we share it with, and how to get it deleted.',
+}
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-canvas">
-      <div className="py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-8">Privacy Policy</h1>
-
-          <Card className="p-6 md:p-8 space-y-6">
-            <div>
-              <p className="text-text-secondary mb-6">
-                Last updated: {new Date().toLocaleDateString()}
-              </p>
-              <p className="text-text-secondary leading-relaxed">
-                At VEMCO, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose,
-                and safeguard your information when you visit our website.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">1. Information We Collect</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                We collect information that you provide directly to us, including:
-              </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 ml-4">
-                <li>Name, email address, and contact information</li>
-                <li>Billing and shipping addresses</li>
-                <li>Payment information (processed securely through third-party payment processors)</li>
-                <li>Order history and preferences</li>
-                <li>Communications with customer support</li>
+    <LegalPage
+      title="Privacy policy"
+      lead="What we collect, why we collect it, and what you can ask us to delete."
+      updated="12 June 2026"
+      sections={[
+        {
+          id: 'what-we-collect',
+          heading: 'What we collect',
+          body: (
+            <>
+              <p>Only what an order actually needs:</p>
+              <ul>
+                <li>Your name, phone number and email address</li>
+                <li>Delivery and billing addresses, including any access notes you give us</li>
+                <li>Order history, so support can answer questions about past purchases</li>
+                <li>Messages you send us through the contact form or WhatsApp</li>
               </ul>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">2. How We Use Your Information</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                We use the information we collect to:
+              <p>
+                <strong>We never see your card details.</strong> Payment is handled entirely by
+                our payment processor; the card number does not pass through VEMCO systems and
+                is not stored on our servers.
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 ml-4">
-                <li>Process and fulfill your orders</li>
-                <li>Communicate with you about your orders and account</li>
-                <li>Send you marketing communications (with your consent)</li>
-                <li>Improve our website and services</li>
-                <li>Detect and prevent fraud</li>
-                <li>Comply with legal obligations</li>
+            </>
+          ),
+        },
+        {
+          id: 'how-we-use-it',
+          heading: 'How we use it',
+          body: (
+            <ul>
+              <li>To take payment, schedule delivery and complete your order</li>
+              <li>To contact you about that order — dispatch, delivery windows, delays</li>
+              <li>To handle warranty claims and returns</li>
+              <li>To meet our obligations under Pakistani tax and consumer law</li>
+              <li>
+                To send occasional marketing, <strong>only if you opted in</strong>, with an
+                unsubscribe link in every message
+              </li>
+            </ul>
+          ),
+        },
+        {
+          id: 'who-we-share-with',
+          heading: 'Who we share it with',
+          body: (
+            <>
+              <p>
+                We do not sell your data. We share the minimum necessary with the people who
+                help us complete an order:
+              </p>
+              <ul>
+                <li>Our payment processor, to take payment</li>
+                <li>Delivery partners, who receive your address and phone number only</li>
+                <li>Our accountants and, where the law requires it, tax authorities</li>
               </ul>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">3. Information Sharing</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                We may share your information with:
-              </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 ml-4">
-                <li>Service providers who assist in operating our website and business</li>
-                <li>Payment processors to complete transactions</li>
-                <li>Shipping companies to deliver your orders</li>
-                <li>Law enforcement when required by law</li>
+            </>
+          ),
+        },
+        {
+          id: 'how-long-we-keep-it',
+          heading: 'How long we keep it',
+          body: (
+            <p>
+              Order records are kept for seven years, because tax law requires it. Marketing
+              consent is kept until you withdraw it. Contact-form messages are deleted after two
+              years. Everything else is removed when you ask.
+            </p>
+          ),
+        },
+        {
+          id: 'your-choices',
+          heading: 'Your choices',
+          body: (
+            <>
+              <p>You can ask us to:</p>
+              <ul>
+                <li>Send you a copy of what we hold about you</li>
+                <li>Correct anything that is wrong</li>
+                <li>Delete your data, except records we are legally required to keep</li>
+                <li>Stop sending you marketing, at any time</li>
               </ul>
-              <p className="text-text-secondary leading-relaxed mt-3">
-                We do not sell your personal information to third parties.
+              <p>
+                Email <a href="mailto:privacy@vemco.pk">privacy@vemco.pk</a> and we will respond
+                within 30 days.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">4. Cookies and Tracking</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We use cookies and similar tracking technologies to enhance your browsing experience, analyze site traffic,
-                and understand where our visitors are coming from. You can control cookies through your browser settings.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">5. Data Security</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We implement appropriate technical and organizational measures to protect your personal information.
-                However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">6. Your Rights</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                You have the right to:
-              </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 ml-4">
-                <li>Access the personal information we hold about you</li>
-                <li>Request correction of inaccurate information</li>
-                <li>Request deletion of your information</li>
-                <li>Opt-out of marketing communications</li>
-                <li>Object to processing of your information</li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">7. Children's Privacy</h2>
-              <p className="text-text-secondary leading-relaxed">
-                Our service is not intended for children under 13 years of age. We do not knowingly collect personal
-                information from children under 13.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">8. International Data Transfers</h2>
-              <p className="text-text-secondary leading-relaxed">
-                Your information may be transferred to and processed in countries other than your country of residence.
-                We ensure appropriate safeguards are in place for such transfers.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">9. Changes to This Policy</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the
-                new policy on this page and updating the "Last updated" date.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">10. Contact Us</h2>
-              <p className="text-text-secondary leading-relaxed">
-                If you have any questions about this Privacy Policy, please contact us at privacy@vemco.pk
-              </p>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-      </div>
-    </div>
+            </>
+          ),
+        },
+        {
+          id: 'cookies',
+          heading: 'Cookies',
+          body: (
+            <p>
+              We use cookies to keep your cart between visits and to understand which pages
+              people use. See the <a href="/policies/cookies">cookie policy</a> for the detail.
+            </p>
+          ),
+        },
+        {
+          id: 'contact',
+          heading: 'Contact',
+          body: (
+            <p>
+              Questions about this policy go to{' '}
+              <a href="mailto:privacy@vemco.pk">privacy@vemco.pk</a>, or write to VEMCO,
+              Showroom 14, Gulberg III, Lahore.
+            </p>
+          ),
+        },
+      ]}
+    />
   )
 }
-

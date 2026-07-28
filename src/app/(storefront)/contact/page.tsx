@@ -1,262 +1,91 @@
-'use client'
-
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import Button from '@/components/ui/Button'
+import type { Metadata } from 'next'
+import { Clock, Mail, MapPin, Phone } from 'lucide-react'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
 import Card from '@/components/ui/Card'
-import Input from '@/components/ui/Input'
-import Textarea from '@/components/ui/Textarea'
-import { Mail, Phone, MapPin, Send, Clock, MessageSquare } from 'lucide-react'
-import { useToast } from '@/components/ui/Toast'
+import ContactForm from '@/components/storefront/ContactForm'
+
+export const metadata: Metadata = {
+  title: 'Contact',
+  description:
+    'Reach VEMCO by phone, email or WhatsApp, or visit the showroom in Gulberg III, Lahore.',
+}
+
+const DETAILS = [
+  {
+    icon: Phone,
+    label: 'Phone',
+    value: '+92 42 3500 0000',
+    href: 'tel:+924235000000',
+    note: 'Mon-Sat, 10am to 8pm',
+  },
+  {
+    icon: Mail,
+    label: 'Email',
+    value: 'hello@vemco.pk',
+    href: 'mailto:hello@vemco.pk',
+    note: 'We reply within one working day',
+  },
+  {
+    icon: MapPin,
+    label: 'Showroom',
+    value: 'Showroom 14, Gulberg III, Lahore',
+    href: null,
+    note: 'Open seven days, 11am to 8pm',
+  },
+  {
+    icon: Clock,
+    label: 'Deliveries',
+    value: 'Mon-Sat',
+    href: null,
+    note: 'Two-hour window confirmed the day before',
+  },
+]
 
 export default function ContactPage() {
-  const { addToast } = useToast()
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: '',
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.email || !formData.message) {
-      addToast('Please fill in all required fields', 'error')
-      return
-    }
-
-    setIsSubmitting(true)
-
-    // Simulate form submission
-    setTimeout(() => {
-      addToast('Message sent successfully! We\'ll get back to you soon.', 'success')
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-      })
-      setIsSubmitting(false)
-    }, 1000)
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
-  }
-
   return (
-    <div className="min-h-screen bg-canvas">
+    <Container className="py-section-md">
+      <PageHeader
+        eyebrow="Contact"
+        title="Talk to us"
+        lead="Tell us about the room. We would rather talk you out of the wrong piece than sell it to you."
+        align="center"
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Contact Us</h1>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto">
-            Have a question? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* Contact Information */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="lg:col-span-1"
-          >
-            <Card className="p-6 h-full">
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-6">Get in Touch</h2>
-
-              <div className="space-y-6">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
-                    <Mail className="h-6 w-6 text-caramel-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-text-primary">Email</h3>
-                    <p className="mt-1 text-text-secondary">support@vemco.pk</p>
-                    <p className="text-sm text-text-tertiary">We'll respond within 24 hours</p>
-                  </div>
+      <div className="grid gap-8 lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-12">
+        <aside>
+          <ul className="space-y-6">
+            {DETAILS.map(detail => (
+              <li key={detail.label} className="flex gap-4">
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-caramel-100">
+                  <detail.icon className="h-4 w-4 text-caramel-700" aria-hidden="true" />
                 </div>
-
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
-                    <Phone className="h-6 w-6 text-caramel-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-text-primary">Phone</h3>
-                    <p className="mt-1 text-text-secondary">+1 (555) 123-4567</p>
-                    <p className="text-sm text-text-tertiary">Mon-Fri 9am-6pm EST</p>
-                  </div>
+                <div className="min-w-0">
+                  <p className="text-caption uppercase tracking-[0.06em] text-text-tertiary">
+                    {detail.label}
+                  </p>
+                  {detail.href ? (
+                    <a
+                      href={detail.href}
+                      className="block rounded-sm text-body font-medium text-text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {detail.value}
+                    </a>
+                  ) : (
+                    <p className="text-body font-medium text-text-primary">{detail.value}</p>
+                  )}
+                  <p className="mt-0.5 text-caption text-text-tertiary">{detail.note}</p>
                 </div>
+              </li>
+            ))}
+          </ul>
+        </aside>
 
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="h-6 w-6 text-caramel-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-text-primary">Address</h3>
-                    <p className="mt-1 text-text-secondary">
-                      123 Commerce Street<br />
-                      Suite 100<br />
-                      New York, NY 10001
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
-                    <Clock className="h-6 w-6 text-caramel-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-text-primary">Business Hours</h3>
-                    <p className="mt-1 text-text-secondary">
-                      Monday - Friday: 9:00 AM - 6:00 PM<br />
-                      Saturday: 10:00 AM - 4:00 PM<br />
-                      Sunday: Closed
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Contact Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
-          >
-            <Card className="p-6 md:p-8">
-              <div className="flex items-center mb-6">
-                <MessageSquare className="h-7 w-7 sm:h-8 sm:w-8 text-caramel-600 mr-3" />
-                <h2 className="text-xl sm:text-2xl font-semibold text-text-primary">Send us a Message</h2>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-bark-700 mb-2">
-                      Name *
-                    </label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Your name"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-bark-700 mb-2">
-                      Email *
-                    </label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="your@email.com"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-bark-700 mb-2">
-                      Phone
-                    </label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="+1 (555) 123-4567"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-bark-700 mb-2">
-                      Subject
-                    </label>
-                    <Input
-                      id="subject"
-                      name="subject"
-                      type="text"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      placeholder="How can we help?"
-                    />
-                  </div>
-                </div>
-
-                <Textarea
-                  label="Message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  rows={6}
-                  placeholder="Which room, roughly what size, and what you have in mind."
-                  required
-                />
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  leftIcon={<Send className="h-5 w-5" />}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                </Button>
-
-                <p className="text-sm text-text-tertiary text-center">
-                  We typically respond within 24 hours during business days
-                </p>
-              </form>
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* FAQ Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-12"
-        >
-          <Card className="p-6 md:p-8 bg-gradient-to-r from-caramel-50 to-blue-50">
-            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Quick Questions?</h2>
-            <p className="text-text-secondary mb-6">
-              Before reaching out, check our FAQ page for instant answers to common questions.
-            </p>
-            <a href="/faq">
-              <Button variant="outline" size="lg">
-                Visit FAQ
-              </Button>
-            </a>
-          </Card>
-        </motion.div>
+        <Card className="p-6 sm:p-8">
+          <h2 className="mb-6 text-h3 text-text-primary">Send a message</h2>
+          <ContactForm />
+        </Card>
       </div>
-    </div>
+    </Container>
   )
 }

@@ -1,126 +1,115 @@
-'use client'
+import type { Metadata } from 'next'
+import LegalPage from '@/components/layout/LegalPage'
 
-import { motion } from 'framer-motion'
-import Card from '@/components/ui/Card'
+export const metadata: Metadata = {
+  title: 'Terms of sale',
+  description:
+    'The terms you agree to when ordering furniture from VEMCO — pricing, delivery, cancellation and liability.',
+}
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-canvas">
-      <div className="py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-8">Terms of Service</h1>
-
-          <Card className="p-6 md:p-8 space-y-6">
-            <div>
-              <p className="text-text-secondary mb-6">
-                Last updated: {new Date().toLocaleDateString()}
+    <LegalPage
+      title="Terms of sale"
+      lead="The agreement between you and VEMCO when you place an order."
+      updated="12 June 2026"
+      sections={[
+        {
+          id: 'who-we-are',
+          heading: 'Who we are',
+          body: (
+            <p>
+              VEMCO is a furniture retailer registered in Pakistan, trading from Showroom 14,
+              Gulberg III, Lahore. In these terms, &ldquo;we&rdquo; means VEMCO and
+              &ldquo;you&rdquo; means the person placing the order.
+            </p>
+          ),
+        },
+        {
+          id: 'orders',
+          heading: 'Placing an order',
+          body: (
+            <>
+              <p>
+                An order is an offer to buy. The contract forms when we send you an order
+                confirmation, not when payment is taken.
               </p>
-              <p className="text-text-secondary leading-relaxed">
-                Welcome to VEMCO. By accessing and using our website, you agree to be bound by these Terms of Service.
-                Please read them carefully before making any purchase.
+              <p>
+                We may decline an order if the item is out of stock, if the price was listed
+                incorrectly, or if we cannot deliver to your address. If we decline after taking
+                payment, you get a full refund.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">1. Acceptance of Terms</h2>
-              <p className="text-text-secondary leading-relaxed">
-                By accessing or using VEMCO's services, you agree to comply with and be bound by these Terms of Service.
-                If you do not agree to these terms, please do not use our services.
+            </>
+          ),
+        },
+        {
+          id: 'pricing',
+          heading: 'Pricing',
+          body: (
+            <>
+              <p>
+                All prices are in Pakistani rupees and include applicable sales tax. Delivery is
+                charged separately and shown before you pay.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">2. Use of Service</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                You agree to use our service only for lawful purposes and in accordance with these Terms. You agree not to:
+              <p>
+                If a price is obviously wrong — a decimal in the wrong place — we will contact
+                you before dispatch rather than silently cancel or charge the correct amount.
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 ml-4">
-                <li>Use the service in any way that violates any applicable law or regulation</li>
-                <li>Engage in any conduct that restricts or inhibits anyone's use of the service</li>
-                <li>Attempt to gain unauthorized access to any portion of the service</li>
-                <li>Use the service to transmit any harmful or malicious code</li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">3. Account Registration</h2>
-              <p className="text-text-secondary leading-relaxed">
-                To make purchases, you may need to create an account. You are responsible for maintaining the confidentiality
-                of your account credentials and for all activities that occur under your account.
+            </>
+          ),
+        },
+        {
+          id: 'delivery',
+          heading: 'Delivery',
+          body: (
+            <>
+              <p>
+                Delivery estimates are estimates. We will tell you if a date moves, and you may
+                cancel for a full refund if a delay is longer than you are willing to accept.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">4. Product Information</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We strive to provide accurate product descriptions and pricing. However, we do not warrant that product
-                descriptions, pricing, or other content is accurate, complete, reliable, current, or error-free.
+              <p>
+                <strong>Access is your responsibility.</strong> Measure doorways, stairwells and
+                lifts before ordering; every listing carries full dimensions. If a piece cannot
+                be brought in, we will take it back, but the delivery charge still applies.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">5. Pricing and Payment</h2>
-              <p className="text-text-secondary leading-relaxed">
-                All prices are subject to change without notice. We reserve the right to refuse or cancel any order for any reason.
-                Payment must be received before order processing begins.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">6. Shipping and Delivery</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We will make reasonable efforts to deliver products within the estimated timeframe. However, delivery times
-                are estimates and not guaranteed. We are not liable for delays caused by circumstances beyond our control.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">7. Returns and Refunds</h2>
-              <p className="text-text-secondary leading-relaxed">
-                Please refer to our Return Policy for detailed information about returns, exchanges, and refunds.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">8. Intellectual Property</h2>
-              <p className="text-text-secondary leading-relaxed">
-                All content on this website, including text, graphics, logos, images, and software, is the property of
-                VEMCO and is protected by copyright and other intellectual property laws.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">9. Limitation of Liability</h2>
-              <p className="text-text-secondary leading-relaxed">
-                To the fullest extent permitted by law, VEMCO shall not be liable for any indirect, incidental,
-                special, consequential, or punitive damages arising out of or relating to your use of the service.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">10. Changes to Terms</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We reserve the right to modify these Terms of Service at any time. Changes will be effective immediately
-                upon posting. Your continued use of the service constitutes acceptance of the modified terms.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">11. Contact Information</h2>
-              <p className="text-text-secondary leading-relaxed">
-                If you have any questions about these Terms of Service, please contact us at support@vemco.pk
-              </p>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-      </div>
-    </div>
+              <p>Risk passes to you on delivery. Title passes once payment clears in full.</p>
+            </>
+          ),
+        },
+        {
+          id: 'cancellation',
+          heading: 'Cancellation',
+          body: (
+            <p>
+              You can cancel a stock item any time before dispatch, and within 14 days of
+              delivery under our <a href="/policies/returns">returns policy</a>. Made-to-order
+              pieces can be cancelled free of charge until production starts.
+            </p>
+          ),
+        },
+        {
+          id: 'liability',
+          heading: 'Liability',
+          body: (
+            <p>
+              We are responsible for loss or damage you suffer that is a foreseeable result of
+              us breaking these terms. We are not liable for business losses. Nothing here
+              limits liability for death or personal injury caused by our negligence, or for
+              fraud — the law does not permit that and we would not want it to.
+            </p>
+          ),
+        },
+        {
+          id: 'governing-law',
+          heading: 'Governing law',
+          body: (
+            <p>
+              These terms are governed by the laws of Pakistan, and the courts of Lahore have
+              jurisdiction over any dispute.
+            </p>
+          ),
+        },
+      ]}
+    />
   )
 }
-

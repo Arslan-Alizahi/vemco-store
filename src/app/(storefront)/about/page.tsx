@@ -1,137 +1,109 @@
-'use client'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { Hammer, Ruler, Trees, Truck } from 'lucide-react'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
+import Prose from '@/components/layout/Prose'
+import Section from '@/components/layout/Section'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 
-import { motion } from 'framer-motion'
-import Card, { CardContent } from '@/components/ui/Card'
-import { ShoppingBag, Users, Award, TrendingUp } from 'lucide-react'
-
-export default function AboutPage() {
-  const features = [
-    {
-      icon: ShoppingBag,
-      title: 'Wide Selection',
-      description: 'Browse through thousands of products across multiple categories',
-    },
-    {
-      icon: Users,
-      title: 'Customer First',
-      description: 'Dedicated support team available 24/7 to assist you',
-    },
-    {
-      icon: Award,
-      title: 'Quality Guaranteed',
-      description: 'All products are verified and come with quality assurance',
-    },
-    {
-      icon: TrendingUp,
-      title: 'Best Prices',
-      description: 'Competitive pricing with regular discounts and offers',
-    },
-  ]
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100 py-12">
-      <div className="container mx-auto px-4">
-        {/* Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary mb-4">About VEMCO</h1>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-3xl mx-auto">
-            Your trusted partner for quality products and exceptional shopping experience
-          </p>
-        </motion.div>
-
-        {/* Story Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mb-16"
-        >
-          <Card className="p-6 md:p-8 lg:p-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-6">Our Story</h2>
-            <div className="space-y-4 text-text-secondary text-base sm:text-lg leading-relaxed">
-              <p>
-                Founded in 2024, VEMCO has quickly become a leading destination for online shopping.
-                We started with a simple mission: to make quality products accessible to everyone, everywhere.
-              </p>
-              <p>
-                Today, we serve thousands of customers worldwide, offering a curated selection of products
-                across electronics, fashion, home goods, and more. Our commitment to quality, affordability,
-                and customer satisfaction remains at the heart of everything we do.
-              </p>
-              <p>
-                We believe shopping should be easy, enjoyable, and trustworthy. That's why we've built a
-                platform that combines cutting-edge technology with personalized service to deliver the
-                best possible experience.
-              </p>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Features Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mb-16"
-        >
-          <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-8 text-center">Why Choose Us</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-              >
-                <Card className="p-6 text-center h-full hover:shadow-xl transition-shadow">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-caramel-100 text-caramel-600 mb-4">
-                    <feature.icon className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-text-primary mb-2">{feature.title}</h3>
-                  <p className="text-text-secondary">{feature.description}</p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Values Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <Card className="p-6 md:p-8 lg:p-12 bg-gradient-to-br from-caramel-50 to-caramel-100">
-            <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-6 text-center">Our Values</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <h3 className="text-lg sm:text-xl font-semibold text-text-primary mb-3">Integrity</h3>
-                <p className="text-text-secondary">
-                  We conduct business with honesty and transparency in all our dealings
-                </p>
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg sm:text-xl font-semibold text-text-primary mb-3">Innovation</h3>
-                <p className="text-text-secondary">
-                  We continuously improve our platform to serve you better
-                </p>
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg sm:text-xl font-semibold text-text-primary mb-3">Excellence</h3>
-                <p className="text-text-secondary">
-                  We strive for excellence in every product and service we offer
-                </p>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-    </div>
-  )
+export const metadata: Metadata = {
+  title: 'About',
+  description:
+    'VEMCO makes solid wood furniture in Lahore, publishes full specifications, and backs the structure for five years.',
 }
 
+const PRINCIPLES = [
+  {
+    icon: Trees,
+    title: 'Solid wood',
+    body: 'No veneer over particleboard where it matters. What you see on the edge is what the piece is made of.',
+  },
+  {
+    icon: Hammer,
+    title: 'Real joinery',
+    body: 'Mortise and tenon, corner blocks, dowels. Staples and glue alone do not keep a frame square for twenty years.',
+  },
+  {
+    icon: Ruler,
+    title: 'Full specifications',
+    body: 'Every listing carries dimensions, materials and a doorway clearance note, before you pay rather than after.',
+  },
+  {
+    icon: Truck,
+    title: 'Delivered properly',
+    body: 'Carried into the room you want it in, unwrapped, and the packaging taken away with us.',
+  },
+]
+
+export default function AboutPage() {
+  return (
+    <>
+      <Container className="pt-section-md">
+        <PageHeader
+          eyebrow="About VEMCO"
+          title="Furniture that outlasts the room you bought it for"
+          lead="We build in Lahore, sell direct, and tell you what a piece is actually made of."
+          align="center"
+        />
+
+        <Prose className="mx-auto">
+          <p>
+            Most furniture sold online in Pakistan is described in adjectives. Premium. Luxury.
+            Imported. None of those words tell you whether a frame is kiln-dried hardwood or
+            stapled particleboard, and that difference decides whether a sofa lasts five years
+            or twenty.
+          </p>
+          <p>
+            So we publish the specification instead. Timber species, joint type, foam density,
+            fabric rub count, every dimension including the one that matters most — whether it
+            fits through your door.
+          </p>
+          <p>
+            We sell direct from our own workshop and a single showroom in Gulberg. No
+            middlemen, which is the only reason the pricing works at this level of
+            construction.
+          </p>
+        </Prose>
+      </Container>
+
+      <Section spacing="md">
+        <Container>
+          <h2 className="mb-8 text-center font-serif text-h2 text-text-primary">
+            What we hold ourselves to
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {PRINCIPLES.map(principle => (
+              <Card key={principle.title} className="h-full">
+                <div className="mb-4 inline-flex rounded-full bg-caramel-100 p-3">
+                  <principle.icon className="h-5 w-5 text-caramel-700" aria-hidden="true" />
+                </div>
+                <h3 className="mb-2 text-h3 text-text-primary">{principle.title}</h3>
+                <p className="text-body text-text-secondary">{principle.body}</p>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      <Section spacing="md" className="bg-caramel-700 text-white">
+        <Container size="prose" className="text-center">
+          <h2 className="mb-4 font-serif text-h1">Come and sit on it</h2>
+          <p className="mb-8 text-body-lg text-caramel-100">
+            Photographs only go so far. The showroom is open seven days a week in Gulberg III,
+            and nobody there works on commission.
+          </p>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="border-white/30 text-white hover:bg-surface/10"
+          >
+            <Link href="/contact">Get directions</Link>
+          </Button>
+        </Container>
+      </Section>
+    </>
+  )
+}

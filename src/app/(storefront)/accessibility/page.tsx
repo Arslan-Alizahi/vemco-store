@@ -1,233 +1,92 @@
-'use client'
+import type { Metadata } from 'next'
+import { Check, CircleDashed } from 'lucide-react'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
+import Prose from '@/components/layout/Prose'
 
-import { motion } from 'framer-motion'
-import Card from '@/components/ui/Card'
-import { Accessibility, Eye, Keyboard, Volume2, MousePointer, Smile } from 'lucide-react'
+export const metadata: Metadata = {
+  title: 'Accessibility',
+  description:
+    'What is accessible on the VEMCO site today, what is not yet, and how to tell us when something blocks you.',
+}
+
+const DONE = [
+  'Every colour pairing meets WCAG AA contrast, checked automatically on each build',
+  'A skip link, page landmarks, and a single main region on every page',
+  'Form fields have real labels, and errors are announced rather than only shown',
+  'Focus is visible on keyboard navigation and stays out of the way of mouse users',
+  'Dialogs trap focus, close on Escape, and return focus where it came from',
+  'Motion respects the reduce-motion setting, and carousels never autoplay under it',
+  'Interactive controls are at least 44 by 44 pixels',
+]
+
+const NOT_YET = [
+  'The product gallery has not been tested end to end with a screen reader',
+  'The point-of-sale screen has no keyboard shortcuts for fast repeated use',
+  'The admin data tables are not yet usable at 320 pixels wide',
+  'Product images use the product name as alt text rather than a written description',
+]
 
 export default function AccessibilityPage() {
   return (
-    <div className="min-h-screen bg-canvas">
+    <Container size="prose" className="py-section-md">
+      <PageHeader
+        eyebrow="Accessibility"
+        title="Accessibility at VEMCO"
+        lead="An honest account of where this site stands, rather than a badge."
+      />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-center mb-6">
-            <Accessibility className="h-12 w-12 text-caramel-600" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary text-center mb-4">Accessibility Statement</h1>
-          <p className="text-text-secondary text-center">Last updated: {new Date().toLocaleDateString()}</p>
-        </motion.div>
+      <Prose>
+        <p>
+          This page used to claim full WCAG 2.1 AA conformance. That was not accurate, so it has
+          been replaced with a list of what is actually done and what is not. We would rather
+          you knew which parts might give you trouble than found out the hard way.
+        </p>
+      </Prose>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="p-8 space-y-8">
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Our Commitment</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                VEMCO is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying the relevant accessibility standards to ensure we provide equal access to all of our users.
-              </p>
-              <p className="text-text-secondary leading-relaxed">
-                We believe that everyone, regardless of ability, should be able to browse, shop, and interact with our website with ease. We strive to meet or exceed the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA standards.
-              </p>
-            </section>
+      <section aria-labelledby="done" className="mt-12">
+        <h2 id="done" className="mb-5 font-serif text-h2 text-text-primary">
+          What works today
+        </h2>
+        <ul className="space-y-3">
+          {DONE.map(item => (
+            <li key={item} className="flex gap-3">
+              <Check className="mt-0.5 h-5 w-5 shrink-0 text-success-600" aria-hidden="true" />
+              <span className="text-body text-text-secondary">{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Accessibility Features</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-start p-4 bg-blue-50 rounded-lg">
-                  <Eye className="h-8 w-8 text-blue-600 mr-3 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-text-primary mb-2">Visual Accessibility</h3>
-                    <ul className="text-sm text-bark-700 space-y-1">
-                      <li>• High contrast color scheme</li>
-                      <li>• Resizable text</li>
-                      <li>• Clear visual focus indicators</li>
-                      <li>• Alternative text for images</li>
-                    </ul>
-                  </div>
-                </div>
+      <section aria-labelledby="not-yet" className="mt-12">
+        <h2 id="not-yet" className="mb-5 font-serif text-h2 text-text-primary">
+          What is not done yet
+        </h2>
+        <ul className="space-y-3">
+          {NOT_YET.map(item => (
+            <li key={item} className="flex gap-3">
+              <CircleDashed
+                className="mt-0.5 h-5 w-5 shrink-0 text-text-tertiary"
+                aria-hidden="true"
+              />
+              <span className="text-body text-text-secondary">{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-                <div className="flex items-start p-4 bg-green-50 rounded-lg">
-                  <Keyboard className="h-8 w-8 text-green-600 mr-3 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-text-primary mb-2">Keyboard Navigation</h3>
-                    <ul className="text-sm text-bark-700 space-y-1">
-                      <li>• Full keyboard accessibility</li>
-                      <li>• Skip navigation links</li>
-                      <li>• Logical tab order</li>
-                      <li>• Keyboard shortcuts</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex items-start p-4 bg-purple-50 rounded-lg">
-                  <Volume2 className="h-8 w-8 text-purple-600 mr-3 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-text-primary mb-2">Screen Reader Support</h3>
-                    <ul className="text-sm text-bark-700 space-y-1">
-                      <li>• ARIA labels and landmarks</li>
-                      <li>• Semantic HTML structure</li>
-                      <li>• Descriptive link text</li>
-                      <li>• Form labels and instructions</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex items-start p-4 bg-amber-50 rounded-lg">
-                  <MousePointer className="h-8 w-8 text-amber-600 mr-3 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-text-primary mb-2">Navigation & Interaction</h3>
-                    <ul className="text-sm text-bark-700 space-y-1">
-                      <li>• Clear page structure</li>
-                      <li>• Consistent navigation</li>
-                      <li>• Large clickable areas</li>
-                      <li>• Clear error messages</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Conformance Status</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We are actively working towards WCAG 2.1 Level AA conformance. Our efforts include:
-              </p>
-              <div className="bg-caramel-50 p-6 rounded-lg space-y-3">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
-                  <p className="text-bark-800"><strong>Perceivable:</strong> Content is available to all senses</p>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
-                  <p className="text-bark-800"><strong>Operable:</strong> Interface forms and controls are usable</p>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
-                  <p className="text-bark-800"><strong>Understandable:</strong> Information is easy to comprehend</p>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
-                  <p className="text-bark-800"><strong>Robust:</strong> Content works with current and future technologies</p>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Assistive Technologies</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                Our website is designed to be compatible with the following assistive technologies:
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-3 bg-canvas rounded">
-                  <p className="text-bark-700"><strong>Screen Readers:</strong> JAWS, NVDA, VoiceOver</p>
-                </div>
-                <div className="p-3 bg-canvas rounded">
-                  <p className="text-bark-700"><strong>Screen Magnifiers:</strong> ZoomText, MAGic</p>
-                </div>
-                <div className="p-3 bg-canvas rounded">
-                  <p className="text-bark-700"><strong>Speech Recognition:</strong> Dragon NaturallySpeaking</p>
-                </div>
-                <div className="p-3 bg-canvas rounded">
-                  <p className="text-bark-700"><strong>Alternative Input:</strong> Switch devices, eye trackers</p>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Known Limitations</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                Despite our best efforts, some pages or sections may have accessibility issues that we're actively working to address:
-              </p>
-              <ul className="list-disc list-inside space-y-2 text-text-secondary ml-4">
-                <li>Some PDF documents may not be fully accessible</li>
-                <li>Third-party embedded content may not meet all accessibility standards</li>
-                <li>Some older product images may lack detailed alternative text</li>
-              </ul>
-              <p className="text-text-secondary leading-relaxed mt-4">
-                We are committed to resolving these issues as quickly as possible.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Ongoing Efforts</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We continuously monitor and improve our website's accessibility through:
-              </p>
-              <div className="space-y-2 text-bark-700">
-                <div className="flex items-start">
-                  <span className="text-caramel-600 mr-2">✓</span>
-                  <p>Regular accessibility audits and testing</p>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-caramel-600 mr-2">✓</span>
-                  <p>Staff training on accessibility best practices</p>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-caramel-600 mr-2">✓</span>
-                  <p>User testing with people who use assistive technologies</p>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-caramel-600 mr-2">✓</span>
-                  <p>Incorporating accessibility into our development process</p>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-caramel-600 mr-2">✓</span>
-                  <p>Responding promptly to user feedback</p>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Feedback & Contact</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We welcome your feedback on the accessibility of VEMCO. If you encounter any accessibility barriers on our website, please let us know:
-              </p>
-              <div className="bg-caramel-50 p-6 rounded-lg space-y-3">
-                <div className="flex items-center">
-                  <Smile className="h-6 w-6 text-caramel-600 mr-3" />
-                  <div>
-                    <p className="text-bark-800"><strong>Email:</strong> accessibility@vemco.pk</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Volume2 className="h-6 w-6 text-caramel-600 mr-3" />
-                  <div>
-                    <p className="text-bark-800"><strong>Phone:</strong> +1 (555) 123-4567</p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <a href="/contact" className="inline-block px-6 py-3 bg-caramel-600 text-white rounded-lg font-semibold hover:bg-caramel-700 transition-colors">
-                    Contact Our Accessibility Team
-                  </a>
-                </div>
-              </div>
-              <p className="text-text-secondary text-sm mt-4">
-                We aim to respond to accessibility feedback within 2 business days and propose a solution within 10 business days.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Technical Specifications</h2>
-              <p className="text-text-secondary leading-relaxed">
-                Accessibility of VEMCO relies on the following technologies:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-text-secondary ml-4 mt-2">
-                <li>HTML5</li>
-                <li>WAI-ARIA</li>
-                <li>CSS3</li>
-                <li>JavaScript (Progressive Enhancement)</li>
-              </ul>
-            </section>
-          </Card>
-        </motion.div>
-      </div>
-    </div>
+      <Prose className="mt-12">
+        <h2>If something blocks you</h2>
+        <p>
+          Email <a href="mailto:access@vemco.pk">access@vemco.pk</a> or call{' '}
+          <a href="tel:+924235000000">+92 42 3500 0000</a>. Tell us the page and what happened —
+          you do not need to know the technical term for it.
+        </p>
+        <p>
+          If the website is in your way, we will take the order over the phone, and you will not
+          lose any offer or price by doing it that way.
+        </p>
+      </Prose>
+    </Container>
   )
 }

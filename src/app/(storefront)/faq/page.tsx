@@ -1,265 +1,146 @@
-'use client'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
+import Button from '@/components/ui/Button'
+import FaqAccordion, { type FaqCategory, type FaqItem } from '@/components/storefront/FaqAccordion'
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Card from '@/components/ui/Card'
-import Input from '@/components/ui/Input'
-import { Search, ChevronDown, HelpCircle, Package, CreditCard, Truck, RotateCcw } from 'lucide-react'
-
-interface FAQItem {
-  question: string
-  answer: string
-  category: string
+export const metadata: Metadata = {
+  title: 'FAQ',
+  description:
+    'Answers on VEMCO delivery, payment, returns, warranty and made-to-order timescales.',
 }
 
+const CATEGORIES: FaqCategory[] = [
+  { id: 'ordering', name: 'Ordering' },
+  { id: 'delivery', name: 'Delivery' },
+  { id: 'payment', name: 'Payment' },
+  { id: 'returns', name: 'Returns' },
+  { id: 'care', name: 'Care' },
+]
+
+const FAQS: FaqItem[] = [
+  {
+    id: 'order-how',
+    category: 'ordering',
+    question: 'How do I place an order?',
+    answer:
+      'Add what you want to the cart and check out. You will get a confirmation email with your order number, and a call from our delivery team once the piece is picked.',
+  },
+  {
+    id: 'order-change',
+    category: 'ordering',
+    question: 'Can I change or cancel my order?',
+    answer:
+      'Yes, any time before dispatch — email support@vemco.pk with your order number. Made-to-order pieces can be cancelled free until production starts, and we tell you in writing before that happens.',
+  },
+  {
+    id: 'order-stock',
+    category: 'ordering',
+    question: 'Is everything on the site in stock?',
+    answer:
+      'Stock levels are live on each listing. If a piece is made to order it says so, along with the 3 to 4 week lead time.',
+  },
+  {
+    id: 'delivery-time',
+    category: 'delivery',
+    question: 'How long does delivery take?',
+    answer:
+      'Three to five working days in Lahore, Karachi and Islamabad. Seven to ten upcountry. Made-to-order pieces ship 3 to 4 weeks after the order is confirmed.',
+  },
+  {
+    id: 'delivery-free',
+    category: 'delivery',
+    question: 'Do you offer free delivery?',
+    answer:
+      'Free city delivery on orders over Rs 100,000 in Lahore, Karachi and Islamabad, applied automatically at checkout. Upcountry is a flat Rs 7,500.',
+  },
+  {
+    id: 'delivery-room',
+    category: 'delivery',
+    question: 'Will you carry it into the room?',
+    answer:
+      'With room-of-choice delivery, yes — carried in, unwrapped, and the packaging taken away with us. Standard city delivery is to your door.',
+  },
+  {
+    id: 'delivery-fit',
+    category: 'delivery',
+    question: 'What if it does not fit through my door?',
+    answer:
+      'Check the dimensions and the doorway clearance note on the listing before ordering, and measure the narrowest point on the route — usually a stairwell turn, not the front door. If it will not go in we take it back, but the delivery charge still applies.',
+  },
+  {
+    id: 'payment-methods',
+    category: 'payment',
+    question: 'What payment methods do you accept?',
+    answer:
+      'Card, bank transfer, and cash on delivery within Lahore. Card payments are handled by our payment processor; we never see or store your card number.',
+  },
+  {
+    id: 'payment-when',
+    category: 'payment',
+    question: 'When am I charged?',
+    answer:
+      'At checkout. For made-to-order pieces we take payment up front, because production starts on your specification.',
+  },
+  {
+    id: 'returns-window',
+    category: 'returns',
+    question: 'What is your returns policy?',
+    answer:
+      'Fourteen days from delivery on stock items, in original condition and packaging. Collection is charged at your area delivery rate and deducted from the refund. Made-to-order pieces cannot be returned unless faulty.',
+  },
+  {
+    id: 'returns-faulty',
+    category: 'returns',
+    question: 'What if something arrives damaged?',
+    answer:
+      'Tell the delivery team before they leave, or send photographs to support@vemco.pk within 48 hours. We collect at our cost and repair, replace or refund. There is no charge to you either way.',
+  },
+  {
+    id: 'returns-warranty',
+    category: 'returns',
+    question: 'What does the warranty cover?',
+    answer:
+      'Five years on structure — frames, joints and load-bearing parts under normal domestic use. It does not cover fabric wear, sun fading, accidental damage or commercial use.',
+  },
+  {
+    id: 'care-wood',
+    category: 'care',
+    question: 'How do I look after oiled timber?',
+    answer:
+      'Wipe with a damp cloth and dry it, then re-oil once or twice a year with a hardwax oil. Scratches buff out at home, which is the advantage of oil over lacquer.',
+  },
+  {
+    id: 'care-movement',
+    category: 'care',
+    question: 'The wood has moved slightly. Is that a fault?',
+    answer:
+      'No. Solid timber expands and contracts with humidity, and Pakistani summers and winters are far apart. Small seasonal movement in a panel is normal and expected.',
+  },
+]
+
 export default function FAQPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeCategory, setActiveCategory] = useState('all')
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
-
-  const categories = [
-    { id: 'all', name: 'All Questions', icon: HelpCircle },
-    { id: 'orders', name: 'Orders', icon: Package },
-    { id: 'payment', name: 'Payment', icon: CreditCard },
-    { id: 'shipping', name: 'Shipping', icon: Truck },
-    { id: 'returns', name: 'Returns', icon: RotateCcw },
-  ]
-
-  const faqs: FAQItem[] = [
-    // Orders
-    {
-      category: 'orders',
-      question: 'How do I place an order?',
-      answer: 'Browse our products, add items to your cart, and proceed to checkout. Fill in your shipping and payment information, then confirm your order. You\'ll receive a confirmation email with your order details.'
-    },
-    {
-      category: 'orders',
-      question: 'Can I modify or cancel my order?',
-      answer: 'You can modify or cancel your order within 1 hour of placing it. After that, your order enters our processing system. Please contact our support team immediately if you need to make changes.'
-    },
-    {
-      category: 'orders',
-      question: 'How do I track my order?',
-      answer: 'Once your order ships, you\'ll receive a tracking number via email. You can use this to track your package on the carrier\'s website. You can also check your order status in your account dashboard.'
-    },
-    {
-      category: 'orders',
-      question: 'Do I need an account to place an order?',
-      answer: 'No, you can checkout as a guest. However, creating an account allows you to track orders, save favorites, and enjoy a faster checkout experience for future purchases.'
-    },
-
-    // Payment
-    {
-      category: 'payment',
-      question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, and Apple Pay. All payments are processed securely through Stripe.'
-    },
-    {
-      category: 'payment',
-      question: 'Is my payment information secure?',
-      answer: 'Yes! We use industry-standard SSL encryption and never store your credit card information. All payments are processed through Stripe, a PCI-compliant payment processor.'
-    },
-    {
-      category: 'payment',
-      question: 'When will I be charged?',
-      answer: 'Your payment method will be charged immediately when you place your order. You\'ll receive a payment confirmation email within minutes.'
-    },
-    {
-      category: 'payment',
-      question: 'Can I use multiple payment methods?',
-      answer: 'Currently, we only support one payment method per order. If you need to split payment, please contact our customer support team.'
-    },
-
-    // Shipping
-    {
-      category: 'shipping',
-      question: 'How long does shipping take?',
-      answer: 'Standard shipping takes 5-7 business days. Express shipping takes 2-3 business days, and overnight shipping delivers the next business day. International shipping times vary by location.'
-    },
-    {
-      category: 'shipping',
-      question: 'Do you offer free shipping?',
-      answer: 'Yes — free city delivery on orders over Rs 100,000 in Lahore, Karachi and Islamabad. No code needed; it is applied automatically at checkout. Upcountry delivery is charged at a flat Rs 7,500.'
-    },
-    {
-      category: 'shipping',
-      question: 'Do you ship internationally?',
-      answer: 'Yes, we ship to over 50 countries worldwide including Canada, UK, Australia, and more. International shipping costs and delivery times vary by destination.'
-    },
-    {
-      category: 'shipping',
-      question: 'What if my package is lost or damaged?',
-      answer: 'If your package is lost or arrives damaged, please contact us immediately with your order number and photos (if damaged). We\'ll work with the carrier to resolve the issue and send a replacement if needed.'
-    },
-
-    // Returns
-    {
-      category: 'returns',
-      question: 'What is your return policy?',
-      answer: 'We offer a 30-day return policy on most items. Products must be unused, in original packaging, and in the same condition you received them. Some items like personalized products are non-returnable.'
-    },
-    {
-      category: 'returns',
-      question: 'How do I return an item?',
-      answer: 'Contact our support team to initiate a return. We\'ll provide you with a return shipping label and instructions. Once we receive and inspect the item, we\'ll process your refund within 5-7 business days.'
-    },
-    {
-      category: 'returns',
-      question: 'Who pays for return shipping?',
-      answer: 'For defective or incorrect items, we cover return shipping costs. For other returns, customers are responsible for return shipping unless the item qualifies for free returns.'
-    },
-    {
-      category: 'returns',
-      question: 'Can I exchange an item?',
-      answer: 'Yes! Contact our support team to arrange an exchange. We\'ll send you a replacement item and provide instructions for returning the original item.'
-    },
-    {
-      category: 'returns',
-      question: 'How long do refunds take?',
-      answer: 'Once we receive and inspect your return, refunds are processed within 5-7 business days. The refund will appear on your original payment method within 3-10 business days, depending on your bank.'
-    },
-  ]
-
-  const filteredFAQs = faqs.filter(faq => {
-    const matchesCategory = activeCategory === 'all' || faq.category === activeCategory
-    const matchesSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
-
   return (
-    <div className="min-h-screen bg-canvas">
+    <Container size="prose" className="py-section-md">
+      <PageHeader
+        eyebrow="Help"
+        title="Questions we get asked"
+        lead="If yours is not here, we would rather you asked than guessed."
+        align="center"
+      />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Frequently Asked Questions</h1>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto">
-            Find answers to common questions about orders, shipping, payments, and returns
-          </p>
-        </motion.div>
+      <FaqAccordion items={FAQS} categories={CATEGORIES} />
 
-        {/* Search */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <Card className="p-4">
-            <Input
-              placeholder="Search for answers..."
-              leftIcon={<Search className="h-5 w-5 text-bark-400" />}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Card>
-        </motion.div>
-
-        {/* Categories */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
-          <div className="flex flex-wrap gap-3">
-            {categories.map((category) => {
-              const Icon = category.icon
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
-                  className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all ${
-                    activeCategory === category.id
-                      ? 'bg-caramel-600 text-white shadow-md'
-                      : 'bg-surface text-bark-700 hover:bg-surface-subtle'
-                  }`}
-                >
-                  <Icon className="h-5 w-5 mr-2" />
-                  {category.name}
-                </button>
-              )
-            })}
-          </div>
-        </motion.div>
-
-        {/* FAQs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-3"
-        >
-          {filteredFAQs.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-text-tertiary text-lg">No questions found matching your search.</p>
-              <p className="text-bark-400 mt-2">Try different keywords or browse all categories.</p>
-            </Card>
-          ) : (
-            filteredFAQs.map((faq, index) => (
-              <Card
-                key={index}
-                className="overflow-hidden hover:shadow-md transition-shadow"
-              >
-                <button
-                  onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                  className="w-full p-6 text-left flex items-center justify-between"
-                >
-                  <span className="font-semibold text-text-primary pr-4">{faq.question}</span>
-                  <ChevronDown
-                    className={`h-5 w-5 text-text-tertiary flex-shrink-0 transition-transform ${
-                      expandedIndex === index ? 'transform rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                <AnimatePresence>
-                  {expandedIndex === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-6 pb-6 pt-0">
-                        <div className="border-t border-border-subtle pt-4">
-                          <p className="text-text-secondary leading-relaxed">{faq.answer}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Card>
-            ))
-          )}
-        </motion.div>
-
-        {/* Still Have Questions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-12"
-        >
-          <Card className="p-6 md:p-8 bg-gradient-to-r from-caramel-50 to-blue-50 text-center">
-            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Still have questions?</h2>
-            <p className="text-text-secondary mb-6">
-              Can't find the answer you're looking for? Our customer support team is here to help.
-            </p>
-            <a href="/contact">
-              <button className="px-6 py-3 bg-caramel-600 text-white rounded-lg font-semibold hover:bg-caramel-700 transition-colors">
-                Contact Support
-              </button>
-            </a>
-          </Card>
-        </motion.div>
+      <div className="mt-12 rounded-md bg-surface p-8 text-center shadow-e0">
+        <h2 className="mb-2 text-h3 text-text-primary">Still not sure?</h2>
+        <p className="mb-6 text-body text-text-secondary">
+          Tell us about the room and we will tell you honestly whether we have the right piece.
+        </p>
+        <Button asChild>
+          <Link href="/contact">Ask us</Link>
+        </Button>
       </div>
-    </div>
+    </Container>
   )
 }

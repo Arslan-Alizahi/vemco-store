@@ -1,56 +1,75 @@
-'use client'
-
-import { motion } from 'framer-motion'
+import type { Metadata } from 'next'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
+import Prose from '@/components/layout/Prose'
 import Card from '@/components/ui/Card'
-import { Newspaper, Download, Mail } from 'lucide-react'
+import Button from '@/components/ui/Button'
+
+export const metadata: Metadata = {
+  title: 'Press',
+  description: 'Company facts, brand assets and press contact for VEMCO.',
+}
+
+const FACTS = [
+  ['Founded', '2024'],
+  ['Head office', 'Lahore, Punjab'],
+  ['Showroom', 'Gulberg III, Lahore'],
+  ['Delivers to', 'All major cities in Pakistan'],
+]
 
 export default function PressPage() {
   return (
-    <div className="min-h-screen bg-canvas">
+    <Container size="prose" className="py-section-md">
+      <PageHeader
+        eyebrow="Press"
+        title="Press and media"
+        lead="Facts, assets and a direct line — no form in between."
+      />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <Newspaper className="h-12 w-12 sm:h-16 sm:w-16 text-caramel-600 mx-auto mb-4" />
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Press & Media</h1>
-          <p className="text-lg sm:text-xl text-text-secondary">Latest news and media resources</p>
-        </motion.div>
+      <Prose>
+        <h2>About VEMCO</h2>
+        <p>
+          VEMCO makes and sells solid wood furniture for the Pakistani market. We publish full
+          dimensions and materials on every listing, deliver into the room of your choice, and
+          back the structure of every piece for five years.
+        </p>
+        <p>
+          We are not a marketplace and we do not dropship. What we sell, we stand behind.
+        </p>
+      </Prose>
 
-        <div className="space-y-6">
-          <Card className="p-6 md:p-8">
-            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">About VEMCO</h2>
-            <p className="text-text-secondary leading-relaxed mb-4">
-              VEMCO is a leading e-commerce platform dedicated to providing exceptional shopping experiences. Founded in 2024, we've grown to serve thousands of customers with a wide range of quality products.
-            </p>
-            <p className="text-text-secondary leading-relaxed">
-              Our mission is to make online shopping accessible, enjoyable, and trustworthy for everyone.
-            </p>
-          </Card>
-
-          <Card className="p-6 md:p-8">
-            <div className="flex items-center mb-4">
-              <Download className="h-6 w-6 text-caramel-600 mr-2" />
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary">Media Kit</h2>
+      <Card className="my-10">
+        <h2 className="mb-5 text-h3 text-text-primary">Company facts</h2>
+        <dl className="divide-y divide-border-subtle">
+          {FACTS.map(([label, value]) => (
+            <div key={label} className="flex justify-between gap-6 py-3">
+              <dt className="text-ui text-text-secondary">{label}</dt>
+              <dd className="text-ui font-medium text-text-primary">{value}</dd>
             </div>
-            <p className="text-text-secondary mb-4">Download our brand assets and media kit</p>
-            <div className="bg-canvas p-4 rounded">
-              <p className="text-text-secondary">Brand logos, product images, and company information coming soon</p>
-            </div>
-          </Card>
+          ))}
+        </dl>
+      </Card>
 
-          <Card className="p-6 md:p-8 bg-caramel-50">
-            <div className="flex items-center mb-4">
-              <Mail className="h-6 w-6 text-caramel-600 mr-2" />
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary">Media Inquiries</h2>
-            </div>
-            <p className="text-text-secondary mb-2">For press and media inquiries, please contact:</p>
-            <p className="text-text-primary font-semibold">press@vemco.pk</p>
-          </Card>
-        </div>
+      <Prose>
+        <h2>Brand assets</h2>
+        <p>
+          We do not host a downloadable press kit. Tell us what you need — logo files,
+          photography, a quote — and we will send it directly, which is faster than maintaining
+          a zip nobody keeps current.
+        </p>
+
+        <h2>Press contact</h2>
+        <p>
+          <a href="mailto:press@vemco.pk">press@vemco.pk</a> — we reply within one working day.
+          For anything on deadline, say so in the subject line.
+        </p>
+      </Prose>
+
+      <div className="mt-10">
+        <Button asChild>
+          <a href="mailto:press@vemco.pk">Email press@vemco.pk</a>
+        </Button>
       </div>
-    </div>
+    </Container>
   )
 }

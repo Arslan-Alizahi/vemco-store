@@ -1,134 +1,116 @@
-'use client'
+import type { Metadata } from 'next'
+import LegalPage from '@/components/layout/LegalPage'
 
-import { motion } from 'framer-motion'
-import Card from '@/components/ui/Card'
+export const metadata: Metadata = {
+  title: 'Returns and refunds',
+  description:
+    'Fourteen days to change your mind on stock furniture, and how warranty claims work.',
+}
 
 export default function ReturnsPage() {
   return (
-    <div className="min-h-screen bg-canvas">
-      <div className="py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-8">Return Policy</h1>
-          
-          <Card className="p-6 md:p-8 space-y-6">
-            <div>
-              <p className="text-text-secondary mb-6">
-                Last updated: {new Date().toLocaleDateString()}
+    <LegalPage
+      title="Returns and refunds"
+      lead="Furniture is expensive and hard to move. Here is exactly where you stand before you buy."
+      updated="12 June 2026"
+      sections={[
+        {
+          id: 'changing-your-mind',
+          heading: 'Changing your mind',
+          body: (
+            <>
+              <p>
+                You have <strong>14 days from delivery</strong> to return a stock item for a
+                refund. It has to come back in the condition it arrived in — unmarked, and in
+                its original packaging, which is why we ask you to keep the packaging until you
+                are sure.
               </p>
-              <p className="text-bark-700 leading-relaxed">
-                We want you to be completely satisfied with your purchase. If you're not happy with your order,
-                we're here to help with returns and exchanges.
+              <p>
+                Collection is charged at the delivery rate for your area, and that fee is
+                deducted from the refund.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">1. Return Window</h2>
-              <p className="text-text-secondary leading-relaxed">
-                You have 30 days from the date of delivery to return most items for a full refund or exchange.
-                Items must be in their original condition with all tags and packaging intact.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">2. Eligible Items</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                Most items can be returned, including:
-              </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 ml-4">
-                <li>Clothing and accessories (with tags attached)</li>
-                <li>Electronics (in original packaging, unopened)</li>
-                <li>Home goods and furniture (unassembled and unused)</li>
-                <li>Books and media (in resalable condition)</li>
+            </>
+          ),
+        },
+        {
+          id: 'what-cannot-be-returned',
+          heading: 'What cannot be returned',
+          body: (
+            <>
+              <ul>
+                <li>
+                  <strong>Made-to-order pieces.</strong> Anything built to your fabric, size or
+                  finish is yours once production starts. We confirm that in writing before we
+                  begin, and you can cancel free of charge until then.
+                </li>
+                <li>Items marked clearance or ex-display at the point of sale</li>
+                <li>Anything assembled or modified after delivery</li>
               </ul>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">3. Non-Returnable Items</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                The following items cannot be returned:
+              <p>None of this affects your rights if an item turns out to be faulty.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faulty-or-damaged',
+          heading: 'Faulty or damaged on arrival',
+          body: (
+            <>
+              <p>
+                Check your delivery before the team leaves. If something is damaged, tell them
+                and they will note it there and then.
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 ml-4">
-                <li>Personalized or custom-made items</li>
-                <li>Perishable goods</li>
-                <li>Intimate apparel and swimwear</li>
-                <li>Health and personal care items (opened)</li>
-                <li>Gift cards</li>
-                <li>Downloadable software or digital products</li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">4. How to Return an Item</h2>
-              <p className="text-text-secondary leading-relaxed mb-3">
-                To initiate a return:
+              <p>
+                If you find a problem later, send photographs to{' '}
+                <a href="mailto:support@vemco.pk">support@vemco.pk</a> within 48 hours. We
+                collect at our cost and either repair, replace or refund. There is no charge to
+                you either way.
               </p>
-              <ol className="list-decimal list-inside text-text-secondary space-y-2 ml-4">
-                <li>Contact our customer service team at returns@vemco.pk</li>
-                <li>Provide your order number and reason for return</li>
-                <li>Receive a return authorization number and shipping label</li>
-                <li>Pack the item securely in its original packaging</li>
-                <li>Attach the return label and ship the package</li>
-              </ol>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">5. Return Shipping</h2>
-              <p className="text-text-secondary leading-relaxed">
-                Return shipping costs are the responsibility of the customer unless the item is defective or we made
-                an error in your order. We recommend using a trackable shipping service for returns.
+            </>
+          ),
+        },
+        {
+          id: 'warranty',
+          heading: 'Warranty',
+          body: (
+            <>
+              <p>
+                Every piece carries a <strong>five-year structural warranty</strong> — frames,
+                joints and load-bearing components under normal domestic use.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">6. Refund Processing</h2>
-              <p className="text-text-secondary leading-relaxed">
-                Once we receive your return, we will inspect the item and process your refund within 5-7 business days.
-                Refunds will be issued to the original payment method. Please allow additional time for your bank to
-                process the refund.
+              <p>
+                Not covered: fabric wear, fading from direct sunlight, accidental damage, or
+                commercial use.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">7. Exchanges</h2>
-              <p className="text-text-secondary leading-relaxed">
-                If you need to exchange an item for a different size, color, or product, please contact our customer
-                service team. We'll help you process the exchange and arrange for the new item to be shipped.
+              <p>
+                Timber moves with humidity. Small seasonal changes in a solid wood panel are
+                normal and are not a fault.
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">8. Damaged or Defective Items</h2>
-              <p className="text-text-secondary leading-relaxed">
-                If you receive a damaged or defective item, please contact us immediately with photos of the damage.
-                We will arrange for a replacement or full refund, including return shipping costs.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">9. Late or Missing Refunds</h2>
-              <p className="text-text-secondary leading-relaxed">
-                If you haven't received your refund within the expected timeframe, please check with your bank first.
-                If you still haven't received it, contact us at support@vemco.pk
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-3">10. Questions?</h2>
-              <p className="text-text-secondary leading-relaxed">
-                If you have any questions about our return policy, please don't hesitate to contact us at
-                returns@vemco.pk or call our customer service team.
-              </p>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-      </div>
-    </div>
+            </>
+          ),
+        },
+        {
+          id: 'how-refunds-work',
+          heading: 'How refunds work',
+          body: (
+            <p>
+              Refunds go back to the original payment method within 7 to 10 working days of the
+              item reaching us and passing inspection. Bank transfers can take a few days longer
+              to appear.
+            </p>
+          ),
+        },
+        {
+          id: 'starting-a-return',
+          heading: 'Starting a return',
+          body: (
+            <p>
+              Email <a href="mailto:support@vemco.pk">support@vemco.pk</a> with your order
+              number and what you would like to do. We reply within one working day and arrange
+              collection from there.
+            </p>
+          ),
+        },
+      ]}
+    />
   )
 }
-
