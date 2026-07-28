@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { CheckCircle, Package, Truck, Clock } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import { formatCurrency } from '@/lib/utils'
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams()
@@ -81,7 +82,9 @@ function OrderSuccessContent() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Total Amount</p>
-                <p className="text-lg font-semibold text-gray-900">${order.total?.toFixed(2)}</p>
+                <p className="text-lg font-semibold tabular-nums text-gray-900">
+                  {formatCurrency(order.total ?? 0)}
+                </p>
               </div>
             </div>
           </div>

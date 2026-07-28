@@ -33,7 +33,7 @@ export default function AccessibilityPage() {
             <section>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Our Commitment</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                ModernStore is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying the relevant accessibility standards to ensure we provide equal access to all of our users.
+                VEMCO is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying the relevant accessibility standards to ensure we provide equal access to all of our users.
               </p>
               <p className="text-gray-600 leading-relaxed">
                 We believe that everyone, regardless of ability, should be able to browse, shop, and interact with our website with ease. We strive to meet or exceed the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA standards.
@@ -190,13 +190,13 @@ export default function AccessibilityPage() {
             <section>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Feedback & Contact</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                We welcome your feedback on the accessibility of ModernStore. If you encounter any accessibility barriers on our website, please let us know:
+                We welcome your feedback on the accessibility of VEMCO. If you encounter any accessibility barriers on our website, please let us know:
               </p>
               <div className="bg-primary-50 p-6 rounded-lg space-y-3">
                 <div className="flex items-center">
                   <Smile className="h-6 w-6 text-primary-600 mr-3" />
                   <div>
-                    <p className="text-gray-800"><strong>Email:</strong> accessibility@modernstore.com</p>
+                    <p className="text-gray-800"><strong>Email:</strong> accessibility@vemco.pk</p>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -219,7 +219,7 @@ export default function AccessibilityPage() {
             <section>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Technical Specifications</h2>
               <p className="text-gray-600 leading-relaxed">
-                Accessibility of ModernStore relies on the following technologies:
+                Accessibility of VEMCO relies on the following technologies:
               </p>
               <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4 mt-2">
                 <li>HTML5</li>

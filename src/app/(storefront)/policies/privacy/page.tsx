@@ -24,7 +24,7 @@ export default function PrivacyPage() {
                 Last updated: {new Date().toLocaleDateString()}
               </p>
               <p className="text-gray-600 leading-relaxed">
-                At ModernStore, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose,
+                At VEMCO, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose,
                 and safeguard your information when you visit our website.
               </p>
             </div>
@@ -131,7 +131,7 @@ export default function PrivacyPage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">10. Contact Us</h2>
               <p className="text-gray-600 leading-relaxed">
-                If you have any questions about this Privacy Policy, please contact us at privacy@modernstore.com
+                If you have any questions about this Privacy Policy, please contact us at privacy@vemco.pk
               </p>
             </div>
           </Card>

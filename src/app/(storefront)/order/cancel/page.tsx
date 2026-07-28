@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { XCircle, AlertTriangle, ShoppingCart, Home } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import { formatCurrency } from '@/lib/utils'
 
 function OrderCancelContent() {
   const searchParams = useSearchParams()
@@ -81,7 +82,9 @@ function OrderCancelContent() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Total Amount:</span>
-                  <span className="text-sm font-medium text-gray-900">${order.total?.toFixed(2)}</span>
+                  <span className="text-sm font-medium tabular-nums text-gray-900">
+                    {formatCurrency(order.total ?? 0)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Payment Status:</span>
@@ -135,8 +138,8 @@ function OrderCancelContent() {
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             Need help? Contact our support team at{' '}
-            <a href="mailto:support@modernstore.com" className="text-primary-600 hover:text-primary-700 font-medium">
-              support@modernstore.com
+            <a href="mailto:support@vemco.pk" className="text-primary-600 hover:text-primary-700 font-medium">
+              support@vemco.pk
             </a>
           </p>
         </div>

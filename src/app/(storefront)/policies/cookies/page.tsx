@@ -36,7 +36,7 @@ export default function CookiePolicyPage() {
                 Cookies are small text files that are placed on your computer or mobile device when you visit a website. They are widely used to make websites work more efficiently and provide information to the site owners.
               </p>
               <p className="text-gray-600 leading-relaxed">
-                At ModernStore, we use cookies to enhance your shopping experience, remember your preferences, and provide you with personalized content and advertisements.
+                At VEMCO, we use cookies to enhance your shopping experience, remember your preferences, and provide you with personalized content and advertisements.
               </p>
             </section>
 
@@ -150,7 +150,7 @@ export default function CookiePolicyPage() {
                 If you have any questions about our use of cookies, please contact us:
               </p>
               <div className="bg-primary-50 p-4 rounded-lg">
-                <p className="text-gray-700"><strong>Email:</strong> privacy@modernstore.com</p>
+                <p className="text-gray-700"><strong>Email:</strong> privacy@vemco.pk</p>
                 <p className="text-gray-700"><strong>Address:</strong> 123 Commerce Street, Suite 100, New York, NY 10001</p>
                 <p className="text-gray-700 mt-2">
                   <a href="/contact" className="text-primary-600 hover:text-primary-700 underline">

@@ -1,8 +1,32 @@
 // Formatting utilities
-export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
-  const symbol = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
-  return `${symbol}${amount.toFixed(2)}`
+
+/**
+ * Formats an amount as Pakistani rupees.
+ *
+ * Furniture is priced in whole rupees -- nobody quotes Rs 168,000.00 -- so
+ * fractional digits are dropped unless the amount actually has paisa, which
+ * only happens on a tax line. Grouping follows en-PK, and the previous
+ * implementation had neither: it concatenated a symbol with toFixed(2) and
+ * rendered "$168000.00".
+ */
+export const formatCurrency = (amount: number): string => {
+  const value = Number.isFinite(amount) ? amount : 0
+  const hasFraction = Math.round(value * 100) % 100 !== 0
+
+  return new Intl.NumberFormat('en-PK', {
+    style: 'currency',
+    currency: 'PKR',
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    maximumFractionDigits: hasFraction ? 2 : 0,
+  }).format(value)
 }
+
+/** Digits only, for tight table columns where the unit is already in the header. */
+export const formatAmount = (amount: number): string =>
+  new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 }).format(
+    Number.isFinite(amount) ? amount : 0
+  )
 
 export const formatDate = (date: string | Date): string => {
   const d = new Date(date)

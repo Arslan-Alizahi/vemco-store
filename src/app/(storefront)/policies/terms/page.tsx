@@ -24,7 +24,7 @@ export default function TermsPage() {
                 Last updated: {new Date().toLocaleDateString()}
               </p>
               <p className="text-gray-600 leading-relaxed">
-                Welcome to ModernStore. By accessing and using our website, you agree to be bound by these Terms of Service.
+                Welcome to VEMCO. By accessing and using our website, you agree to be bound by these Terms of Service.
                 Please read them carefully before making any purchase.
               </p>
             </div>
@@ -32,7 +32,7 @@ export default function TermsPage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h2>
               <p className="text-gray-600 leading-relaxed">
-                By accessing or using ModernStore's services, you agree to comply with and be bound by these Terms of Service.
+                By accessing or using VEMCO's services, you agree to comply with and be bound by these Terms of Service.
                 If you do not agree to these terms, please do not use our services.
               </p>
             </div>
@@ -93,14 +93,14 @@ export default function TermsPage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">8. Intellectual Property</h2>
               <p className="text-gray-600 leading-relaxed">
                 All content on this website, including text, graphics, logos, images, and software, is the property of
-                ModernStore and is protected by copyright and other intellectual property laws.
+                VEMCO and is protected by copyright and other intellectual property laws.
               </p>
             </div>
 
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">9. Limitation of Liability</h2>
               <p className="text-gray-600 leading-relaxed">
-                To the fullest extent permitted by law, ModernStore shall not be liable for any indirect, incidental,
+                To the fullest extent permitted by law, VEMCO shall not be liable for any indirect, incidental,
                 special, consequential, or punitive damages arising out of or relating to your use of the service.
               </p>
             </div>
@@ -116,7 +116,7 @@ export default function TermsPage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">11. Contact Information</h2>
               <p className="text-gray-600 leading-relaxed">
-                If you have any questions about these Terms of Service, please contact us at support@modernstore.com
+                If you have any questions about these Terms of Service, please contact us at support@vemco.pk
               </p>
             </div>
           </Card>

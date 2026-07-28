@@ -51,7 +51,7 @@ export default function Navbar() {
             >
               <Package className="h-6 w-6 text-caramel-700" aria-hidden="true" />
               <span className="font-serif text-h3 tracking-[-0.015em] text-text-primary">
-                ModernStore
+                VEMCO
               </span>
             </Link>
           </div>

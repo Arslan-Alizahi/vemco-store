@@ -3,8 +3,8 @@ import { bark, caramel } from '@/design/tokens'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ModernStore',
-    short_name: 'ModernStore',
+    name: 'VEMCO',
+    short_name: 'VEMCO',
     description: 'Furniture for considered spaces.',
     start_url: '/',
     display: 'standalone',

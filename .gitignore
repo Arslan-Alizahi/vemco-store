@@ -23,6 +23,11 @@ next-env.d.ts
 # user uploads
 /public/uploads/
 
+# Source photography for the demo catalogue -- 48 MB of full-resolution
+# originals. The processed 4:5 crops in public/seed/products/ are what the app
+# ships; re-running npm run seed:images needs this folder restored locally.
+/Demo Pics/
+
 # environment / secrets
 .env
 .env.local

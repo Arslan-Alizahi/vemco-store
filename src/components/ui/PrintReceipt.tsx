@@ -48,7 +48,7 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
       <div className="print-receipt-content bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto print:shadow-none print:max-w-full print:max-h-full print:overflow-visible print:rounded-none">
         {/* Print-only header */}
         <div className="hidden print:block text-center mb-6">
-          <h1 className="text-3xl font-bold">ModernStore</h1>
+          <h1 className="text-3xl font-bold">VEMCO</h1>
           <p className="text-sm text-gray-600">Your trusted shopping partner</p>
           <p className="text-xs text-gray-500 mt-1">
             123 Main Street, City, State 12345 | Phone: (555) 123-4567
@@ -155,7 +155,7 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
           {/* Footer */}
           <div className="text-center text-sm text-gray-600 pt-4 border-t">
             <p className="font-semibold mb-1">Thank you for your purchase!</p>
-            <p className="text-xs">For any queries, please contact us at support@modernstore.com</p>
+            <p className="text-xs">For any queries, please contact us at support@vemco.pk</p>
           </div>
         </div>
 

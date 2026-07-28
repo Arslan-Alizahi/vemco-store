@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Modal from '@/components/ui/Modal'
-import { StatusBadge, StockBadge } from '@/components/ui/Badge'
+import Badge, { StatusBadge, StockBadge } from '@/components/ui/Badge'
 import { useToast } from '@/components/ui/Toast'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { AdminAuth } from '@/components/ui/AdminAuth'
@@ -37,6 +37,8 @@ export default function AdminPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [editingSocial, setEditingSocial] = useState<SocialMediaLink | null>(null)
   const [editingNav, setEditingNav] = useState<any | null>(null)
+  const [demoData, setDemoData] = useState<{ present: boolean; productCount: number } | null>(null)
+  const [demoBusy, setDemoBusy] = useState(false)
   const { addToast } = useToast()
 
   // Form states
@@ -129,6 +131,51 @@ export default function AdminPage() {
         if (data.success) setNavItems(data.data || [])
       })
       .catch(error => console.error('Error fetching nav items:', error))
+
+    // Demo catalogue status
+    fetch('/api/admin/demo-data')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setDemoData(data.data)
+      })
+      .catch(error => console.error('Error fetching demo data status:', error))
+  }
+
+  const handleSeedDemo = async () => {
+    setDemoBusy(true)
+    try {
+      const res = await fetch('/api/admin/demo-data', { method: 'POST' })
+      const data = await res.json()
+      addToast(data.message || 'Demo data loaded', data.success ? 'success' : 'error')
+      fetchData()
+    } catch (error) {
+      console.error('Error seeding demo data:', error)
+      addToast('Failed to load demo data', 'error')
+    } finally {
+      setDemoBusy(false)
+    }
+  }
+
+  const handleClearDemo = async () => {
+    if (
+      !confirm(
+        'Remove the demo catalogue?\n\nThis deletes only the products, categories, navigation and social links that were seeded. Anything you added yourself is kept.'
+      )
+    )
+      return
+
+    setDemoBusy(true)
+    try {
+      const res = await fetch('/api/admin/demo-data', { method: 'DELETE' })
+      const data = await res.json()
+      addToast(data.message || 'Demo data cleared', data.success ? 'success' : 'error')
+      fetchData()
+    } catch (error) {
+      console.error('Error clearing demo data:', error)
+      addToast('Failed to clear demo data', 'error')
+    } finally {
+      setDemoBusy(false)
+    }
   }
 
   const saveProduct = async () => {
@@ -549,6 +596,57 @@ export default function AdminPage() {
                     Open Revenue Dashboard
                   </Button>
                 </Link>
+              </CardContent>
+            </Card>
+
+            {/* Demo catalogue */}
+            <Card className="mt-6">
+              <CardContent className="p-0">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="mb-1 text-h3 text-text-primary">Demo catalogue</h3>
+                    <p className="max-w-prose text-ui text-text-secondary">
+                      {demoData === null
+                        ? 'Checking…'
+                        : demoData.present
+                          ? 'Sample furniture products, categories, navigation and social links are loaded, with illustrations that ship in the repo. Clearing removes only these — anything you added yourself is kept.'
+                          : 'No demo data is loaded. Seeding adds a sample furniture catalogue so the storefront has something to show.'}
+                    </p>
+                  </div>
+                  <Badge variant={demoData?.present ? 'default' : 'secondary'}>
+                    {demoData === null ? '—' : demoData.present ? 'Loaded' : 'Not loaded'}
+                  </Badge>
+                </div>
+
+                <div className="mb-4 flex flex-wrap gap-x-8 gap-y-2">
+                  <div>
+                    <p className="text-caption text-text-tertiary">Products in store</p>
+                    <p className="text-h3 tabular-nums text-text-primary">
+                      {demoData?.productCount ?? '—'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    onClick={handleSeedDemo}
+                    isLoading={demoBusy}
+                    disabled={demoBusy || demoData?.present}
+                    leftIcon={<Package className="h-4 w-4" />}
+                  >
+                    Load demo data
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={handleClearDemo}
+                    isLoading={demoBusy}
+                    disabled={demoBusy || !demoData?.present}
+                    leftIcon={<Trash2 className="h-4 w-4" />}
+                  >
+                    Clear demo data
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

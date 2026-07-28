@@ -91,7 +91,7 @@ export default function Footer() {
                 <ShoppingBag className="h-6 w-6 text-white" />
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-                ModernStore
+                VEMCO
               </span>
             </Link>
             <p className="text-gray-400 mb-6 leading-relaxed">
@@ -102,11 +102,11 @@ export default function Footer() {
             {/* Contact Info */}
             <div className="space-y-3">
               <a
-                href="mailto:support@modernstore.com"
+                href="mailto:support@vemco.pk"
                 className="flex items-center text-gray-400 hover:text-primary-400 transition-colors group"
               >
                 <Mail className="h-4 w-4 mr-3 text-primary-500 group-hover:scale-110 transition-transform" />
-                <span className="text-sm">support@modernstore.com</span>
+                <span className="text-sm">support@vemco.pk</span>
               </a>
               <a
                 href="tel:+1234567890"
@@ -181,7 +181,7 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             {/* Copyright */}
             <div className="flex items-center text-gray-400 text-sm">
-              <span>© {new Date().getFullYear()} ModernStore. Made with</span>
+              <span>© {new Date().getFullYear()} VEMCO. Made with</span>
               <Heart className="h-4 w-4 mx-1 text-red-500 fill-current animate-pulse" />
               <span>All rights reserved.</span>
             </div>

@@ -20,7 +20,7 @@ export default function CareersPage() {
         >
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Join Our Team</h1>
           <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-            Build your career with ModernStore and help us create amazing shopping experiences
+            Build your career with VEMCO and help us create amazing shopping experiences
           </p>
         </motion.div>
 

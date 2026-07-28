@@ -24,9 +24,9 @@ export default function PressPage() {
 
         <div className="space-y-6">
           <Card className="p-6 md:p-8">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">About ModernStore</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">About VEMCO</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              ModernStore is a leading e-commerce platform dedicated to providing exceptional shopping experiences. Founded in 2024, we've grown to serve thousands of customers with a wide range of quality products.
+              VEMCO is a leading e-commerce platform dedicated to providing exceptional shopping experiences. Founded in 2024, we've grown to serve thousands of customers with a wide range of quality products.
             </p>
             <p className="text-gray-600 leading-relaxed">
               Our mission is to make online shopping accessible, enjoyable, and trustworthy for everyone.
@@ -50,7 +50,7 @@ export default function PressPage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Media Inquiries</h2>
             </div>
             <p className="text-gray-600 mb-2">For press and media inquiries, please contact:</p>
-            <p className="text-gray-900 font-semibold">press@modernstore.com</p>
+            <p className="text-gray-900 font-semibold">press@vemco.pk</p>
           </Card>
         </div>
       </div>

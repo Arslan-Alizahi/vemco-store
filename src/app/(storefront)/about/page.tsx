@@ -38,7 +38,7 @@ export default function AboutPage() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">About ModernStore</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">About VEMCO</h1>
           <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
             Your trusted partner for quality products and exceptional shopping experience
           </p>
@@ -55,7 +55,7 @@ export default function AboutPage() {
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
             <div className="space-y-4 text-gray-600 text-base sm:text-lg leading-relaxed">
               <p>
-                Founded in 2024, ModernStore has quickly become a leading destination for online shopping.
+                Founded in 2024, VEMCO has quickly become a leading destination for online shopping.
                 We started with a simple mission: to make quality products accessible to everyone, everywhere.
               </p>
               <p>

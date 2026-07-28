@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { existsSync, mkdirSync } from 'fs'
 import { dirname } from 'path'
 import { createTables, createTriggers } from './schema'
-import { seedDatabase } from './seed'
+import { createDemoSeedTable, isDatabaseEmpty, seedDemoData } from './seed'
 
 const DATABASE_PATH = process.env.DATABASE_PATH || './data/ecommerce.db'
 
@@ -41,9 +41,6 @@ export const getDb = (): Database.Database => {
       // Create triggers
       db.exec(createTriggers)
       console.log('Triggers created successfully')
-
-      // Seed initial data
-      // seedDatabase(db) // Commented out - start with empty database
     } else {
       // Check if tables exist
       const tableCheck = db.prepare(`
@@ -55,7 +52,6 @@ export const getDb = (): Database.Database => {
         console.log('Tables not found, creating...')
         db.exec(createTables)
         db.exec(createTriggers)
-        // seedDatabase(db) // Commented out - start with empty database
       }
 
       // Check if revenue_transactions table exists (migration)
@@ -72,6 +68,18 @@ export const getDb = (): Database.Database => {
         } catch (error) {
           console.error('Failed to run revenue migration:', error)
         }
+      }
+    }
+
+    // Demo catalogue. Only fires when the store has never been populated, so
+    // an operator who clears it does not get it back on the next restart.
+    db.exec(createDemoSeedTable)
+    if (isDatabaseEmpty(db)) {
+      try {
+        const { seeded, products } = seedDemoData(db)
+        if (seeded) console.log(`Seeded demo catalogue: ${products} products`)
+      } catch (error) {
+        console.error('Failed to seed demo data:', error)
       }
     }
   }

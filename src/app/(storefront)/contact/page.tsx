@@ -87,7 +87,7 @@ export default function ContactPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-gray-900">Email</h3>
-                    <p className="mt-1 text-gray-600">support@modernstore.com</p>
+                    <p className="mt-1 text-gray-600">support@vemco.pk</p>
                     <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
                   </div>
                 </div>

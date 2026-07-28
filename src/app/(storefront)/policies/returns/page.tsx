@@ -71,7 +71,7 @@ export default function ReturnsPage() {
                 To initiate a return:
               </p>
               <ol className="list-decimal list-inside text-gray-600 space-y-2 ml-4">
-                <li>Contact our customer service team at returns@modernstore.com</li>
+                <li>Contact our customer service team at returns@vemco.pk</li>
                 <li>Provide your order number and reason for return</li>
                 <li>Receive a return authorization number and shipping label</li>
                 <li>Pack the item securely in its original packaging</li>
@@ -116,7 +116,7 @@ export default function ReturnsPage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">9. Late or Missing Refunds</h2>
               <p className="text-gray-600 leading-relaxed">
                 If you haven't received your refund within the expected timeframe, please check with your bank first.
-                If you still haven't received it, contact us at support@modernstore.com
+                If you still haven't received it, contact us at support@vemco.pk
               </p>
             </div>
 
@@ -124,7 +124,7 @@ export default function ReturnsPage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">10. Questions?</h2>
               <p className="text-gray-600 leading-relaxed">
                 If you have any questions about our return policy, please don't hesitate to contact us at
-                returns@modernstore.com or call our customer service team.
+                returns@vemco.pk or call our customer service team.
               </p>
             </div>
           </Card>
