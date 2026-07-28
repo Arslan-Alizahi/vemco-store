@@ -1,401 +1,365 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ShoppingCart, Heart, Share2, ChevronRight, Minus, Plus, Check, X } from 'lucide-react'
+import Image from 'next/image'
+import { useParams, useRouter } from 'next/navigation'
+import { Check, ChevronRight, Heart, Minus, Plus, Share2, ShoppingCart, Truck } from 'lucide-react'
+import Container from '@/components/layout/Container'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
-import { formatCurrency } from '@/lib/utils'
+import Money from '@/components/ui/Money'
+import IconButton from '@/components/ui/IconButton'
+import Spinner from '@/components/ui/Spinner'
+import ErrorState from '@/components/ui/ErrorState'
+import ProductCard from '@/components/storefront/ProductCard'
 import { useCart } from '@/hooks/useCart'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useToast } from '@/components/ui/Toast'
+import { cn } from '@/lib/cn'
+import { formatAmount } from '@/lib/utils'
 
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { addToCart } = useCart()
-  const { toggleFavorite, isFavorite: checkIsFavorite } = useFavorites()
+  const { toggleFavorite, isFavorite } = useFavorites()
   const { addToast } = useToast()
+
   const [product, setProduct] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(`/api/products/slug/${params.slug}`)
-        if (!response.ok) {
-          if (response.status === 404) {
-            router.push('/products')
-            return
-          }
-          throw new Error('Failed to fetch product')
+    if (!params.slug) return
+
+    fetch(`/api/products/slug/${params.slug}`)
+      .then(async response => {
+        if (response.status === 404) {
+          router.replace('/products')
+          return null
         }
-        const data = await response.json()
+        if (!response.ok) throw new Error('Request failed')
+        return response.json()
+      })
+      .then(data => {
+        if (!data) return
         setProduct(data)
-      } catch (error) {
-        console.error('Error:', error)
-        addToast('Failed to load product', 'error')
-      } finally {
-        setLoading(false)
-      }
-    }
+        setStatus('ready')
+      })
+      .catch(() => setStatus('error'))
+  }, [params.slug, router])
 
-    if (params.slug) {
-      fetchProduct()
-    }
-  }, [params.slug, router, addToast])
-
-  const handleAddToCart = () => {
-    if (!product) return
-
-    addToCart({
-      product_id: product.id,
-      product_name: product.name,
-      product_slug: product.slug,
-      product_image: product.images?.[0]?.image_url || '/placeholder.png',
-      product_sku: product.sku,
-      quantity: quantity,
-      unit_price: product.price,
-      stock_quantity: product.stock_quantity,
-    })
-
-    addToast(`${product.name} added to cart!`, 'success')
+  if (status === 'loading') {
+    return (
+      <Container className="flex min-h-[60vh] items-center justify-center">
+        <Spinner size="lg" />
+      </Container>
+    )
   }
 
-  const handleToggleFavorite = () => {
-    if (!product) return
+  if (status === 'error' || !product) {
+    return (
+      <Container size="prose" className="py-section-md">
+        <ErrorState
+          title="We could not load this piece"
+          onRetry={() => window.location.reload()}
+        />
+      </Container>
+    )
+  }
 
-    const isNowFavorite = toggleFavorite({
+  const inStock = product.stock_quantity > 0
+  const lowStock = inStock && product.stock_quantity <= (product.low_stock_threshold ?? 5)
+  const onSale = product.compare_at_price && product.compare_at_price > product.price
+  const favourite = isFavorite(product.id)
+
+  const cartPayload = {
+    product_id: product.id,
+    product_name: product.name,
+    product_slug: product.slug,
+    product_image: product.images?.[0]?.image_url,
+    product_sku: product.sku,
+    quantity,
+    unit_price: product.price,
+    stock_quantity: product.stock_quantity,
+  }
+
+  const handleAddToCart = () => {
+    addToCart(cartPayload)
+    addToast(`${product.name} added to cart`, 'success')
+  }
+
+  const handleToggleFavourite = () => {
+    const nowFavourite = toggleFavorite({
       product_id: product.id,
       product_name: product.name,
       product_slug: product.slug,
-      product_image: product.images?.[0]?.image_url || '/placeholder.png',
+      product_image: product.images?.[0]?.image_url,
       product_sku: product.sku,
       price: product.price,
       compare_at_price: product.compare_at_price,
       stock_quantity: product.stock_quantity,
     })
-
-    if (isNowFavorite) {
-      addToast(`${product.name} added to favorites!`, 'success')
-    } else {
-      addToast(`${product.name} removed from favorites`, 'info')
-    }
+    addToast(nowFavourite ? 'Saved to favourites' : 'Removed from favourites', 'info')
   }
 
   const handleShare = async () => {
-    const shareData = {
-      title: product.name,
-      text: product.description,
-      url: window.location.href,
-    }
-
-    // Check if Web Share API is supported
+    const shareData = { title: product.name, text: product.description, url: window.location.href }
     if (navigator.share) {
       try {
         await navigator.share(shareData)
-        addToast('Product shared successfully!', 'success')
       } catch (error) {
-        // User cancelled or error occurred
-        if (error instanceof Error && error.name !== 'AbortError') {
-          console.error('Error sharing:', error)
-        }
+        if (error instanceof Error && error.name !== 'AbortError') console.error(error)
       }
-    } else {
-      // Fallback: Copy link to clipboard
-      try {
-        await navigator.clipboard.writeText(window.location.href)
-        addToast('Link copied to clipboard!', 'success')
-      } catch (error) {
-        console.error('Error copying to clipboard:', error)
-        addToast('Failed to copy link', 'error')
-      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      addToast('Link copied', 'success')
+    } catch {
+      addToast('Could not copy the link', 'error')
     }
   }
-
-  const incrementQuantity = () => {
-    if (quantity < product.stock_quantity) {
-      setQuantity(quantity + 1)
-    }
-  }
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
-      </div>
-    )
-  }
-
-  if (!product) {
-    return null
-  }
-
-  const inStock = product.stock_quantity > 0
-  const lowStock = product.stock_quantity > 0 && product.stock_quantity <= (product.low_stock_threshold || 5)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100 py-8">
-      <div className="container mx-auto px-4">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center space-x-2 text-sm text-text-secondary mb-8 overflow-x-auto pb-2">
-          <Link href="/" className="hover:text-caramel-600 transition-colors whitespace-nowrap">
-            Home
-          </Link>
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <Link href="/products" className="hover:text-caramel-600 transition-colors whitespace-nowrap">
-            Products
-          </Link>
-          {product.parent_category_name && product.parent_category_id && (
-            <>
-              <ChevronRight className="w-4 h-4 flex-shrink-0" />
-              <Link
-                href={`/products?category=${product.parent_category_id}`}
-                className="hover:text-caramel-600 transition-colors max-w-[100px] sm:max-w-none truncate"
-              >
-                {product.parent_category_name}
+    <>
+      <Container className="py-8 pb-28 lg:pb-section-md">
+        <nav aria-label="Breadcrumb" className="mb-8">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-ui text-text-secondary">
+            <li>
+              <Link href="/" className="hover:text-text-primary">
+                Home
               </Link>
-            </>
-          )}
-          {product.category_name && product.category_id && (
-            <>
-              <ChevronRight className="w-4 h-4 flex-shrink-0" />
-              <Link
-                href={`/products?category=${product.category_id}`}
-                className="hover:text-caramel-600 transition-colors max-w-[100px] sm:max-w-none truncate"
-              >
-                {product.category_name}
+            </li>
+            <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <li>
+              <Link href="/products" className="hover:text-text-primary">
+                Shop
               </Link>
-            </>
-          )}
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <span className="text-text-primary font-medium max-w-[150px] sm:max-w-none truncate">{product.name}</span>
+            </li>
+            {product.category_name && (
+              <>
+                <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <li>
+                  <Link
+                    href={`/products?category=${product.category_id}`}
+                    className="hover:text-text-primary"
+                  >
+                    {product.category_name}
+                  </Link>
+                </li>
+              </>
+            )}
+            <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <li aria-current="page" className="font-medium text-text-primary">
+              {product.name}
+            </li>
+          </ol>
         </nav>
 
-        {/* Product Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 mb-16">
-          {/* Image Gallery */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="overflow-hidden">
-              <div className="aspect-square relative bg-surface">
-                <Image
-                  src={product.images?.[selectedImage]?.image_url || '/placeholder.png'}
-                  alt={product.images?.[selectedImage]?.alt_text || product.name}
-                  fill
-                  className="object-contain p-8"
-                  priority
-                />
-              </div>
-            </Card>
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+          <div>
+            <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-surface-subtle">
+              <Image
+                src={product.images?.[selectedImage]?.image_url || '/placeholder.png'}
+                alt={product.images?.[selectedImage]?.alt_text || product.name}
+                fill
+                sizes="(min-width: 1024px) 45vw, 92vw"
+                priority
+                className="object-cover"
+              />
+            </div>
 
-            {/* Thumbnail Gallery */}
-            {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-4 mt-4">
+            {product.images?.length > 1 && (
+              <div className="mt-4 grid grid-cols-4 gap-3">
                 {product.images.map((image: any, index: number) => (
                   <button
                     key={image.id}
                     type="button"
                     onClick={() => setSelectedImage(index)}
-                    aria-label={`View image ${index + 1}`}
-                    className={`aspect-square relative rounded-lg overflow-hidden border-2 transition-all ${
+                    aria-label={`View image ${index + 1} of ${product.images.length}`}
+                    aria-current={selectedImage === index}
+                    className={cn(
+                      'relative aspect-square overflow-hidden rounded-sm border-2 transition-colors duration-fast',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
                       selectedImage === index
-                        ? 'border-caramel-600 ring-2 ring-caramel-200'
-                        : 'border-border-subtle hover:border-border-strong'
-                    }`}
+                        ? 'border-caramel-600'
+                        : 'border-transparent hover:border-border-strong'
+                    )}
                   >
                     <Image
                       src={image.image_url}
-                      alt={image.alt_text || product.name}
+                      alt=""
                       fill
-                      className="object-contain p-2"
+                      sizes="120px"
+                      className="object-cover"
                     />
                   </button>
                 ))}
               </div>
             )}
-          </motion.div>
+          </div>
 
-          {/* Product Info */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-6"
-          >
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2">{product.name}</h1>
-              <p className="text-text-secondary text-sm sm:text-base">{product.description}</p>
-            </div>
+          {/* Sticky on desktop, so the price and Add to Cart stay in view
+              through a long specification. */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <h1 className="font-serif text-h1 text-text-primary">{product.name}</h1>
+            {product.description && (
+              <p className="mt-3 text-body-lg text-text-secondary">{product.description}</p>
+            )}
 
-            {/* Price. Neutral, not brand -- the accent is reserved for the
-                markdown, which is the thing worth noticing. */}
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-h1 tabular-nums text-text-primary">
-                {formatCurrency(product.price)}
-              </span>
-              {product.compare_at_price && product.compare_at_price > product.price && (
+            <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <Money amount={product.price} className="text-h1 text-text-primary" />
+              {onSale && (
                 <>
-                  <span className="text-body-lg tabular-nums text-text-tertiary line-through">
-                    {formatCurrency(product.compare_at_price)}
-                  </span>
-                  <Badge variant="sale" size="sm">
-                    Save {formatCurrency(product.compare_at_price - product.price)}
+                  <Money amount={product.compare_at_price} strike className="text-body-lg" />
+                  {/* One text node, not "Save" beside a <Money> element: Badge
+                      is inline-flex, and a flex container drops the whitespace
+                      between adjacent items, so it rendered as "Save53,000". */}
+                  <Badge variant="sale" size="sm" className="tabular-nums">
+                    {`Save ${formatAmount(product.compare_at_price - product.price)}`}
                   </Badge>
                 </>
               )}
             </div>
 
-            {/* Stock Status */}
-            <div className="flex items-center space-x-3">
+            <div className="mt-4 flex items-center gap-3">
               {inStock ? (
                 <>
-                  <div className="flex items-center text-green-600">
-                    <Check className="w-5 h-5 mr-2" />
-                    <span className="font-medium">In Stock</span>
-                  </div>
-                  {lowStock && (
-                    <Badge variant="warning">Only {product.stock_quantity} left!</Badge>
-                  )}
+                  <span className="flex items-center gap-1.5 text-ui font-medium text-success-700">
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                    In stock
+                  </span>
+                  {lowStock && <Badge variant="warning">Only {product.stock_quantity} left</Badge>}
                 </>
               ) : (
-                <div className="flex items-center text-red-600">
-                  <X className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Out of Stock</span>
-                </div>
+                <Badge variant="danger">Out of stock</Badge>
               )}
+              <span className="font-mono text-caption text-text-tertiary">{product.sku}</span>
             </div>
 
-            {/* SKU */}
-            <div className="text-sm text-text-secondary">
-              <span className="font-medium">SKU:</span> {product.sku}
-            </div>
-
-            {/* Quantity Selector */}
-            {inStock && (
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <span className="text-bark-700 font-medium">Quantity:</span>
-                  <div className="flex items-center border border-border-strong rounded-lg">
-                    <button
-                      type="button"
-                      onClick={decrementQuantity}
+            {inStock ? (
+              <div className="mt-8 space-y-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-ui font-medium text-text-secondary">Quantity</span>
+                  <div className="flex items-center rounded-sm border border-border-subtle">
+                    <IconButton
+                      label="Decrease quantity"
+                      size="sm"
                       disabled={quantity <= 1}
-                      aria-label="Decrease quantity"
-                      className="p-3 hover:bg-surface-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="px-6 py-2 font-medium">{quantity}</span>
-                    <button
-                      type="button"
-                      onClick={incrementQuantity}
+                      <Minus />
+                    </IconButton>
+                    <span className="w-10 text-center text-ui font-medium tabular-nums">
+                      {quantity}
+                    </span>
+                    <IconButton
+                      label="Increase quantity"
+                      size="sm"
                       disabled={quantity >= product.stock_quantity}
-                      aria-label="Increase quantity"
-                      className="p-3 hover:bg-surface-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      onClick={() => setQuantity(q => Math.min(product.stock_quantity, q + 1))}
                     >
-                      <Plus className="w-4 h-4" />
-                    </button>
+                      <Plus />
+                    </IconButton>
                   </div>
                 </div>
 
-                {/* Add to Cart Button */}
-                <div className="flex space-x-4">
-                  <Button
-                    onClick={handleAddToCart}
-                    size="lg"
-                    className="flex-1"
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={handleToggleFavorite}
-                    className={product && checkIsFavorite(product.id) ? 'text-red-500 border-red-500 hover:bg-red-50' : ''}
-                  >
-                    <Heart className={`w-5 h-5 ${product && checkIsFavorite(product.id) ? 'fill-current' : ''}`} />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={handleShare}
-                  >
-                    <Share2 className="w-5 h-5" />
-                  </Button>
-                </div>
+                <Button
+                  size="lg"
+                  fullWidth
+                  onClick={handleAddToCart}
+                  leftIcon={<ShoppingCart className="h-4 w-4" />}
+                >
+                  Add to cart
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-8 rounded-md border border-border-subtle bg-surface-subtle p-5">
+                <p className="text-body text-text-secondary">
+                  This one is out of stock. Tell us and we will let you know the moment it is
+                  back, usually within three weeks.
+                </p>
+                <Button asChild variant="outline" className="mt-4">
+                  <Link href={`/contact?product=${product.sku}`}>Notify me</Link>
+                </Button>
               </div>
             )}
 
-            {/* Long Description */}
+            {/* Outside the stock guard, deliberately. These used to be nested
+                inside it, so an out-of-stock page had no way to save the piece,
+                share it, or do anything at all -- a complete dead end. */}
+            <div className="mt-4 flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleToggleFavourite}
+                leftIcon={
+                  <Heart className={cn('h-4 w-4', favourite && 'fill-current text-danger-600')} />
+                }
+              >
+                {favourite ? 'Saved' : 'Save'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                leftIcon={<Share2 className="h-4 w-4" />}
+              >
+                Share
+              </Button>
+            </div>
+
+            <p className="mt-6 flex items-start gap-2 text-ui text-text-secondary">
+              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-caramel-700" aria-hidden="true" />
+              Delivered in 3-5 working days.{' '}
+              <Link href="/shipping" className="underline underline-offset-4">
+                Rates and access notes
+              </Link>
+            </p>
+
             {product.long_description && (
-              <Card className="p-6 bg-canvas">
-                <h3 className="text-lg font-semibold mb-3">Product Details</h3>
-                <p className="text-bark-700 whitespace-pre-line">{product.long_description}</p>
+              <Card className="mt-8 bg-surface-subtle">
+                <h2 className="mb-3 text-h3 text-text-primary">The detail</h2>
+                <p className="whitespace-pre-line text-body text-text-secondary">
+                  {product.long_description}
+                </p>
               </Card>
             )}
-          </motion.div>
+          </div>
         </div>
 
-        {/* Related Products */}
-        {product.relatedProducts && product.relatedProducts.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <h2 className="text-3xl font-bold text-text-primary mb-8">Related Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {product.relatedProducts.map((relatedProduct: any) => (
-                <Link key={relatedProduct.id} href={`/products/${relatedProduct.slug}`}>
-                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300">
-                    <div className="aspect-square relative bg-surface overflow-hidden">
-                      <Image
-                        src={relatedProduct.primary_image || '/placeholder.png'}
-                        alt={relatedProduct.name}
-                        fill
-                        className="object-contain p-4 group-hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-text-primary mb-2 line-clamp-2">
-                        {relatedProduct.name}
-                      </h3>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-h3 tabular-nums text-text-primary">
-                          {formatCurrency(relatedProduct.price)}
-                        </span>
-                        {relatedProduct.compare_at_price && (
-                          <span className="text-ui tabular-nums text-text-tertiary line-through">
-                            {formatCurrency(relatedProduct.compare_at_price)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
+        {product.relatedProducts?.length > 0 && (
+          <section aria-labelledby="related" className="mt-section-md">
+            <h2 id="related" className="mb-8 font-serif text-h2 text-text-primary">
+              Goes with this
+            </h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {product.relatedProducts.map((related: any) => (
+                <ProductCard key={related.id} product={related} />
               ))}
             </div>
-          </motion.div>
+          </section>
         )}
-      </div>
-    </div>
+      </Container>
+
+      {/* Mobile buy bar. On a long specification page the Add to Cart button
+          scrolls far out of reach on a phone; this keeps the price and the
+          action available without hunting for them. */}
+      {inStock && (
+        <div className="fixed inset-x-0 bottom-0 z-sticky border-t border-border-subtle bg-surface/95 p-3 shadow-e4 backdrop-blur lg:hidden">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-caption text-text-secondary">{product.name}</p>
+              <Money amount={product.price * quantity} className="text-body font-medium" />
+            </div>
+            <Button size="lg" onClick={handleAddToCart} className="shrink-0">
+              Add to cart
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
-

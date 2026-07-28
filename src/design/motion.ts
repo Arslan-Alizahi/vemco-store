@@ -26,12 +26,30 @@ export const durationCss: Record<string, string> = Object.fromEntries(
   Object.entries(duration).map(([key, value]) => [key, `${value}ms`])
 )
 
+type Bezier = [number, number, number, number]
+
+/**
+ * Bezier control points, the source both forms are derived from.
+ *
+ * framer-motion will not accept the `cubic-bezier(...)` string that CSS wants.
+ * It throws "Invalid easing type" and leaves the element pinned to its initial
+ * keyframe -- so a Reveal does not merely skip its animation, it stays at
+ * opacity 0 and the content is invisible. Pass `ease` to framer, `easing` to
+ * CSS, and they cannot drift because both come from here.
+ */
+export const ease: Record<'standard' | 'exit' | 'emphasis', Bezier> = {
+  standard: [0.2, 0, 0, 1], // decelerate -- the default for ~90% of UI
+  exit: [0.4, 0, 1, 1], // accelerate out; exits run at 0.75x enter
+  emphasis: [0.2, 0, 0, 1.2], // slight overshoot, used sparingly
+}
+
+/** The CSS string form, consumed by tailwind.config.ts. */
 export const easing = {
-  standard: 'cubic-bezier(0.2, 0, 0, 1)', // decelerate -- the default for ~90% of UI
-  exit: 'cubic-bezier(0.4, 0, 1, 1)', // accelerate out; exits run at 0.75x enter
-  emphasis: 'cubic-bezier(0.2, 0, 0, 1.2)', // slight overshoot, used sparingly
+  standard: `cubic-bezier(${ease.standard.join(', ')})`,
+  exit: `cubic-bezier(${ease.exit.join(', ')})`,
+  emphasis: `cubic-bezier(${ease.emphasis.join(', ')})`,
   linear: 'linear', // spinners and indeterminate progress only
-} as const
+}
 
 /**
  * framer-motion presets. Never pass `duration` alongside these -- framer
@@ -43,9 +61,10 @@ export const spring = {
   panel: { type: 'spring', stiffness: 320, damping: 32, mass: 1.0 }, // sheets, drawers
 } as const
 
+/** For framer-motion, so it gets the array form rather than the CSS string. */
 export const fade = {
   duration: duration.base / 1000,
-  ease: easing.standard,
+  ease: ease.standard,
 } as const
 
 /**

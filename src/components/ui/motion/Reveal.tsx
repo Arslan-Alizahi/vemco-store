@@ -2,7 +2,7 @@
 
 import { motion, type Variants } from 'framer-motion'
 import { cn } from '@/lib/cn'
-import { duration, easing, staggerDelay } from '@/design/motion'
+import { duration, ease, staggerDelay } from '@/design/motion'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'none'
 
@@ -51,7 +51,7 @@ export function Reveal({
       y: 0,
       transition: {
         duration: duration.slow / 1000,
-        ease: easing.standard,
+        ease: ease.standard,
         delay: staggerDelay(index),
       },
     },
@@ -71,3 +71,5 @@ export function Reveal({
     </MotionTag>
   )
 }
+
+export default Reveal

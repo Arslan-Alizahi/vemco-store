@@ -2,17 +2,37 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react'
+import { Heart, Trash2 } from 'lucide-react'
+import Container from '@/components/layout/Container'
+import PageHeader from '@/components/layout/PageHeader'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
-import { useFavorites } from '@/hooks/useFavorites'
-import { useCart } from '@/hooks/useCart'
-import { useToast } from '@/components/ui/Toast'
-import { formatCurrency } from '@/lib/utils'
-import { StockBadge } from '@/components/ui/Badge'
+import IconButton from '@/components/ui/IconButton'
+import EmptyState from '@/components/ui/EmptyState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import ProductCard from '@/components/storefront/ProductCard'
+import { useToast } from '@/components/ui/Toast'
+import { useCart } from '@/hooks/useCart'
+import { useFavorites } from '@/hooks/useFavorites'
+import type { Product } from '@/types/product'
+import type { FavoriteItem } from '@/types/favorites'
+
+/**
+ * Favourites are stored as their own flat shape in localStorage, not as full
+ * products. This adapts one to the shape ProductCard expects so the page uses
+ * the same card as the rest of the storefront instead of a fourth variant.
+ */
+const toProduct = (item: FavoriteItem): Product =>
+  ({
+    id: item.product_id,
+    name: item.product_name,
+    slug: item.product_slug,
+    sku: item.product_sku ?? '',
+    price: item.price,
+    compare_at_price: item.compare_at_price,
+    stock_quantity: item.stock_quantity,
+    primary_image: item.product_image,
+    category_id: 0,
+  }) as Product
 
 export default function FavoritesPage() {
   const { favorites, addToFavorites, removeFromFavorites, clearFavorites, isLoading } =
@@ -21,52 +41,37 @@ export default function FavoritesPage() {
   const { addToast } = useToast()
   const [confirmClear, setConfirmClear] = useState(false)
 
-  const handleRemove = (productId: number, productName: string) => {
-    const removed = favorites.find(f => f.product_id === productId)
-    removeFromFavorites(productId)
-
-    // Removing a favourite is trivially reversible, so offer the undo rather
-    // than interrupting with a confirmation.
-    addToast(`${productName} removed`, 'info', 6000, {
+  const handleRemove = (item: FavoriteItem) => {
+    removeFromFavorites(item.product_id)
+    // Reversible in one tap, so an Undo beats a confirmation dialog here.
+    addToast(`${item.product_name} removed`, 'info', 6000, {
       label: 'Undo',
-      onClick: () => {
-        if (removed) addToFavorites(removed)
-      },
+      onClick: () => addToFavorites(item),
     })
   }
 
-  const handleAddToCart = (item: any) => {
-    if (item.stock_quantity <= 0) {
-      addToast('Product is out of stock', 'error')
+  const handleAddToCart = (product: Product) => {
+    if (product.stock_quantity <= 0) {
+      addToast('That one is out of stock', 'error')
       return
     }
-
     addToCart({
-      product_id: item.product_id,
-      product_name: item.product_name,
-      product_slug: item.product_slug,
-      product_image: item.product_image,
-      product_sku: item.product_sku,
+      product_id: product.id,
+      product_name: product.name,
+      product_slug: product.slug,
+      product_image: product.primary_image,
+      product_sku: product.sku,
       quantity: 1,
-      unit_price: item.price,
-      stock_quantity: item.stock_quantity,
+      unit_price: product.price,
+      stock_quantity: product.stock_quantity,
     })
-
-    addToast(`${item.product_name} added to cart!`, 'success')
+    addToast(`${product.name} added to cart`, 'success')
   }
 
-  const handleClearAll = () => setConfirmClear(true)
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
-      </div>
-    )
-  }
+  if (isLoading) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100 py-8">
+    <Container className="py-section-md">
       <ConfirmDialog
         isOpen={confirmClear}
         onClose={() => setConfirmClear(false)}
@@ -80,151 +85,56 @@ export default function FavoritesPage() {
         destructive
       />
 
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/products"
-            className="inline-flex items-center text-caramel-600 hover:text-caramel-700 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Products
-          </Link>
+      <PageHeader
+        eyebrow="Saved"
+        title="Your favourites"
+        lead={
+          favorites.length > 0
+            ? `${favorites.length} ${favorites.length === 1 ? 'piece' : 'pieces'} saved for later.`
+            : undefined
+        }
+        actions={
+          favorites.length > 0 ? (
+            <Button variant="outline" onClick={() => setConfirmClear(true)}>
+              Clear all
+            </Button>
+          ) : undefined
+        }
+      />
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2 flex items-center">
-                <Heart className="w-7 h-7 sm:w-8 sm:h-8 mr-3 text-red-500 fill-current" />
-                My Favorites
-              </h1>
-              <p className="text-text-secondary">
-                {favorites.length === 0
-                  ? 'No favorites yet. Start adding products you love!'
-                  : `${favorites.length} ${favorites.length === 1 ? 'item' : 'items'} in your wishlist`}
-              </p>
-            </div>
-
-            {favorites.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={handleClearAll}
-                leftIcon={<Trash2 className="w-4 h-4" />}
-              >
-                Clear All
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Empty State */}
-        {favorites.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
-          >
-            <Card className="max-w-md mx-auto p-12">
-              <Heart className="w-24 h-24 mx-auto mb-6 text-bark-300" />
-              <h2 className="text-2xl font-semibold text-text-primary mb-3">
-                Your wishlist is empty
-              </h2>
-              <p className="text-text-secondary mb-6">
-                Browse our products and add your favorites to keep track of items you love!
-              </p>
-              <Button asChild size="lg">
-                <Link href="/products">Browse products</Link>
-              </Button>
-            </Card>
-          </motion.div>
-        ) : (
-          /* Favorites Grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <AnimatePresence>
-              {favorites.map((item, index) => (
-                <motion.div
-                  key={item.product_id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.05 }}
-                  layout
+      {favorites.length === 0 ? (
+        <EmptyState
+          icon={Heart}
+          title="Nothing saved yet"
+          description="Tap the heart on any piece to keep it here while you decide. Saved items stay on this device."
+          action={
+            <Button asChild size="lg">
+              <Link href="/products">Browse furniture</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {favorites.map(item => (
+            <ProductCard
+              key={item.product_id}
+              product={toProduct(item)}
+              onAddToCart={handleAddToCart}
+              overlay={
+                <IconButton
+                  label={`Remove ${item.product_name} from favourites`}
+                  variant="solid"
+                  size="sm"
+                  onClick={() => handleRemove(item)}
+                  className="bg-surface/90 text-text-secondary shadow-e1 hover:bg-surface hover:text-danger-600"
                 >
-                  <Card interactive noPadding className="h-full flex flex-col relative group">
-                    {/* Remove Button */}
-                    <button
-                      onClick={() => handleRemove(item.product_id, item.product_name)}
-                      className="absolute top-2 right-2 z-10 p-2 bg-surface rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600"
-                      aria-label="Remove from favorites"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
-                    {/* Product Image */}
-                    <Link href={`/products/${item.product_slug}`}>
-                      <div className="relative aspect-square bg-surface overflow-hidden">
-                        <Image
-                          src={item.product_image || '/placeholder.png'}
-                          alt={item.product_name}
-                          fill
-                          className="object-contain p-4 group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute top-2 left-2">
-                          <StockBadge quantity={item.stock_quantity} />
-                        </div>
-                      </div>
-                    </Link>
-
-                    {/* Product Info */}
-                    <div className="p-4 flex-1 flex flex-col">
-                      <Link href={`/products/${item.product_slug}`}>
-                        <h3 className="font-semibold text-text-primary mb-2 line-clamp-2 hover:text-caramel-600 transition-colors">
-                          {item.product_name}
-                        </h3>
-                      </Link>
-
-                      {item.product_sku && (
-                        <p className="text-xs text-text-tertiary mb-2">SKU: {item.product_sku}</p>
-                      )}
-
-                      <div className="flex items-baseline space-x-2 mb-4">
-                        <span className="text-xl font-bold text-caramel-600">
-                          {formatCurrency(item.price)}
-                        </span>
-                        {item.compare_at_price && item.compare_at_price > item.price && (
-                          <span className="text-sm text-bark-400 line-through">
-                            {formatCurrency(item.compare_at_price)}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-auto space-y-2">
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          onClick={() => handleAddToCart(item)}
-                          disabled={item.stock_quantity <= 0}
-                          leftIcon={<ShoppingCart className="w-4 h-4" />}
-                        >
-                          Add to Cart
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full text-red-500 border-red-500 hover:bg-red-50"
-                          onClick={() => handleRemove(item.product_id, item.product_name)}
-                          leftIcon={<Heart className="w-4 h-4 fill-current" />}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
-    </div>
+                  <Trash2 />
+                </IconButton>
+              }
+            />
+          ))}
+        </div>
+      )}
+    </Container>
   )
 }
