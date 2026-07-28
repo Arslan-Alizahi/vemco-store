@@ -23,12 +23,6 @@ const config: Config = {
         warning,
         danger,
         ...semantic,
-        // Compatibility aliases for call sites not yet migrated. `primary`
-        // maps to the brand and `gray` to the warm neutral, so untouched
-        // markup picks up the new palette instead of sitting on Tailwind's
-        // cool stock grey next to migrated warm surfaces.
-        primary: caramel,
-        gray: bark,
       },
       fontFamily: {
         sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],

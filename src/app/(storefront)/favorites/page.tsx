@@ -53,19 +53,19 @@ export default function FavoritesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100 py-8">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/products"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4 transition-colors"
+            className="inline-flex items-center text-caramel-600 hover:text-caramel-700 mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Products
@@ -73,11 +73,11 @@ export default function FavoritesPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 flex items-center">
+              <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2 flex items-center">
                 <Heart className="w-7 h-7 sm:w-8 sm:h-8 mr-3 text-red-500 fill-current" />
                 My Favorites
               </h1>
-              <p className="text-gray-600">
+              <p className="text-text-secondary">
                 {favorites.length === 0
                   ? 'No favorites yet. Start adding products you love!'
                   : `${favorites.length} ${favorites.length === 1 ? 'item' : 'items'} in your wishlist`}
@@ -104,11 +104,11 @@ export default function FavoritesPage() {
             className="text-center py-16"
           >
             <Card className="max-w-md mx-auto p-12">
-              <Heart className="w-24 h-24 mx-auto mb-6 text-gray-300" />
-              <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+              <Heart className="w-24 h-24 mx-auto mb-6 text-bark-300" />
+              <h2 className="text-2xl font-semibold text-text-primary mb-3">
                 Your wishlist is empty
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-text-secondary mb-6">
                 Browse our products and add your favorites to keep track of items you love!
               </p>
               <Link href="/products">
@@ -133,7 +133,7 @@ export default function FavoritesPage() {
                     {/* Remove Button */}
                     <button
                       onClick={() => handleRemove(item.product_id, item.product_name)}
-                      className="absolute top-2 right-2 z-10 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600"
+                      className="absolute top-2 right-2 z-10 p-2 bg-surface rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600"
                       aria-label="Remove from favorites"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function FavoritesPage() {
 
                     {/* Product Image */}
                     <Link href={`/products/${item.product_slug}`}>
-                      <div className="relative aspect-square bg-white overflow-hidden">
+                      <div className="relative aspect-square bg-surface overflow-hidden">
                         <Image
                           src={item.product_image || '/placeholder.png'}
                           alt={item.product_name}
@@ -157,21 +157,21 @@ export default function FavoritesPage() {
                     {/* Product Info */}
                     <div className="p-4 flex-1 flex flex-col">
                       <Link href={`/products/${item.product_slug}`}>
-                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-primary-600 transition-colors">
+                        <h3 className="font-semibold text-text-primary mb-2 line-clamp-2 hover:text-caramel-600 transition-colors">
                           {item.product_name}
                         </h3>
                       </Link>
 
                       {item.product_sku && (
-                        <p className="text-xs text-gray-500 mb-2">SKU: {item.product_sku}</p>
+                        <p className="text-xs text-text-tertiary mb-2">SKU: {item.product_sku}</p>
                       )}
 
                       <div className="flex items-baseline space-x-2 mb-4">
-                        <span className="text-xl font-bold text-primary-600">
+                        <span className="text-xl font-bold text-caramel-600">
                           {formatCurrency(item.price)}
                         </span>
                         {item.compare_at_price && item.compare_at_price > item.price && (
-                          <span className="text-sm text-gray-400 line-through">
+                          <span className="text-sm text-bark-400 line-through">
                             {formatCurrency(item.compare_at_price)}
                           </span>
                         )}

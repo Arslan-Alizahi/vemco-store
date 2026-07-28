@@ -66,8 +66,8 @@ export function AdminAuth({ children }: AdminAuthProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-canvas">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
       </div>
     )
   }
@@ -75,15 +75,15 @@ export function AdminAuth({ children }: AdminAuthProps) {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-bark-100 to-bark-200">
-        <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+        <div className="bg-surface p-8 rounded-lg shadow-xl max-w-md w-full">
           <div className="flex justify-center mb-6">
-            <div className="bg-primary-100 p-4 rounded-full">
-              <Lock className="h-8 w-8 text-primary-600" />
+            <div className="bg-caramel-100 p-4 rounded-full">
+              <Lock className="h-8 w-8 text-caramel-600" />
             </div>
           </div>
           
           <h1 className="text-2xl font-bold text-center mb-2">Admin Access</h1>
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-text-secondary text-center mb-6">
             Please enter the admin password to continue
           </p>
 
@@ -118,7 +118,7 @@ export function AdminAuth({ children }: AdminAuthProps) {
             </p>
           </div>
 
-          <p className="text-xs text-gray-500 text-center mt-4">
+          <p className="text-xs text-text-tertiary text-center mt-4">
             Session expires after 1 hour of inactivity
           </p>
         </div>

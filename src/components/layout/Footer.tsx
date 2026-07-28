@@ -80,21 +80,21 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <footer className="bg-gradient-to-br from-bark-900 via-bark-800 to-bark-900 text-white">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
           {/* Brand Section */}
           <div className="lg:col-span-2">
             <Link href="/" className="inline-flex items-center space-x-2 mb-4 group">
-              <div className="bg-gradient-to-br from-primary-500 to-primary-700 p-2 rounded-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-gradient-to-br from-caramel-500 to-caramel-700 p-2 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <ShoppingBag className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-caramel-400 to-caramel-600 bg-clip-text text-transparent">
                 VEMCO
               </span>
             </Link>
-            <p className="text-gray-400 mb-6 leading-relaxed">
+            <p className="text-bark-400 mb-6 leading-relaxed">
               Your trusted destination for quality products and exceptional service.
               Shop with confidence and discover amazing deals every day.
             </p>
@@ -103,20 +103,20 @@ export default function Footer() {
             <div className="space-y-3">
               <a
                 href="mailto:support@vemco.pk"
-                className="flex items-center text-gray-400 hover:text-primary-400 transition-colors group"
+                className="flex items-center text-bark-400 hover:text-caramel-400 transition-colors group"
               >
-                <Mail className="h-4 w-4 mr-3 text-primary-500 group-hover:scale-110 transition-transform" />
+                <Mail className="h-4 w-4 mr-3 text-caramel-500 group-hover:scale-110 transition-transform" />
                 <span className="text-sm">support@vemco.pk</span>
               </a>
               <a
                 href="tel:+1234567890"
-                className="flex items-center text-gray-400 hover:text-primary-400 transition-colors group"
+                className="flex items-center text-bark-400 hover:text-caramel-400 transition-colors group"
               >
-                <Phone className="h-4 w-4 mr-3 text-primary-500 group-hover:scale-110 transition-transform" />
+                <Phone className="h-4 w-4 mr-3 text-caramel-500 group-hover:scale-110 transition-transform" />
                 <span className="text-sm">+1 (234) 567-890</span>
               </a>
-              <div className="flex items-start text-gray-400">
-                <MapPin className="h-4 w-4 mr-3 text-primary-500 mt-1 flex-shrink-0" />
+              <div className="flex items-start text-bark-400">
+                <MapPin className="h-4 w-4 mr-3 text-caramel-500 mt-1 flex-shrink-0" />
                 <span className="text-sm">123 Commerce Street, Suite 456<br />New York, NY 10001</span>
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-gray-400 hover:text-primary-400 transition-colors text-sm inline-block hover:translate-x-1 duration-200"
+                      className="text-bark-400 hover:text-caramel-400 transition-colors text-sm inline-block hover:translate-x-1 duration-200"
                     >
                       {link.label}
                     </Link>
@@ -154,20 +154,20 @@ export default function Footer() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           viewport={{ once: true }}
-          className="mt-12 pt-8 border-t border-gray-700"
+          className="mt-12 pt-8 border-t border-bark-700"
         >
           <div className="max-w-md mx-auto text-center">
             <h3 className="text-xl font-bold mb-2">Stay Updated</h3>
-            <p className="text-gray-400 mb-4 text-sm">
+            <p className="text-bark-400 mb-4 text-sm">
               Subscribe to our newsletter for exclusive deals and updates
             </p>
             <div className="flex gap-2">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-white placeholder-gray-500"
+                className="flex-1 px-4 py-2 bg-bark-800 border border-bark-700 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:border-transparent text-white placeholder-bark-500"
               />
-              <button className="px-6 py-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-primary-500/30">
+              <button className="px-6 py-2 bg-gradient-to-r from-caramel-600 to-caramel-700 hover:from-caramel-700 hover:to-caramel-800 rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-caramel-500/30">
                 Subscribe
               </button>
             </div>
@@ -176,11 +176,11 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-800 bg-gray-900/50">
+      <div className="border-t border-bark-800 bg-bark-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             {/* Copyright */}
-            <div className="flex items-center text-gray-400 text-sm">
+            <div className="flex items-center text-bark-400 text-sm">
               <span>© {new Date().getFullYear()} VEMCO. Made with</span>
               <Heart className="h-4 w-4 mx-1 text-red-500 fill-current animate-pulse" />
               <span>All rights reserved.</span>
@@ -189,7 +189,7 @@ export default function Footer() {
             {/* Social Media Links */}
             {socialLinks.length > 0 && (
               <div className="flex items-center space-x-4">
-                <span className="text-gray-400 text-sm mr-2">Follow us:</span>
+                <span className="text-bark-400 text-sm mr-2">Follow us:</span>
                 <div className="flex space-x-3">
                   {socialLinks.map((link) => {
                     const IconComponent = iconMap[link.icon.toLowerCase()] || ShoppingBag
@@ -201,10 +201,10 @@ export default function Footer() {
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2, rotate: 5 }}
                         whileTap={{ scale: 0.9 }}
-                        className="bg-gray-800 hover:bg-gradient-to-br hover:from-primary-600 hover:to-primary-700 p-2.5 rounded-lg transition-all duration-300 group"
+                        className="bg-bark-800 hover:bg-gradient-to-br hover:from-caramel-600 hover:to-caramel-700 p-2.5 rounded-lg transition-all duration-300 group"
                         title={link.platform}
                       >
-                        <IconComponent className="h-5 w-5 text-gray-400 group-hover:text-white transition-colors" />
+                        <IconComponent className="h-5 w-5 text-bark-400 group-hover:text-white transition-colors" />
                       </motion.a>
                     )
                   })}
@@ -213,13 +213,13 @@ export default function Footer() {
             )}
 
             {/* Payment Methods */}
-            <div className="flex flex-wrap items-center gap-2 text-gray-500 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-text-tertiary text-xs">
               <span className="whitespace-nowrap">We accept:</span>
               <div className="flex flex-wrap gap-2">
                 {['VISA', 'MC', 'AMEX', 'PayPal'].map((method) => (
                   <div
                     key={method}
-                    className="px-2 py-1 bg-gray-800 rounded text-xs font-semibold whitespace-nowrap"
+                    className="px-2 py-1 bg-bark-800 rounded text-xs font-semibold whitespace-nowrap"
                   >
                     {method}
                   </div>
@@ -233,7 +233,7 @@ export default function Footer() {
       {/* Scroll to Top Button (Optional) */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 p-3 rounded-full shadow-lg shadow-primary-500/50 text-white hover:scale-110 transition-transform duration-200 z-50"
+        className="fixed bottom-8 right-8 bg-gradient-to-br from-caramel-600 to-caramel-700 hover:from-caramel-700 hover:to-caramel-800 p-3 rounded-full shadow-lg shadow-caramel-500/50 text-white hover:scale-110 transition-transform duration-200 z-50"
         aria-label="Scroll to top"
       >
         <svg

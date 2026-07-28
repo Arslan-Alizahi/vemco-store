@@ -130,7 +130,7 @@ export default function TransactionsPage() {
 
   return (
     <AdminAuth>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-canvas">
         <Navbar />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -138,7 +138,7 @@ export default function TransactionsPage() {
           <div className="mb-6">
             <Link
               href="/admin/revenue"
-              className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4 transition-colors"
+              className="inline-flex items-center text-caramel-600 hover:text-caramel-700 mb-4 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Revenue Dashboard
@@ -146,8 +146,8 @@ export default function TransactionsPage() {
 
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">All Transactions</h1>
-                <p className="text-gray-600">
+                <h1 className="text-3xl font-bold text-text-primary">All Transactions</h1>
+                <p className="text-text-secondary">
                   {pagination.total} total transactions
                 </p>
               </div>
@@ -245,55 +245,55 @@ export default function TransactionsPage() {
           <Card noPadding>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-canvas border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Reference
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Subtotal
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Tax
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Total
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Payment
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-surface divide-y divide-border-subtle">
                   {loading ? (
                     <tr>
                       <td colSpan={9} className="px-6 py-12 text-center">
                         <div className="flex justify-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-caramel-600"></div>
                         </div>
                       </td>
                     </tr>
                   ) : transactions.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={9} className="px-6 py-12 text-center text-text-tertiary">
                         No transactions found
                       </td>
                     </tr>
                   ) : (
                     transactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-gray-50">
+                      <tr key={transaction.id} className="hover:bg-canvas">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -316,28 +316,28 @@ export default function TransactionsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-text-primary">
                             {transaction.reference_number}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-text-primary">
                             {transaction.customer_name || 'Guest'}
                           </div>
                           {transaction.customer_email && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-text-tertiary">
                               {transaction.customer_email}
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
                           {formatCurrency(transaction.subtotal)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                           {formatCurrency(transaction.tax)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-semibold text-gray-900">
+                          <div className="text-sm font-semibold text-text-primary">
                             {formatCurrency(transaction.total)}
                           </div>
                           {transaction.discount > 0 && (
@@ -346,16 +346,16 @@ export default function TransactionsPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 capitalize">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary capitalize">
                           {transaction.payment_method?.replace('_', ' ')}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-tertiary">
                           {formatDate(transaction.transaction_date)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleViewDetails(transaction)}
-                            className="text-primary-600 hover:text-primary-900 hover:bg-primary-50 p-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                            className="text-caramel-600 hover:text-caramel-900 hover:bg-caramel-50 p-2 rounded-lg transition-colors inline-flex items-center gap-2"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
@@ -371,7 +371,7 @@ export default function TransactionsPage() {
 
             {/* Pagination */}
             {!loading && transactions.length > 0 && (
-              <div className="bg-white px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="bg-surface px-6 py-4 flex items-center justify-between border-t border-border-subtle">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <Button
                     variant="outline"
@@ -390,7 +390,7 @@ export default function TransactionsPage() {
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-bark-700">
                       Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
                       <span className="font-medium">
                         {Math.min(pagination.page * pagination.limit, pagination.total)}
@@ -409,7 +409,7 @@ export default function TransactionsPage() {
                       >
                         Previous
                       </Button>
-                      <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                      <span className="relative inline-flex items-center px-4 py-2 border border-border-strong bg-surface text-sm font-medium text-bark-700">
                         Page {pagination.page} of {pagination.totalPages}
                       </span>
                       <Button
@@ -462,33 +462,33 @@ export default function TransactionsPage() {
                   </span>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">Reference Number</p>
-                  <p className="font-semibold text-gray-900">{selectedTransaction.reference_number}</p>
+                  <p className="text-sm text-text-tertiary">Reference Number</p>
+                  <p className="font-semibold text-text-primary">{selectedTransaction.reference_number}</p>
                 </div>
               </div>
 
               {/* Customer Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Customer Information</h3>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <h3 className="text-lg font-semibold text-text-primary mb-3">Customer Information</h3>
+                <div className="bg-canvas rounded-lg p-4 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Name:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-text-secondary">Name:</span>
+                    <span className="font-medium text-text-primary">
                       {selectedTransaction.customer_name || 'Guest'}
                     </span>
                   </div>
                   {selectedTransaction.customer_email && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Email:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-text-secondary">Email:</span>
+                      <span className="font-medium text-text-primary">
                         {selectedTransaction.customer_email}
                       </span>
                     </div>
                   )}
                   {selectedTransaction.customer_phone && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Phone:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-text-secondary">Phone:</span>
+                      <span className="font-medium text-text-primary">
                         {selectedTransaction.customer_phone}
                       </span>
                     </div>
@@ -498,23 +498,23 @@ export default function TransactionsPage() {
 
               {/* Payment Summary */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Payment Summary</h3>
+                <h3 className="text-lg font-semibold text-text-primary mb-3">Payment Summary</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-text-secondary">Subtotal</span>
+                    <span className="font-medium text-text-primary">
                       {formatCurrency(selectedTransaction.subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tax (18%)</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-text-secondary">Tax (18%)</span>
+                    <span className="font-medium text-text-primary">
                       {formatCurrency(selectedTransaction.tax)}
                     </span>
                   </div>
                   {selectedTransaction.discount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Discount</span>
+                      <span className="text-text-secondary">Discount</span>
                       <span className="font-medium text-green-600">
                         -{formatCurrency(selectedTransaction.discount)}
                       </span>
@@ -522,15 +522,15 @@ export default function TransactionsPage() {
                   )}
                   {selectedTransaction.shipping_cost > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Shipping</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-text-secondary">Shipping</span>
+                      <span className="font-medium text-text-primary">
                         {formatCurrency(selectedTransaction.shipping_cost)}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-bold pt-3 border-t">
                     <span>Total</span>
-                    <span className="text-primary-600">
+                    <span className="text-caramel-600">
                       {formatCurrency(selectedTransaction.total)}
                     </span>
                   </div>
@@ -539,23 +539,23 @@ export default function TransactionsPage() {
 
               {/* Payment Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Payment Information</h3>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <h3 className="text-lg font-semibold text-text-primary mb-3">Payment Information</h3>
+                <div className="bg-canvas rounded-lg p-4 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-medium text-gray-900 capitalize">
+                    <span className="text-text-secondary">Payment Method:</span>
+                    <span className="font-medium text-text-primary capitalize">
                       {selectedTransaction.payment_method?.replace('_', ' ')}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Status:</span>
+                    <span className="text-text-secondary">Payment Status:</span>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       {selectedTransaction.payment_status}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Transaction Date:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-text-secondary">Transaction Date:</span>
+                    <span className="font-medium text-text-primary">
                       {formatDate(selectedTransaction.transaction_date)}
                     </span>
                   </div>
@@ -565,9 +565,9 @@ export default function TransactionsPage() {
               {/* Notes */}
               {selectedTransaction.notes && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-700">{selectedTransaction.notes}</p>
+                  <h3 className="text-lg font-semibold text-text-primary mb-3">Notes</h3>
+                  <div className="bg-canvas rounded-lg p-4">
+                    <p className="text-bark-700">{selectedTransaction.notes}</p>
                   </div>
                 </div>
               )}

@@ -40,7 +40,7 @@ function OrderCancelContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
       </div>
     )
   }
@@ -53,8 +53,8 @@ function OrderCancelContent() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-4">
             <XCircle className="w-12 h-12 text-red-600" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Payment Cancelled</h1>
-          <p className="text-xl text-gray-600">Your payment was not completed</p>
+          <h1 className="text-4xl font-bold text-text-primary mb-2">Payment Cancelled</h1>
+          <p className="text-xl text-text-secondary">Your payment was not completed</p>
         </div>
 
         {/* Information Card */}
@@ -64,8 +64,8 @@ function OrderCancelContent() {
               <AlertTriangle className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Your Order is Saved</h2>
-              <p className="text-gray-600 mb-4">
+              <h2 className="text-lg font-semibold text-text-primary mb-2">Your Order is Saved</h2>
+              <p className="text-text-secondary mb-4">
                 Don't worry! Your order has been saved and is waiting for payment. 
                 You can complete the payment anytime.
               </p>
@@ -73,21 +73,21 @@ function OrderCancelContent() {
           </div>
 
           {order && (
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Order Information</h3>
+            <div className="bg-canvas rounded-lg p-4 mb-6">
+              <h3 className="text-sm font-medium text-bark-700 mb-2">Order Information</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Order Number:</span>
-                  <span className="text-sm font-medium text-gray-900">{order.orderNumber}</span>
+                  <span className="text-sm text-text-secondary">Order Number:</span>
+                  <span className="text-sm font-medium text-text-primary">{order.orderNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Total Amount:</span>
-                  <span className="text-sm font-medium tabular-nums text-gray-900">
+                  <span className="text-sm text-text-secondary">Total Amount:</span>
+                  <span className="text-sm font-medium tabular-nums text-text-primary">
                     {formatCurrency(order.total ?? 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Payment Status:</span>
+                  <span className="text-sm text-text-secondary">Payment Status:</span>
                   <span className="text-sm font-medium text-amber-600">Pending</span>
                 </div>
               </div>
@@ -136,9 +136,9 @@ function OrderCancelContent() {
 
         {/* Support Information */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-text-secondary">
             Need help? Contact our support team at{' '}
-            <a href="mailto:support@vemco.pk" className="text-primary-600 hover:text-primary-700 font-medium">
+            <a href="mailto:support@vemco.pk" className="text-caramel-600 hover:text-caramel-700 font-medium">
               support@vemco.pk
             </a>
           </p>
@@ -153,7 +153,7 @@ export default function OrderCancelPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
         </div>
       }
     >

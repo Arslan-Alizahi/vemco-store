@@ -5,81 +5,59 @@ import { cn } from '@/lib/cn'
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
+  /** Announced to assistive tech; also rendered when `showLabel` is set. */
   label?: string
+  showLabel?: boolean
 }
 
 const sizeClasses = {
-  sm: 'h-4 w-4',
-  md: 'h-6 w-6',
-  lg: 'h-8 w-8',
-  xl: 'h-12 w-12',
+  sm: 'h-4 w-4 border-2',
+  md: 'h-6 w-6 border-2',
+  lg: 'h-8 w-8 border-[3px]',
+  xl: 'h-12 w-12 border-4',
 }
 
-export function Spinner({ size = 'md', className, label }: SpinnerProps) {
+/**
+ * The single spinner implementation.
+ *
+ * The previous version nested one `animate-spin` inside another, so the
+ * rotations compounded and it span at roughly double the intended rate. One
+ * ring, one animation, with `role="status"` so a screen reader announces the
+ * loading state instead of silence.
+ */
+export function Spinner({ size = 'md', className, label = 'Loading', showLabel }: SpinnerProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3">
-      <div className="relative">
-        <div
-          className={cn(
-            'animate-spin rounded-full border-2 border-gray-200',
-            sizeClasses[size],
-            className
-          )}
-        >
-          <div className="absolute inset-0 rounded-full border-2 border-primary-600 border-t-transparent animate-spin" />
-        </div>
-      </div>
-      {label && (
-        <p className="text-sm text-gray-600 animate-pulse">{label}</p>
-      )}
+      <div
+        role="status"
+        aria-label={showLabel ? undefined : label}
+        className={cn(
+          'animate-spin rounded-full border-border-subtle border-t-caramel-600',
+          sizeClasses[size],
+          className
+        )}
+      />
+      {showLabel && <p className="text-ui text-text-secondary">{label}</p>}
     </div>
   )
 }
 
-// Default export for convenience
 export default Spinner
 
 export function LoadingDots({ className }: { className?: string }) {
   return (
-    <div className={cn('loading-dots', className)}>
-      <span></span>
-      <span></span>
-      <span></span>
+    <div className={cn('loading-dots', className)} role="status" aria-label="Loading">
+      <span />
+      <span />
+      <span />
     </div>
   )
 }
 
-export function FullPageSpinner({ label = 'Loading...' }: { label?: string }) {
+export function FullPageSpinner({ label = 'Loading' }: { label?: string }) {
   return (
-    <div className="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center">
-      <div className="text-center">
-        <Spinner size="xl" />
-        {label && (
-          <p className="mt-4 text-lg text-gray-600 animate-pulse">{label}</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export function SkeletonLoader({ className }: { className?: string }) {
-  return (
-    <div className={cn('skeleton', className)} />
-  )
-}
-
-export function ProductCardSkeleton() {
-  return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <SkeletonLoader className="h-64 w-full" />
-      <div className="p-4">
-        <SkeletonLoader className="h-6 w-3/4 mb-2" />
-        <SkeletonLoader className="h-4 w-full mb-4" />
-        <div className="flex justify-between items-center">
-          <SkeletonLoader className="h-6 w-20" />
-          <SkeletonLoader className="h-10 w-24" />
-        </div>
-      </div>
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-canvas/90">
+      <Spinner size="xl" label={label} showLabel />
     </div>
   )
 }

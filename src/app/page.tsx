@@ -54,7 +54,7 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100">
       <Navbar />
 
       {/* Hero Section */}
@@ -117,7 +117,7 @@ export default function HomePage() {
                   size="lg"
                   variant="outline"
                   fullWidth
-                  className="border-white/25 text-white hover:bg-white/10"
+                  className="border-white/25 text-white hover:bg-surface/10"
                 >
                   Our story
                 </Button>
@@ -266,7 +266,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10"
+                className="border-white/30 text-white hover:bg-surface/10"
               >
                 Talk to us
               </Button>

@@ -486,13 +486,13 @@ export default function AdminPage() {
 
   return (
     <AdminAuth>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-canvas">
         <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your store</p>
+          <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
+          <p className="text-text-secondary">Manage your store</p>
         </div>
 
         {/* Tabs */}
@@ -503,8 +503,8 @@ export default function AdminPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-caramel-600 text-caramel-600'
+                  : 'border-transparent text-text-tertiary hover:text-bark-700'
               }`}
             >
               <tab.icon className="h-5 w-5" />
@@ -522,7 +522,7 @@ export default function AdminPage() {
                   <CardTitle>Total Products</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-primary-600">{totalProducts}</p>
+                  <p className="text-3xl font-bold text-caramel-600">{totalProducts}</p>
                 </CardContent>
               </Card>
 
@@ -543,7 +543,7 @@ export default function AdminPage() {
                   <p className="text-3xl font-bold text-blue-600">
                     {formatCurrency(totalRevenue)}
                   </p>
-                  <p className="text-sm text-gray-500">From online orders</p>
+                  <p className="text-sm text-text-tertiary">From online orders</p>
                 </CardContent>
               </Card>
 
@@ -553,40 +553,40 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-3xl font-bold text-red-600">{lowStockProducts}</p>
-                  <p className="text-sm text-gray-500">Products need restocking</p>
+                  <p className="text-sm text-text-tertiary">Products need restocking</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Revenue Management Card */}
-            <Card interactive className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-primary-200">
+            <Card interactive className="bg-gradient-to-br from-caramel-50 to-blue-50 border-2 border-caramel-200">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-xl font-bold text-text-primary mb-2">
                       Revenue Management
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-text-secondary">
                       Track and analyze revenue from both online store and local billing
                     </p>
                   </div>
-                  <div className="p-4 bg-primary-100 rounded-lg">
-                    <Wallet className="h-10 w-10 text-primary-600" />
+                  <div className="p-4 bg-caramel-100 rounded-lg">
+                    <Wallet className="h-10 w-10 text-caramel-600" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
-                    <p className="text-lg font-bold text-gray-900">View Details</p>
+                  <div className="bg-surface rounded-lg p-4">
+                    <p className="text-sm text-text-secondary mb-1">Total Revenue</p>
+                    <p className="text-lg font-bold text-text-primary">View Details</p>
                   </div>
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Store vs Billing</p>
-                    <p className="text-lg font-bold text-gray-900">Compare</p>
+                  <div className="bg-surface rounded-lg p-4">
+                    <p className="text-sm text-text-secondary mb-1">Store vs Billing</p>
+                    <p className="text-lg font-bold text-text-primary">Compare</p>
                   </div>
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Export Data</p>
-                    <p className="text-lg font-bold text-gray-900">CSV</p>
+                  <div className="bg-surface rounded-lg p-4">
+                    <p className="text-sm text-text-secondary mb-1">Export Data</p>
+                    <p className="text-lg font-bold text-text-primary">CSV</p>
                   </div>
                 </div>
 
@@ -682,20 +682,20 @@ export default function AdminPage() {
             <Card noPadding>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-canvas border-b">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Product</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">SKU</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Price</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Stock</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Product</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">SKU</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Category</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Price</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Stock</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {products.map(product => (
-                      <tr key={product.id} className="hover:bg-gray-50">
+                      <tr key={product.id} className="hover:bg-canvas">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <img
@@ -705,7 +705,7 @@ export default function AdminPage() {
                             />
                             <div>
                               <p className="font-medium text-sm">{product.name}</p>
-                              <p className="text-xs text-gray-500 truncate max-w-xs">
+                              <p className="text-xs text-text-tertiary truncate max-w-xs">
                                 {product.description}
                               </p>
                             </div>
@@ -788,8 +788,8 @@ export default function AdminPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold">{category.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{category.description}</p>
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-sm text-text-secondary mt-1">{category.description}</p>
+                      <p className="text-xs text-text-tertiary mt-2">
                         {category.product_count || 0} products
                       </p>
                     </div>
@@ -821,25 +821,25 @@ export default function AdminPage() {
           <Card noPadding>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-canvas border-b">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Order #</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Customer</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Total</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Order Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Payment Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Order #</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Customer</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Total</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Order Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Payment Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-bark-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {orders.map(order => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr key={order.id} className="hover:bg-canvas">
                       <td className="px-4 py-3 text-sm font-medium">{order.order_number}</td>
                       <td className="px-4 py-3 text-sm">
                         <div>
                           <p>{order.customer_name || 'Guest'}</p>
-                          <p className="text-xs text-gray-500">{order.customer_email}</p>
+                          <p className="text-xs text-text-tertiary">{order.customer_email}</p>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm font-medium">
@@ -856,12 +856,12 @@ export default function AdminPage() {
                             ? 'bg-yellow-100 text-yellow-800'
                             : order.payment_status === 'failed'
                             ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-surface-subtle text-bark-800'
                         }`}>
                           {order.payment_status || 'pending'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-text-tertiary">
                         {new Date(order.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
@@ -913,12 +913,12 @@ export default function AdminPage() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="bg-gradient-to-br from-primary-500 to-primary-700 p-3 rounded-lg">
+                        <div className="bg-gradient-to-br from-caramel-500 to-caramel-700 p-3 rounded-lg">
                           <Share2 className="h-6 w-6 text-white" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-lg">{link.platform}</h3>
-                          <p className="text-sm text-gray-500">Order: {link.display_order}</p>
+                          <p className="text-sm text-text-tertiary">Order: {link.display_order}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -934,13 +934,13 @@ export default function AdminPage() {
                             })
                             setSocialModal(true)
                           }}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
                           <Edit2 className="h-4 w-4 text-blue-600" />
                         </button>
                         <button
                           onClick={() => deleteSocial(link.id)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </button>
@@ -949,29 +949,29 @@ export default function AdminPage() {
 
                     <div className="space-y-2">
                       <div className="flex items-center text-sm">
-                        <span className="text-gray-500 w-16">Icon:</span>
-                        <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs">
+                        <span className="text-text-tertiary w-16">Icon:</span>
+                        <span className="font-mono bg-surface-subtle px-2 py-1 rounded text-xs">
                           {link.icon}
                         </span>
                       </div>
                       <div className="flex items-center text-sm">
-                        <span className="text-gray-500 w-16">URL:</span>
+                        <span className="text-text-tertiary w-16">URL:</span>
                         <a
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary-600 hover:underline truncate flex-1"
+                          className="text-caramel-600 hover:underline truncate flex-1"
                         >
                           {link.url}
                         </a>
                       </div>
                       <div className="flex items-center text-sm">
-                        <span className="text-gray-500 w-16">Status:</span>
+                        <span className="text-text-tertiary w-16">Status:</span>
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium ${
                             link.is_active
                               ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-600'
+                              : 'bg-surface-subtle text-text-secondary'
                           }`}
                         >
                           {link.is_active ? 'Active' : 'Inactive'}
@@ -983,8 +983,8 @@ export default function AdminPage() {
               ))}
 
               {socialLinks.length === 0 && (
-                <div className="col-span-full text-center py-12 text-gray-500">
-                  <Share2 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <div className="col-span-full text-center py-12 text-text-tertiary">
+                  <Share2 className="h-12 w-12 mx-auto mb-4 text-bark-400" />
                   <p>No social media links yet.</p>
                   <p className="text-sm mt-2">Click "Add Social Link" to get started.</p>
                 </div>
@@ -1028,7 +1028,7 @@ export default function AdminPage() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="font-semibold text-lg">{item.label}</h3>
-                        <p className="text-sm text-gray-500 capitalize">{item.type}</p>
+                        <p className="text-sm text-text-tertiary capitalize">{item.type}</p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
@@ -1048,14 +1048,14 @@ export default function AdminPage() {
                             })
                             setNavModal(true)
                           }}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
                           <Edit2 className="h-4 w-4 text-blue-600" />
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteNav(item.id)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </button>
@@ -1064,24 +1064,24 @@ export default function AdminPage() {
 
                     <div className="space-y-2">
                       <div className="flex items-center text-sm">
-                        <span className="text-gray-500 w-20">Href:</span>
-                        <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded truncate flex-1">
+                        <span className="text-text-tertiary w-20">Href:</span>
+                        <span className="text-xs font-mono bg-surface-subtle px-2 py-1 rounded truncate flex-1">
                           {item.href}
                         </span>
                       </div>
                       <div className="flex items-center text-sm">
-                        <span className="text-gray-500 w-20">Order:</span>
+                        <span className="text-text-tertiary w-20">Order:</span>
                         <span className="font-medium">{item.display_order}</span>
                       </div>
                       <div className="flex items-center text-sm">
-                        <span className="text-gray-500 w-20">Status:</span>
+                        <span className="text-text-tertiary w-20">Status:</span>
                         <button
                           type="button"
                           onClick={() => toggleNavActive(item)}
                           className={`px-2 py-1 rounded text-xs font-medium transition-colors hover:opacity-80 ${
                             item.is_active
                               ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              : 'bg-surface-subtle text-text-secondary hover:bg-bark-200'
                           }`}
                         >
                           {item.is_active ? 'Active' : 'Inactive'}
@@ -1093,8 +1093,8 @@ export default function AdminPage() {
               ))}
 
               {navItems.length === 0 && (
-                <div className="col-span-full text-center py-12 text-gray-500">
-                  <Menu className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <div className="col-span-full text-center py-12 text-text-tertiary">
+                  <Menu className="h-12 w-12 mx-auto mb-4 text-bark-400" />
                   <p>No navigation items yet.</p>
                   <p className="text-sm mt-2">Click "Add Nav Item" to get started.</p>
                 </div>
@@ -1126,7 +1126,7 @@ export default function AdminPage() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-bark-700 mb-2">
               Product Image
             </label>
             <ImageUpload
@@ -1284,9 +1284,9 @@ export default function AdminPage() {
               id="social-active"
               checked={socialForm.is_active}
               onChange={(e) => setSocialForm({ ...socialForm, is_active: e.target.checked })}
-              className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              className="w-4 h-4 text-caramel-600 border-border-strong rounded focus-visible:ring-ring"
             />
-            <label htmlFor="social-active" className="text-sm font-medium text-gray-700">
+            <label htmlFor="social-active" className="text-sm font-medium text-bark-700">
               Active
             </label>
           </div>
@@ -1383,9 +1383,9 @@ export default function AdminPage() {
               id="nav-active"
               checked={navForm.is_active}
               onChange={(e) => setNavForm({ ...navForm, is_active: e.target.checked })}
-              className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              className="w-4 h-4 text-caramel-600 border-border-strong rounded focus-visible:ring-ring"
             />
-            <label htmlFor="nav-active" className="text-sm font-medium text-gray-700">
+            <label htmlFor="nav-active" className="text-sm font-medium text-bark-700">
               Active
             </label>
           </div>

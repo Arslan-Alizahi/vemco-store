@@ -90,7 +90,7 @@ export function ImageUpload({
     <div className={`space-y-4 ${className}`}>
       {value ? (
         <div className="relative group">
-          <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-gray-200">
+          <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-border-subtle">
             <Image
               src={value}
               alt="Uploaded image"
@@ -113,27 +113,27 @@ export function ImageUpload({
         <div
           onClick={() => !disabled && fileInputRef.current?.click()}
           className={`
-            relative w-full h-64 border-2 border-dashed border-gray-300 rounded-lg
+            relative w-full h-64 border-2 border-dashed border-border-strong rounded-lg
             flex flex-col items-center justify-center
-            ${!disabled ? 'cursor-pointer hover:border-primary-500 hover:bg-primary-50' : 'opacity-50 cursor-not-allowed'}
+            ${!disabled ? 'cursor-pointer hover:border-caramel-500 hover:bg-caramel-50' : 'opacity-50 cursor-not-allowed'}
             transition-all duration-200
           `}
         >
           {uploading ? (
             <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
-              <p className="text-gray-600">Uploading...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600 mb-4"></div>
+              <p className="text-text-secondary">Uploading...</p>
             </div>
           ) : (
             <>
-              <div className="p-4 bg-gray-100 rounded-full mb-4">
-                <ImageIcon className="w-8 h-8 text-gray-400" />
+              <div className="p-4 bg-surface-subtle rounded-full mb-4">
+                <ImageIcon className="w-8 h-8 text-bark-400" />
               </div>
-              <div className="flex items-center space-x-2 text-gray-600 mb-2">
+              <div className="flex items-center space-x-2 text-text-secondary mb-2">
                 <Upload className="w-5 h-5" />
                 <span className="font-medium">Click to upload image</span>
               </div>
-              <p className="text-sm text-gray-500">PNG, JPG, GIF, WEBP up to 5MB</p>
+              <p className="text-sm text-text-tertiary">PNG, JPG, GIF, WEBP up to 5MB</p>
             </>
           )}
         </div>

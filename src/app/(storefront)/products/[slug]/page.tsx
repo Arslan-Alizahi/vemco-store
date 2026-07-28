@@ -134,7 +134,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
       </div>
     )
   }
@@ -147,15 +147,15 @@ export default function ProductDetailPage() {
   const lowStock = product.stock_quantity > 0 && product.stock_quantity <= (product.low_stock_threshold || 5)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-bark-50 to-bark-100 py-8">
       <div className="container mx-auto px-4">
         {/* Breadcrumbs */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8 overflow-x-auto pb-2">
-          <Link href="/" className="hover:text-primary-600 transition-colors whitespace-nowrap">
+        <nav className="flex items-center space-x-2 text-sm text-text-secondary mb-8 overflow-x-auto pb-2">
+          <Link href="/" className="hover:text-caramel-600 transition-colors whitespace-nowrap">
             Home
           </Link>
           <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <Link href="/products" className="hover:text-primary-600 transition-colors whitespace-nowrap">
+          <Link href="/products" className="hover:text-caramel-600 transition-colors whitespace-nowrap">
             Products
           </Link>
           {product.parent_category_name && product.parent_category_id && (
@@ -163,7 +163,7 @@ export default function ProductDetailPage() {
               <ChevronRight className="w-4 h-4 flex-shrink-0" />
               <Link
                 href={`/products?category=${product.parent_category_id}`}
-                className="hover:text-primary-600 transition-colors max-w-[100px] sm:max-w-none truncate"
+                className="hover:text-caramel-600 transition-colors max-w-[100px] sm:max-w-none truncate"
               >
                 {product.parent_category_name}
               </Link>
@@ -174,14 +174,14 @@ export default function ProductDetailPage() {
               <ChevronRight className="w-4 h-4 flex-shrink-0" />
               <Link
                 href={`/products?category=${product.category_id}`}
-                className="hover:text-primary-600 transition-colors max-w-[100px] sm:max-w-none truncate"
+                className="hover:text-caramel-600 transition-colors max-w-[100px] sm:max-w-none truncate"
               >
                 {product.category_name}
               </Link>
             </>
           )}
           <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <span className="text-gray-900 font-medium max-w-[150px] sm:max-w-none truncate">{product.name}</span>
+          <span className="text-text-primary font-medium max-w-[150px] sm:max-w-none truncate">{product.name}</span>
         </nav>
 
         {/* Product Details */}
@@ -193,7 +193,7 @@ export default function ProductDetailPage() {
             transition={{ duration: 0.5 }}
           >
             <Card className="overflow-hidden">
-              <div className="aspect-square relative bg-white">
+              <div className="aspect-square relative bg-surface">
                 <Image
                   src={product.images?.[selectedImage]?.image_url || '/placeholder.png'}
                   alt={product.images?.[selectedImage]?.alt_text || product.name}
@@ -215,8 +215,8 @@ export default function ProductDetailPage() {
                     aria-label={`View image ${index + 1}`}
                     className={`aspect-square relative rounded-lg overflow-hidden border-2 transition-all ${
                       selectedImage === index
-                        ? 'border-primary-600 ring-2 ring-primary-200'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-caramel-600 ring-2 ring-caramel-200'
+                        : 'border-border-subtle hover:border-border-strong'
                     }`}
                   >
                     <Image
@@ -239,8 +239,8 @@ export default function ProductDetailPage() {
             className="space-y-6"
           >
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
-              <p className="text-gray-600 text-sm sm:text-base">{product.description}</p>
+              <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2">{product.name}</h1>
+              <p className="text-text-secondary text-sm sm:text-base">{product.description}</p>
             </div>
 
             {/* Price. Neutral, not brand -- the accent is reserved for the
@@ -282,7 +282,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* SKU */}
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-text-secondary">
               <span className="font-medium">SKU:</span> {product.sku}
             </div>
 
@@ -290,14 +290,14 @@ export default function ProductDetailPage() {
             {inStock && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
-                  <span className="text-gray-700 font-medium">Quantity:</span>
-                  <div className="flex items-center border border-gray-300 rounded-lg">
+                  <span className="text-bark-700 font-medium">Quantity:</span>
+                  <div className="flex items-center border border-border-strong rounded-lg">
                     <button
                       type="button"
                       onClick={decrementQuantity}
                       disabled={quantity <= 1}
                       aria-label="Decrease quantity"
-                      className="p-3 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="p-3 hover:bg-surface-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
@@ -307,7 +307,7 @@ export default function ProductDetailPage() {
                       onClick={incrementQuantity}
                       disabled={quantity >= product.stock_quantity}
                       aria-label="Increase quantity"
-                      className="p-3 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="p-3 hover:bg-surface-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -345,9 +345,9 @@ export default function ProductDetailPage() {
 
             {/* Long Description */}
             {product.long_description && (
-              <Card className="p-6 bg-gray-50">
+              <Card className="p-6 bg-canvas">
                 <h3 className="text-lg font-semibold mb-3">Product Details</h3>
-                <p className="text-gray-700 whitespace-pre-line">{product.long_description}</p>
+                <p className="text-bark-700 whitespace-pre-line">{product.long_description}</p>
               </Card>
             )}
           </motion.div>
@@ -360,12 +360,12 @@ export default function ProductDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">Related Products</h2>
+            <h2 className="text-3xl font-bold text-text-primary mb-8">Related Products</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {product.relatedProducts.map((relatedProduct: any) => (
                 <Link key={relatedProduct.id} href={`/products/${relatedProduct.slug}`}>
                   <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300">
-                    <div className="aspect-square relative bg-white overflow-hidden">
+                    <div className="aspect-square relative bg-surface overflow-hidden">
                       <Image
                         src={relatedProduct.primary_image || '/placeholder.png'}
                         alt={relatedProduct.name}
@@ -374,7 +374,7 @@ export default function ProductDetailPage() {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                      <h3 className="font-semibold text-text-primary mb-2 line-clamp-2">
                         {relatedProduct.name}
                       </h3>
                       <div className="flex items-baseline gap-2">

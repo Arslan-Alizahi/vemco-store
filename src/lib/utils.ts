@@ -145,7 +145,7 @@ export const getStockStatusColor = (quantity: number, threshold?: number): strin
     case 'In Stock':
       return 'text-green-600 bg-green-50'
     default:
-      return 'text-gray-600 bg-gray-50'
+      return 'text-text-secondary bg-canvas'
   }
 }
 

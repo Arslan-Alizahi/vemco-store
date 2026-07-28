@@ -53,7 +53,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-canvas">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -63,8 +63,8 @@ export default function ContactPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Contact Us</h1>
+          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto">
             Have a question? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
           </p>
         </motion.div>
@@ -78,38 +78,38 @@ export default function ContactPage() {
             className="lg:col-span-1"
           >
             <Card className="p-6 h-full">
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-6">Get in Touch</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-6">Get in Touch</h2>
 
               <div className="space-y-6">
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <Mail className="h-6 w-6 text-primary-600" />
+                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
+                    <Mail className="h-6 w-6 text-caramel-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900">Email</h3>
-                    <p className="mt-1 text-gray-600">support@vemco.pk</p>
-                    <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
+                    <h3 className="text-lg font-medium text-text-primary">Email</h3>
+                    <p className="mt-1 text-text-secondary">support@vemco.pk</p>
+                    <p className="text-sm text-text-tertiary">We'll respond within 24 hours</p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <Phone className="h-6 w-6 text-primary-600" />
+                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
+                    <Phone className="h-6 w-6 text-caramel-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900">Phone</h3>
-                    <p className="mt-1 text-gray-600">+1 (555) 123-4567</p>
-                    <p className="text-sm text-gray-500">Mon-Fri 9am-6pm EST</p>
+                    <h3 className="text-lg font-medium text-text-primary">Phone</h3>
+                    <p className="mt-1 text-text-secondary">+1 (555) 123-4567</p>
+                    <p className="text-sm text-text-tertiary">Mon-Fri 9am-6pm EST</p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="h-6 w-6 text-primary-600" />
+                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
+                    <MapPin className="h-6 w-6 text-caramel-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900">Address</h3>
-                    <p className="mt-1 text-gray-600">
+                    <h3 className="text-lg font-medium text-text-primary">Address</h3>
+                    <p className="mt-1 text-text-secondary">
                       123 Commerce Street<br />
                       Suite 100<br />
                       New York, NY 10001
@@ -118,12 +118,12 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <Clock className="h-6 w-6 text-primary-600" />
+                  <div className="flex-shrink-0 w-12 h-12 bg-caramel-100 rounded-lg flex items-center justify-center">
+                    <Clock className="h-6 w-6 text-caramel-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900">Business Hours</h3>
-                    <p className="mt-1 text-gray-600">
+                    <h3 className="text-lg font-medium text-text-primary">Business Hours</h3>
+                    <p className="mt-1 text-text-secondary">
                       Monday - Friday: 9:00 AM - 6:00 PM<br />
                       Saturday: 10:00 AM - 4:00 PM<br />
                       Sunday: Closed
@@ -143,14 +143,14 @@ export default function ContactPage() {
           >
             <Card className="p-6 md:p-8">
               <div className="flex items-center mb-6">
-                <MessageSquare className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 mr-3" />
-                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Send us a Message</h2>
+                <MessageSquare className="h-7 w-7 sm:h-8 sm:w-8 text-caramel-600 mr-3" />
+                <h2 className="text-xl sm:text-2xl font-semibold text-text-primary">Send us a Message</h2>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="name" className="block text-sm font-medium text-bark-700 mb-2">
                       Name *
                     </label>
                     <Input
@@ -165,7 +165,7 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-bark-700 mb-2">
                       Email *
                     </label>
                     <Input
@@ -182,7 +182,7 @@ export default function ContactPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="phone" className="block text-sm font-medium text-bark-700 mb-2">
                       Phone
                     </label>
                     <Input
@@ -196,7 +196,7 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="subject" className="block text-sm font-medium text-bark-700 mb-2">
                       Subject
                     </label>
                     <Input
@@ -211,7 +211,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="message" className="block text-sm font-medium text-bark-700 mb-2">
                     Message *
                   </label>
                   <textarea
@@ -220,7 +220,7 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={handleChange}
                     rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 border border-border-strong rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus:border-transparent resize-none"
                     placeholder="Tell us more about your inquiry..."
                     required
                   />
@@ -237,7 +237,7 @@ export default function ContactPage() {
                   {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
 
-                <p className="text-sm text-gray-500 text-center">
+                <p className="text-sm text-text-tertiary text-center">
                   We typically respond within 24 hours during business days
                 </p>
               </form>
@@ -252,9 +252,9 @@ export default function ContactPage() {
           transition={{ delay: 0.3 }}
           className="mt-12"
         >
-          <Card className="p-6 md:p-8 bg-gradient-to-r from-primary-50 to-blue-50">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Quick Questions?</h2>
-            <p className="text-gray-600 mb-6">
+          <Card className="p-6 md:p-8 bg-gradient-to-r from-caramel-50 to-blue-50">
+            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Quick Questions?</h2>
+            <p className="text-text-secondary mb-6">
               Before reaching out, check our FAQ page for instant answers to common questions.
             </p>
             <a href="/faq">

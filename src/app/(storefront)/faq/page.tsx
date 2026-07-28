@@ -130,7 +130,7 @@ export default function FAQPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-canvas">
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -140,8 +140,8 @@ export default function FAQPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Frequently Asked Questions</h1>
+          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto">
             Find answers to common questions about orders, shipping, payments, and returns
           </p>
         </motion.div>
@@ -156,7 +156,7 @@ export default function FAQPage() {
           <Card className="p-4">
             <Input
               placeholder="Search for answers..."
-              leftIcon={<Search className="h-5 w-5 text-gray-400" />}
+              leftIcon={<Search className="h-5 w-5 text-bark-400" />}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -179,8 +179,8 @@ export default function FAQPage() {
                   onClick={() => setActiveCategory(category.id)}
                   className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all ${
                     activeCategory === category.id
-                      ? 'bg-primary-600 text-white shadow-md'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                      ? 'bg-caramel-600 text-white shadow-md'
+                      : 'bg-surface text-bark-700 hover:bg-surface-subtle'
                   }`}
                 >
                   <Icon className="h-5 w-5 mr-2" />
@@ -200,8 +200,8 @@ export default function FAQPage() {
         >
           {filteredFAQs.length === 0 ? (
             <Card className="p-8 text-center">
-              <p className="text-gray-500 text-lg">No questions found matching your search.</p>
-              <p className="text-gray-400 mt-2">Try different keywords or browse all categories.</p>
+              <p className="text-text-tertiary text-lg">No questions found matching your search.</p>
+              <p className="text-bark-400 mt-2">Try different keywords or browse all categories.</p>
             </Card>
           ) : (
             filteredFAQs.map((faq, index) => (
@@ -213,9 +213,9 @@ export default function FAQPage() {
                   onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
                   className="w-full p-6 text-left flex items-center justify-between"
                 >
-                  <span className="font-semibold text-gray-900 pr-4">{faq.question}</span>
+                  <span className="font-semibold text-text-primary pr-4">{faq.question}</span>
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 flex-shrink-0 transition-transform ${
+                    className={`h-5 w-5 text-text-tertiary flex-shrink-0 transition-transform ${
                       expandedIndex === index ? 'transform rotate-180' : ''
                     }`}
                   />
@@ -231,8 +231,8 @@ export default function FAQPage() {
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-6 pt-0">
-                        <div className="border-t border-gray-200 pt-4">
-                          <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                        <div className="border-t border-border-subtle pt-4">
+                          <p className="text-text-secondary leading-relaxed">{faq.answer}</p>
                         </div>
                       </div>
                     </motion.div>
@@ -250,13 +250,13 @@ export default function FAQPage() {
           transition={{ delay: 0.4 }}
           className="mt-12"
         >
-          <Card className="p-6 md:p-8 bg-gradient-to-r from-primary-50 to-blue-50 text-center">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Still have questions?</h2>
-            <p className="text-gray-600 mb-6">
+          <Card className="p-6 md:p-8 bg-gradient-to-r from-caramel-50 to-blue-50 text-center">
+            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4">Still have questions?</h2>
+            <p className="text-text-secondary mb-6">
               Can't find the answer you're looking for? Our customer support team is here to help.
             </p>
             <a href="/contact">
-              <button className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+              <button className="px-6 py-3 bg-caramel-600 text-white rounded-lg font-semibold hover:bg-caramel-700 transition-colors">
                 Contact Support
               </button>
             </a>

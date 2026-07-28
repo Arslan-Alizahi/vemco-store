@@ -154,7 +154,7 @@ export default function Navbar() {
                     href={link.href}
                     target={link.target || '_self'}
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                    className="flex items-center space-x-3 px-3 py-2 rounded-lg text-bark-700 hover:bg-caramel-50 hover:text-caramel-600 transition-colors"
                   >
                     {Icon && <Icon className="h-5 w-5" />}
                     <span>{link.label}</span>
@@ -167,7 +167,7 @@ export default function Navbar() {
                 <Link
                   href="/favorites"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  className="flex items-center justify-between px-3 py-2 rounded-lg text-bark-700 hover:bg-red-50 hover:text-red-500 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <Heart className="h-5 w-5" />
@@ -183,14 +183,14 @@ export default function Navbar() {
                 <Link
                   href="/cart"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                  className="flex items-center justify-between px-3 py-2 rounded-lg text-bark-700 hover:bg-caramel-50 hover:text-caramel-600 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <ShoppingCart className="h-5 w-5" />
                     <span>Shopping Cart</span>
                   </div>
                   {itemCount > 0 && (
-                    <span className="bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="bg-caramel-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {itemCount}
                     </span>
                   )}

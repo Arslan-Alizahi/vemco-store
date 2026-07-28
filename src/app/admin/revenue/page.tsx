@@ -120,10 +120,10 @@ export default function RevenuePage() {
   if (loading) {
     return (
       <AdminAuth>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-canvas">
           <Navbar />
           <div className="flex items-center justify-center h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
           </div>
         </div>
       </AdminAuth>
@@ -142,7 +142,7 @@ export default function RevenuePage() {
 
   return (
     <AdminAuth>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-canvas">
         <Navbar />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -150,7 +150,7 @@ export default function RevenuePage() {
           <div className="mb-6">
             <Link
               href="/admin"
-              className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4 transition-colors"
+              className="inline-flex items-center text-caramel-600 hover:text-caramel-700 mb-4 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Admin
@@ -158,8 +158,8 @@ export default function RevenuePage() {
 
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Revenue Management</h1>
-                <p className="text-gray-600">Track revenue from store and local billing</p>
+                <h1 className="text-3xl font-bold text-text-primary">Revenue Management</h1>
+                <p className="text-text-secondary">Track revenue from store and local billing</p>
               </div>
 
               <Button
@@ -179,16 +179,16 @@ export default function RevenuePage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                    <p className="text-sm font-medium text-text-secondary">Total Revenue</p>
+                    <p className="text-2xl font-bold text-text-primary mt-2">
                       {formatCurrency(overview.total.revenue)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-text-tertiary mt-1">
                       {overview.total.transactions} transactions
                     </p>
                   </div>
-                  <div className="p-3 bg-primary-100 rounded-lg">
-                    <Wallet className="h-8 w-8 text-primary-600" />
+                  <div className="p-3 bg-caramel-100 rounded-lg">
+                    <Wallet className="h-8 w-8 text-caramel-600" />
                   </div>
                 </div>
               </CardContent>
@@ -199,8 +199,8 @@ export default function RevenuePage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                    <p className="text-sm font-medium text-text-secondary">Today's Revenue</p>
+                    <p className="text-2xl font-bold text-text-primary mt-2">
                       {formatCurrency(overview.today.revenue)}
                     </p>
                     <div className="flex items-center mt-1">
@@ -228,8 +228,8 @@ export default function RevenuePage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">This Month</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                    <p className="text-sm font-medium text-text-secondary">This Month</p>
+                    <p className="text-2xl font-bold text-text-primary mt-2">
                       {formatCurrency(overview.month.revenue)}
                     </p>
                     <div className="flex items-center mt-1">
@@ -257,11 +257,11 @@ export default function RevenuePage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Avg Transaction</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                    <p className="text-sm font-medium text-text-secondary">Avg Transaction</p>
+                    <p className="text-2xl font-bold text-text-primary mt-2">
                       {formatCurrency(overview.total.averageValue)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-text-tertiary mt-1">
                       Per transaction
                     </p>
                   </div>
@@ -288,8 +288,8 @@ export default function RevenuePage() {
                         <Store className="h-6 w-6 text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">Online Store</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-semibold text-text-primary">Online Store</p>
+                        <p className="text-sm text-text-tertiary">
                           {overview.bySource.store?.count || 0} transactions
                         </p>
                       </div>
@@ -298,7 +298,7 @@ export default function RevenuePage() {
                       <p className="text-xl font-bold text-blue-600">
                         {formatCurrency(overview.bySource.store?.total || 0)}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-text-tertiary">
                         {overview.total.revenue > 0
                           ? ((overview.bySource.store?.total || 0) / overview.total.revenue * 100).toFixed(1)
                           : 0}%
@@ -313,8 +313,8 @@ export default function RevenuePage() {
                         <Receipt className="h-6 w-6 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">Local Shop Billing</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-semibold text-text-primary">Local Shop Billing</p>
+                        <p className="text-sm text-text-tertiary">
                           {overview.bySource.billing?.count || 0} transactions
                         </p>
                       </div>
@@ -323,7 +323,7 @@ export default function RevenuePage() {
                       <p className="text-xl font-bold text-green-600">
                         {formatCurrency(overview.bySource.billing?.total || 0)}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-text-tertiary">
                         {overview.total.revenue > 0
                           ? ((overview.bySource.billing?.total || 0) / overview.total.revenue * 100).toFixed(1)
                           : 0}%
@@ -344,12 +344,12 @@ export default function RevenuePage() {
                   {overview.paymentMethods.slice(0, 5).map((method) => (
                     <div key={method.payment_method} className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900 capitalize">
+                        <p className="font-medium text-text-primary capitalize">
                           {method.payment_method?.replace('_', ' ') || 'Unknown'}
                         </p>
-                        <p className="text-sm text-gray-500">{method.count} transactions</p>
+                        <p className="text-sm text-text-tertiary">{method.count} transactions</p>
                       </div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-text-primary">
                         {formatCurrency(method.total)}
                       </p>
                     </div>
@@ -374,31 +374,31 @@ export default function RevenuePage() {
             <CardContent className="pt-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-canvas border-b">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase">
                         Reference
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase">
                         Customer
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase">
                         Amount
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase">
                         Payment
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase">
                         Date
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-border-subtle">
                     {overview.recentTransactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-gray-50">
+                      <tr key={transaction.id} className="hover:bg-canvas">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -420,19 +420,19 @@ export default function RevenuePage() {
                             )}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">
                           {transaction.reference_number}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                           {transaction.customer_name || 'Guest'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-text-primary">
                           {formatCurrency(transaction.total)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 capitalize">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary capitalize">
                           {transaction.payment_method?.replace('_', ' ')}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-tertiary">
                           {formatDate(transaction.transaction_date)}
                         </td>
                       </tr>

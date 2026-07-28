@@ -162,13 +162,13 @@ export default function BillingPage() {
   const changeAmount = (parseFloat(amountPaid) || total) - total
 
   return (
-    <div className="min-h-screen bg-gray-50" data-print="receipt-host">
+    <div className="min-h-screen bg-canvas" data-print="receipt-host">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Point of Sale</h1>
-          <p className="text-gray-600">Process billing and manage receipts</p>
+          <h1 className="text-3xl font-bold text-text-primary">Point of Sale</h1>
+          <p className="text-text-secondary">Process billing and manage receipts</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -180,7 +180,7 @@ export default function BillingPage() {
             <div className="mb-4">
               <Input
                 placeholder="Search products by name or SKU..."
-                leftIcon={<Search className="h-5 w-5 text-gray-400" />}
+                leftIcon={<Search className="h-5 w-5 text-bark-400" />}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -212,19 +212,19 @@ export default function BillingPage() {
 
             {/* Quick Add Grid */}
             <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Add</h3>
+              <h3 className="text-sm font-medium text-bark-700 mb-3">Quick Add</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-96 overflow-y-auto">
                 {filteredProducts.slice(0, 12).map(product => (
                   <button
                     key={product.id}
                     onClick={() => addProductToCart(product.id.toString())}
                     disabled={product.stock_quantity <= 0}
-                    className="p-3 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3 border rounded-lg hover:bg-canvas disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Package className="h-8 w-8 mx-auto mb-1 text-gray-400" />
+                    <Package className="h-8 w-8 mx-auto mb-1 text-bark-400" />
                     <p className="text-xs font-medium truncate">{product.name}</p>
-                    <p className="text-xs text-gray-500">{formatCurrency(product.price)}</p>
-                    <p className="text-xs text-gray-400">Stock: {product.stock_quantity}</p>
+                    <p className="text-xs text-text-tertiary">{formatCurrency(product.price)}</p>
+                    <p className="text-xs text-bark-400">Stock: {product.stock_quantity}</p>
                   </button>
                 ))}
               </div>
@@ -237,11 +237,11 @@ export default function BillingPage() {
               <h2 className="text-xl font-semibold mb-4">Cart Items</h2>
 
               {cart.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No items in cart</p>
+                <p className="text-text-tertiary text-center py-8">No items in cart</p>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {cart.map(item => (
-                    <div key={item.product_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div key={item.product_id} className="flex items-center gap-3 p-3 bg-canvas rounded-lg">
                       <img
                         src={item.product_image || '/placeholder.svg'}
                         alt={item.product_name}
@@ -249,12 +249,12 @@ export default function BillingPage() {
                       />
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.product_name}</p>
-                        <p className="text-xs text-gray-500">{item.product_sku}</p>
+                        <p className="text-xs text-text-tertiary">{item.product_sku}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                          className="p-1 hover:bg-gray-200 rounded"
+                          className="p-1 hover:bg-bark-200 rounded"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -262,7 +262,7 @@ export default function BillingPage() {
                         <button
                           onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                           disabled={item.quantity >= item.stock_quantity}
-                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                          className="p-1 hover:bg-bark-200 rounded disabled:opacity-50"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
@@ -285,17 +285,17 @@ export default function BillingPage() {
               <h2 className="text-xl font-semibold mb-4">Summary</h2>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-text-secondary">Subtotal</span>
                   <span className="font-medium">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tax (18%)</span>
+                  <span className="text-text-secondary">Tax (18%)</span>
                   <span className="font-medium">{formatCurrency(tax)}</span>
                 </div>
                 <div className="border-t pt-2">
                   <div className="flex justify-between text-lg">
                     <span className="font-semibold">Total</span>
-                    <span className="font-bold text-primary-600">{formatCurrency(total)}</span>
+                    <span className="font-bold text-caramel-600">{formatCurrency(total)}</span>
                   </div>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export default function BillingPage() {
             value={amountPaid}
             onChange={(e) => setAmountPaid(e.target.value)}
             placeholder={total.toFixed(2)}
-            leftIcon={<DollarSign className="h-5 w-5 text-gray-400" />}
+            leftIcon={<DollarSign className="h-5 w-5 text-bark-400" />}
           />
 
           {amountPaid && parseFloat(amountPaid) >= total && (
@@ -362,9 +362,9 @@ export default function BillingPage() {
             </div>
           )}
 
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="text-sm text-gray-600">Total Due</p>
-            <p className="text-2xl font-bold text-primary-600">{formatCurrency(total)}</p>
+          <div className="bg-canvas p-3 rounded-lg">
+            <p className="text-sm text-text-secondary">Total Due</p>
+            <p className="text-2xl font-bold text-caramel-600">{formatCurrency(total)}</p>
           </div>
 
           <div className="flex gap-3">

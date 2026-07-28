@@ -122,7 +122,7 @@ export default function CartPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-canvas">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <motion.div
@@ -130,9 +130,9 @@ export default function CartPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-8">Add some products to get started</p>
+            <ShoppingBag className="h-24 w-24 text-bark-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-text-primary mb-2">Your cart is empty</h2>
+            <p className="text-text-secondary mb-8">Add some products to get started</p>
             <Link href="/products">
               <Button variant="primary" size="lg">
                 Continue Shopping
@@ -145,14 +145,14 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-canvas">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
-          <p className="text-gray-600 mt-2">{cart.length} items in your cart</p>
+          <h1 className="text-3xl font-bold text-text-primary">Shopping Cart</h1>
+          <p className="text-text-secondary mt-2">{cart.length} items in your cart</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -174,8 +174,8 @@ export default function CartPage() {
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-base sm:text-lg truncate">{item.product_name}</h3>
-                      <p className="text-xs sm:text-sm text-gray-500 mb-2">SKU: {item.product_sku}</p>
-                      <p className="text-base sm:text-lg font-bold text-primary-600">
+                      <p className="text-xs sm:text-sm text-text-tertiary mb-2">SKU: {item.product_sku}</p>
+                      <p className="text-base sm:text-lg font-bold text-caramel-600">
                         {formatCurrency(item.unit_price)}
                       </p>
                     </div>
@@ -190,7 +190,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-1 sm:gap-2">
                         <button
                           onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                          className="p-2 hover:bg-gray-100 rounded transition-colors touch-manipulation"
+                          className="p-2 hover:bg-surface-subtle rounded transition-colors touch-manipulation"
                           aria-label="Decrease quantity"
                         >
                           <Minus className="h-4 w-4" />
@@ -199,13 +199,13 @@ export default function CartPage() {
                         <button
                           onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                           disabled={item.quantity >= item.stock_quantity}
-                          className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 touch-manipulation"
+                          className="p-2 hover:bg-surface-subtle rounded transition-colors disabled:opacity-50 touch-manipulation"
                           aria-label="Increase quantity"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-text-secondary">
                         Subtotal: <span className="font-semibold">{formatCurrency(item.unit_price * item.quantity)}</span>
                       </p>
                     </div>
@@ -231,22 +231,22 @@ export default function CartPage() {
             <Card>
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
               <div className="space-y-2 pb-4 border-b">
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-text-secondary">
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-text-secondary">
                   <span>Tax (18%)</span>
                   <span>{formatCurrency(tax)}</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-text-secondary">
                   <span>Shipping</span>
                   <span>{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
                 </div>
               </div>
               <div className="flex justify-between text-lg font-semibold pt-4">
                 <span>Total</span>
-                <span className="text-primary-600">{formatCurrency(total)}</span>
+                <span className="text-caramel-600">{formatCurrency(total)}</span>
               </div>
             </Card>
 
@@ -289,7 +289,7 @@ export default function CartPage() {
               >
                 {isProcessing ? 'Processing...' : 'Place Order & Pay'}
               </Button>
-              <p className="text-xs text-center text-gray-500 mt-3">
+              <p className="text-xs text-center text-text-tertiary mt-3">
                 By placing this order, you agree to our terms and conditions
               </p>
             </Card>
