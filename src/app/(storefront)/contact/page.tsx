@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -55,7 +53,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
@@ -260,8 +257,6 @@ export default function ContactPage() {
           </Card>
         </motion.div>
       </div>
-
-      <Footer />
     </div>
   )
 }

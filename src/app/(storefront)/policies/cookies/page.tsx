@@ -1,15 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
 import Card from '@/components/ui/Card'
 import { Cookie } from 'lucide-react'
 
 export default function CookiePolicyPage() {
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <motion.div
@@ -162,8 +159,6 @@ export default function CookiePolicyPage() {
           </Card>
         </motion.div>
       </div>
-
-      <Footer />
     </div>
   )
 }

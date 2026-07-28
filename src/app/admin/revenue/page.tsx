@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Navbar from '@/components/layout/Navbar'
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import Input from '@/components/ui/Input'
-import { AdminAuth } from '@/components/ui/AdminAuth'
 import {
   Wallet, TrendingUp, TrendingDown, ShoppingBag,
   Download, Calendar, Store, Receipt, ArrowLeft,
@@ -119,14 +117,10 @@ export default function RevenuePage() {
 
   if (loading) {
     return (
-      <AdminAuth>
-        <div className="min-h-screen bg-canvas">
-          <Navbar />
-          <div className="flex items-center justify-center h-screen">
+        <div className="min-h-screen bg-canvas">          <div className="flex items-center justify-center h-screen">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
           </div>
         </div>
-      </AdminAuth>
     )
   }
 
@@ -141,10 +135,7 @@ export default function RevenuePage() {
   ]
 
   return (
-    <AdminAuth>
-      <div className="min-h-screen bg-canvas">
-        <Navbar />
-
+      <div className="min-h-screen bg-canvas">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-6">
@@ -442,6 +433,5 @@ export default function RevenuePage() {
           </Card>
         </div>
       </div>
-    </AdminAuth>
   )
 }

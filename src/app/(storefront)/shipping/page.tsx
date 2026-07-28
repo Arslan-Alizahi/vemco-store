@@ -1,15 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
 import Card from '@/components/ui/Card'
 import { Truck, Package, Clock, MapPin, DollarSign, CheckCircle } from 'lucide-react'
 
 export default function ShippingPage() {
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
@@ -192,8 +189,6 @@ export default function ShippingPage() {
           </a>
         </motion.div>
       </div>
-
-      <Footer />
     </div>
   )
 }

@@ -1,86 +1,117 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { ShoppingCart, Menu, X, Package, Heart } from 'lucide-react'
+import { ShoppingCart, Menu, X, Heart, Search } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import * as LucideIcons from 'lucide-react'
 import { useCart } from '@/hooks/useCart'
 import { useFavorites } from '@/hooks/useFavorites'
 import { cn } from '@/lib/cn'
-import { motion, AnimatePresence } from 'framer-motion'
 import { NavItem } from '@/types/nav'
-import * as LucideIcons from 'lucide-react'
+import Container from './Container'
+import Logo from './Logo'
 
-export default function Navbar() {
+export interface NavbarProps {
+  /**
+   * Fetched on the server by the shell.
+   *
+   * This used to be a client useEffect, so the header painted empty and then
+   * materialised ~450px of links on every single navigation.
+   */
+  links: NavItem[]
+}
+
+export default function Navbar({ links }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [navLinks, setNavLinks] = useState<NavItem[]>([])
+  const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const { itemCount } = useCart()
   const { count: favoritesCount } = useFavorites()
+  const menuRef = useRef<HTMLDivElement>(null)
+  const toggleRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    // Fetch navigation items from API
-    fetch('/api/nav?location=header&active_only=true')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          // Filter to only show top-level items (no parent_id)
-          const topLevelItems = (data.data || []).filter((item: NavItem) => !item.parent_id)
-          setNavLinks(topLevelItems)
-        }
-      })
-      .catch((error) => console.error('Error fetching nav items:', error))
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Get icon component from lucide-react
+  // Close on navigation, or the menu stays open over the new page.
+  useEffect(() => setIsMenuOpen(false), [pathname])
+
+  // Escape closes and returns focus to the toggle; body scroll is locked while
+  // the panel covers the page.
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setIsMenuOpen(false)
+      toggleRef.current?.focus()
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previous
+    }
+  }, [isMenuOpen])
+
   const getIcon = (iconName?: string) => {
     if (!iconName) return null
     const Icon = (LucideIcons as any)[iconName]
-    return Icon ? Icon : null
+    return Icon ?? null
   }
 
-  return (
-    <nav className="glass sticky top-0 z-sticky border-b border-border-subtle">
-      <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
-        <div className="flex h-16 justify-between">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link
-              href="/"
-              className="flex items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-            >
-              <Package className="h-6 w-6 text-caramel-700" aria-hidden="true" />
-              <span className="font-serif text-h3 tracking-[-0.015em] text-text-primary">
-                VEMCO
-              </span>
-            </Link>
-          </div>
+  const isActive = (href: string) =>
+    pathname === href || (href !== '/' && pathname.startsWith(href))
 
-          {/* Desktop Navigation */}
+  const countPill =
+    'absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-caramel-600 px-1 text-[10px] font-medium tabular-nums text-white'
+
+  const iconLink =
+    'relative flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
+  return (
+    <header
+      className={cn(
+        'sticky top-0 z-sticky border-b transition-shadow duration-base ease-standard',
+        // Hairline at rest, a whisper of elevation once the page moves under
+        // it. The old header carried a permanent shadow-lg, which was the
+        // loudest depth cue on the page doing a hairline's job.
+        scrolled ? 'glass border-border-subtle shadow-e1' : 'border-transparent bg-canvas'
+      )}
+    >
+      <Container>
+        <nav aria-label="Main" className="flex h-16 items-center justify-between gap-4">
+          <Logo />
+
           <div className="hidden items-center gap-7 md:flex">
-            {navLinks.map((link) => {
+            {links.map(link => {
               const Icon = getIcon(link.icon)
-              const isActive =
-                pathname === link.href ||
-                (link.href !== '/' && pathname.startsWith(link.href))
+              const active = isActive(link.href)
               return (
                 <Link
                   key={link.id}
                   href={link.href}
                   target={link.target || '_self'}
-                  aria-current={isActive ? 'page' : undefined}
+                  aria-current={active ? 'page' : undefined}
                   className={cn(
                     'relative flex items-center gap-1.5 rounded-sm py-1 text-ui font-medium',
                     'transition-colors duration-fast ease-standard',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-                    isActive
-                      ? 'text-text-primary'
-                      : 'text-text-secondary hover:text-text-primary'
+                    active ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
                   )}
                 >
                   {Icon && <Icon className="h-4 w-4" aria-hidden="true" />}
                   {link.label}
-                  {isActive && (
+                  {active && (
                     <span
                       aria-hidden="true"
                       className="absolute -bottom-[21px] left-0 right-0 h-0.5 bg-caramel-600"
@@ -91,115 +122,89 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Favorites, Cart & Mobile Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-1">
+            <Link href="/products" aria-label="Search products" className={cn(iconLink, 'hidden sm:flex')}>
+              <Search className="h-5 w-5" aria-hidden="true" />
+            </Link>
+
             <Link
               href="/favorites"
               aria-label={`Favourites${favoritesCount > 0 ? `, ${favoritesCount} saved` : ''}`}
-              className="relative flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={iconLink}
             >
               <Heart className="h-5 w-5" aria-hidden="true" />
               {favoritesCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-caramel-600 px-1 text-[10px] font-medium tabular-nums text-white">
-                  {favoritesCount > 99 ? '99+' : favoritesCount}
-                </span>
+                <span className={countPill}>{favoritesCount > 99 ? '99+' : favoritesCount}</span>
               )}
             </Link>
 
             <Link
               href="/cart"
-              aria-label={`Cart${itemCount > 0 ? `, ${itemCount} items` : ', empty'}`}
-              className="relative flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={itemCount > 0 ? `Cart, ${itemCount} items` : 'Cart, empty'}
+              className={iconLink}
             >
               <ShoppingCart className="h-5 w-5" aria-hidden="true" />
               {itemCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-caramel-600 px-1 text-[10px] font-medium tabular-nums text-white">
-                  {itemCount > 99 ? '99+' : itemCount}
-                </span>
+                <span className={countPill}>{itemCount > 99 ? '99+' : itemCount}</span>
               )}
             </Link>
 
-            {/* Mobile Menu Button */}
             <button
+              ref={toggleRef}
               type="button"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => setIsMenuOpen(open => !open)}
               aria-expanded={isMenuOpen}
               aria-controls="mobile-menu"
               aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-              className="flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+              className={cn(iconLink, 'md:hidden')}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
-        </div>
-      </div>
+        </nav>
+      </Container>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
+            ref={menuRef}
+            id="mobile-menu"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            id="mobile-menu"
+            transition={{ duration: 0.22 }}
             className="overflow-hidden border-t border-border-subtle bg-surface md:hidden"
           >
-            <div className="space-y-1 px-4 py-2">
-              {navLinks.map((link) => {
-                const Icon = getIcon(link.icon)
-                return (
-                  <Link
-                    key={link.id}
-                    href={link.href}
-                    target={link.target || '_self'}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-lg text-bark-700 hover:bg-caramel-50 hover:text-caramel-600 transition-colors"
-                  >
-                    {Icon && <Icon className="h-5 w-5" />}
-                    <span>{link.label}</span>
-                  </Link>
-                )
-              })}
-
-              {/* Favorites & Cart Links */}
-              <div className="border-t pt-2 mt-2">
-                <Link
-                  href="/favorites"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-bark-700 hover:bg-red-50 hover:text-red-500 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Heart className="h-5 w-5" />
-                    <span>Favorites</span>
-                  </div>
-                  {favoritesCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {favoritesCount}
-                    </span>
-                  )}
-                </Link>
-
-                <Link
-                  href="/cart"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-bark-700 hover:bg-caramel-50 hover:text-caramel-600 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span>Shopping Cart</span>
-                  </div>
-                  {itemCount > 0 && (
-                    <span className="bg-caramel-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {itemCount}
-                    </span>
-                  )}
-                </Link>
-              </div>
-            </div>
+            <Container className="py-3">
+              <ul className="space-y-1">
+                {links.map(link => {
+                  const Icon = getIcon(link.icon)
+                  const active = isActive(link.href)
+                  return (
+                    <li key={link.id}>
+                      <Link
+                        href={link.href}
+                        target={link.target || '_self'}
+                        aria-current={active ? 'page' : undefined}
+                        className={cn(
+                          'flex items-center gap-3 rounded-sm px-3 py-3 text-body font-medium',
+                          'transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          active
+                            ? 'bg-caramel-50 text-text-primary'
+                            : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
+                        )}
+                      >
+                        {Icon && <Icon className="h-5 w-5" aria-hidden="true" />}
+                        {link.label}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Container>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </header>
   )
 }

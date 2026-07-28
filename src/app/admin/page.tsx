@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Navbar from '@/components/layout/Navbar'
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -11,7 +10,6 @@ import Modal from '@/components/ui/Modal'
 import Badge, { StatusBadge, StockBadge } from '@/components/ui/Badge'
 import { useToast } from '@/components/ui/Toast'
 import { ImageUpload } from '@/components/ui/ImageUpload'
-import { AdminAuth } from '@/components/ui/AdminAuth'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import {
   Package, ShoppingCart, Wallet, TrendingUp,
@@ -523,7 +521,7 @@ export default function AdminPage() {
   ]
 
   return (
-    <AdminAuth>
+    <>
       <ConfirmDialog
         isOpen={confirmState !== null}
         onClose={() => setConfirmState(null)}
@@ -534,9 +532,7 @@ export default function AdminPage() {
         destructive={confirmState?.destructive}
       />
 
-      <div className="min-h-screen bg-canvas">
-        <Navbar />
-
+      <div className="min-h-screen bg-canvas">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
@@ -1452,6 +1448,6 @@ export default function AdminPage() {
         </div>
       </Modal>
       </div>
-    </AdminAuth>
+    </>
   )
 }

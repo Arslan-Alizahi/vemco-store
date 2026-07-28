@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Navbar from '@/components/layout/Navbar'
 import Card, { CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
-import { AdminAuth } from '@/components/ui/AdminAuth'
 import {
   ArrowLeft, Download, Filter, Search,
   Store, Receipt, ChevronLeft, ChevronRight, Eye
@@ -129,9 +127,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <AdminAuth>
       <div className="min-h-screen bg-canvas">
-        <Navbar />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
@@ -594,6 +590,5 @@ export default function TransactionsPage() {
           </Modal>
         )}
       </div>
-    </AdminAuth>
   )
 }

@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import Navbar from '@/components/layout/Navbar'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Select from '@/components/ui/Select'
@@ -132,7 +131,6 @@ function ProductsContent() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -301,7 +299,6 @@ export default function ProductsPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-canvas">
-          <Navbar />
           <div className="flex items-center justify-center h-screen">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel-600"></div>
           </div>

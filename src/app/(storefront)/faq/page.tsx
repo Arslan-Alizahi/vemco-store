@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import { Search, ChevronDown, HelpCircle, Package, CreditCard, Truck, RotateCcw } from 'lucide-react'
@@ -131,7 +129,6 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
@@ -263,8 +260,6 @@ export default function FAQPage() {
           </Card>
         </motion.div>
       </div>
-
-      <Footer />
     </div>
   )
 }

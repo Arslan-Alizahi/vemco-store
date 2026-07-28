@@ -2,13 +2,10 @@
 
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar />
       <div className="py-12">
       <div className="container mx-auto px-4 max-w-4xl">
         <motion.div
@@ -138,7 +135,6 @@ export default function PrivacyPage() {
         </motion.div>
       </div>
       </div>
-      <Footer />
     </div>
   )
 }
