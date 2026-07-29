@@ -141,16 +141,16 @@ export default function RevenuePage() {
           <div className="mb-6">
             <Link
               href="/admin"
-              className="inline-flex items-center text-caramel-600 hover:text-caramel-700 mb-4 transition-colors"
+              className="mb-4 inline-flex items-center text-caramel-700 transition-colors hover:text-caramel-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Admin
             </Link>
 
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-text-primary">Revenue Management</h1>
-                <p className="text-text-secondary">Track revenue from store and local billing</p>
+                <h1 className="text-h1 text-text-primary">Revenue Management</h1>
+                <p className="text-body text-text-secondary">Track revenue from store and local billing</p>
               </div>
 
               <Button
@@ -361,7 +361,12 @@ export default function RevenuePage() {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="overflow-x-auto">
+              <div
+                className="overflow-x-auto"
+                tabIndex={0}
+                role="region"
+                aria-label="Recent transactions, scrolls sideways"
+              >
                 <table className="w-full">
                   <thead className="bg-canvas border-b">
                     <tr>

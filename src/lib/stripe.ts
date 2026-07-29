@@ -1,6 +1,6 @@
 import Stripe from 'stripe'
+import { stripeCurrency, toStripeAmount } from './currency'
 
-// Initialize Stripe with secret key
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 
 if (!stripeSecretKey) {
@@ -9,115 +9,139 @@ if (!stripeSecretKey) {
 
 export const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey, {
-      // Pinned deliberately. Bumping this changes Stripe response shapes and
-      // default behaviour, so it belongs to a payments task with its own
-      // verification -- not to a type fix in a repo with no tests.
+      // Pinned deliberately. Bumping this changes response shapes and default
+      // behaviour, which belongs to its own task with its own verification.
       apiVersion: '2024-11-20.acacia' as unknown as Stripe.LatestApiVersion,
       typescript: true,
     })
   : null
 
-/**
- * Create a Stripe product for an order
- */
-export async function createStripeProduct(name: string, description?: string) {
+const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+const requireStripe = (): Stripe => {
   if (!stripe) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in .env.local')
+    throw new Error('Stripe is not configured. Set STRIPE_SECRET_KEY in .env.local')
   }
+  return stripe
+}
 
-  const product = await stripe.products.create({
-    name,
-    description,
-  })
-
-  return product
+export interface CheckoutLine {
+  name: string
+  description?: string
+  unitAmount: number
+  quantity: number
 }
 
 /**
- * Create a Stripe price for a product
+ * One Checkout Session for an order.
+ *
+ * This replaces a three-call sequence that created a Stripe Product, then a
+ * Price, then a Payment Link, for every single order. That left one permanent
+ * Product and Price in the Stripe account per order placed -- catalogue
+ * clutter that only ever grows -- and cost three round trips at the moment
+ * the customer is waiting to pay.
+ *
+ * It also fixes the hole that made `/order/cancel` unreachable. Payment Links
+ * have no cancel destination; they only support `after_completion`, which
+ * fires on success. Somebody who reached Stripe and thought better of it was
+ * simply dropped, on the one screen where recovering the sale is still
+ * possible. A Session takes both `success_url` and `cancel_url`.
+ *
+ * Line items are priced inline, so nothing is written to the Stripe account
+ * and the amounts come from whatever the caller computed -- which, on the
+ * order route, means from the database.
  */
-export async function createStripePrice(
-  productId: string,
-  amountInCents: number,
-  currency: string = 'usd'
-) {
-  if (!stripe) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in .env.local')
-  }
+export async function createCheckoutSession(options: {
+  orderId: number
+  orderNumber: string
+  customerEmail?: string | null
+  lines: CheckoutLine[]
+  shipping?: number
+  tax?: number
+}) {
+  const client = requireStripe()
+  const currency = stripeCurrency()
 
-  const price = await stripe.prices.create({
-    product: productId,
-    unit_amount: amountInCents,
-    currency,
-  })
-
-  return price
-}
-
-/**
- * Create a Stripe payment link
- */
-export async function createStripePaymentLink(
-  priceId: string,
-  quantity: number = 1,
-  metadata?: Record<string, string>
-) {
-  if (!stripe) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in .env.local')
-  }
-
-  const paymentLink = await stripe.paymentLinks.create({
-    line_items: [
-      {
-        price: priceId,
-        quantity,
-      },
-    ],
-    metadata,
-    after_completion: {
-      type: 'redirect',
-      redirect: {
-        // Pass orderId in URL for direct success page access
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/stripe/verify-payment?session_id={CHECKOUT_SESSION_ID}`,
+  const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = options.lines.map(line => ({
+    quantity: line.quantity,
+    price_data: {
+      currency,
+      unit_amount: toStripeAmount(line.unitAmount),
+      product_data: {
+        name: line.name,
+        ...(line.description ? { description: line.description } : {}),
       },
     },
-  })
+  }))
 
-  return paymentLink
+  // Delivery and tax as their own lines rather than folded into the goods, so
+  // the Stripe receipt itemises what the cart itemised.
+  if (options.shipping && options.shipping > 0) {
+    line_items.push({
+      quantity: 1,
+      price_data: {
+        currency,
+        unit_amount: toStripeAmount(options.shipping),
+        product_data: { name: 'Delivery' },
+      },
+    })
+  }
+
+  if (options.tax && options.tax > 0) {
+    line_items.push({
+      quantity: 1,
+      price_data: {
+        currency,
+        unit_amount: toStripeAmount(options.tax),
+        product_data: { name: 'Tax' },
+      },
+    })
+  }
+
+  return client.checkout.sessions.create({
+    mode: 'payment',
+    line_items,
+    ...(options.customerEmail ? { customer_email: options.customerEmail } : {}),
+    // Read back by the webhook to find the order again. Stripe requires
+    // strings here, hence the conversion.
+    metadata: {
+      order_id: String(options.orderId),
+      order_number: options.orderNumber,
+    },
+    payment_intent_data: {
+      metadata: {
+        order_id: String(options.orderId),
+        order_number: options.orderNumber,
+      },
+    },
+    success_url: `${siteUrl()}/order/success?orderId=${options.orderId}`,
+    cancel_url: `${siteUrl()}/order/cancel?orderId=${options.orderId}`,
+  })
 }
 
-/**
- * Retrieve a payment intent by ID
- */
+export async function getCheckoutSession(sessionId: string) {
+  return requireStripe().checkout.sessions.retrieve(sessionId)
+}
+
 export async function getPaymentIntent(paymentIntentId: string) {
-  if (!stripe) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in .env.local')
-  }
-
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
-  return paymentIntent
+  return requireStripe().paymentIntents.retrieve(paymentIntentId)
 }
 
 /**
- * List payment intents for a customer
+ * Verifies a webhook came from Stripe.
+ *
+ * Needs the raw request body, not a parsed object: the signature is computed
+ * over the exact bytes Stripe sent, and JSON.parse followed by JSON.stringify
+ * does not reliably reproduce them.
  */
-export async function listPaymentIntents(customerId?: string, limit: number = 10) {
-  if (!stripe) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in .env.local')
+export function constructWebhookEvent(rawBody: string, signature: string): Stripe.Event {
+  const secret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!secret) {
+    throw new Error('STRIPE_WEBHOOK_SECRET is not set')
   }
-
-  const paymentIntents = await stripe.paymentIntents.list({
-    customer: customerId,
-    limit,
-  })
-
-  return paymentIntents
+  return requireStripe().webhooks.constructEvent(rawBody, signature, secret)
 }
 
-/**
- * Check if Stripe is configured
- */
 export function isStripeConfigured(): boolean {
   return stripe !== null
 }
-

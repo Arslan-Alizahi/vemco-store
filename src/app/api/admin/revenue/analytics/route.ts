@@ -11,34 +11,34 @@ export async function GET(request: NextRequest) {
 
     const db = getDb()
 
-    // Build date filter
-    let dateFilter = ''
+    /**
+     * Values are bound; only fixed fragments are ever concatenated.
+     *
+     * Every one of startDate, endDate and type used to be pasted straight
+     * into the statement from the query string. This route sits behind a
+     * session now, which lowers the stakes, but "only an administrator can
+     * inject SQL" is not a property worth relying on.
+     */
+    const filterParams: unknown[] = []
+    let dateFilter: string
+
     if (startDate && endDate) {
-      dateFilter = `WHERE DATE(transaction_date) BETWEEN DATE('${startDate}') AND DATE('${endDate}')`
+      dateFilter = 'WHERE DATE(transaction_date) BETWEEN DATE(?) AND DATE(?)'
+      filterParams.push(startDate, endDate)
     } else {
-      // Default date ranges based on period
-      switch (period) {
-        case 'day':
-          dateFilter = `WHERE DATE(transaction_date) >= DATE('now', '-30 days')`
-          break
-        case 'week':
-          dateFilter = `WHERE DATE(transaction_date) >= DATE('now', '-12 weeks')`
-          break
-        case 'month':
-          dateFilter = `WHERE DATE(transaction_date) >= DATE('now', '-12 months')`
-          break
-        case 'year':
-          dateFilter = `WHERE DATE(transaction_date) >= DATE('now', '-5 years')`
-          break
-        default:
-          dateFilter = `WHERE DATE(transaction_date) >= DATE('now', '-12 months')`
+      const WINDOWS: Record<string, string> = {
+        day: '-30 days',
+        week: '-12 weeks',
+        month: '-12 months',
+        year: '-5 years',
       }
+      dateFilter = "WHERE DATE(transaction_date) >= DATE('now', ?)"
+      filterParams.push(WINDOWS[period] ?? WINDOWS.month)
     }
 
-    // Add type filter if specified
     if (type && type !== 'all') {
-      dateFilter += dateFilter.includes('WHERE') ? ' AND' : ' WHERE'
-      dateFilter += ` transaction_type = '${type}'`
+      dateFilter += ' AND transaction_type = ?'
+      filterParams.push(type)
     }
 
     // Get revenue over time based on period
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
         ORDER BY period ASC
       `
       )
-      .all() as any[]
+      .all(...filterParams) as any[]
 
     // Get revenue by source over time
     const revenueBySource = db
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         ORDER BY period ASC, transaction_type
       `
       )
-      .all() as any[]
+      .all(...filterParams) as any[]
 
     // Get top performing days
     const topDays = db
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         LIMIT 10
       `
       )
-      .all() as any[]
+      .all(...filterParams) as any[]
 
     // Get revenue by payment method over period
     const paymentMethodTrends = db
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
         ORDER BY revenue DESC
       `
       )
-      .all() as any[]
+      .all(...filterParams) as any[]
 
     // Get daily averages
     const avgDaily = db
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         )
       `
       )
-      .get() as any
+      .get(...filterParams) as any
 
     return NextResponse.json({
       success: true,

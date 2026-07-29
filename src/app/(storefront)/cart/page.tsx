@@ -18,6 +18,7 @@ import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/ui/Toast'
 import { useCart } from '@/hooks/useCart'
 import { calculateTax, calculateTotal, validateEmail } from '@/lib/utils'
+import { shippingFor } from '@/lib/shipping'
 
 interface Fields {
   name: string
@@ -45,8 +46,10 @@ export default function CartPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
+  // Shown here, decided on the server. Both read the same constants so the
+  // figure the customer sees is the figure the order route computes.
   const tax = calculateTax(subtotal)
-  const shipping = subtotal >= 100000 ? 0 : 2500
+  const shipping = shippingFor(subtotal)
   const total = calculateTotal(subtotal, tax, shipping, 0)
 
   const set =
@@ -107,16 +110,17 @@ export default function CartPage() {
           customer_email: values.email,
           customer_phone: values.phone,
           shipping_address: `${values.address}, ${values.city}`,
+          // Which product, how many. Nothing else.
+          //
+          // This used to send the price too, and the server used it. Posting
+          // unit_price: 1 for a Rs 185,000 sofa produced an order totalling
+          // Rs 1.18, and the payment was raised against that total. The names,
+          // prices, tax and delivery all come from the catalogue now, so the
+          // figures below are for display only.
           items: cart.map(item => ({
             product_id: item.product_id,
-            product_name: item.product_name,
-            product_sku: item.product_sku,
-            product_image: item.product_image,
             quantity: item.quantity,
-            unit_price: item.unit_price,
           })),
-          tax,
-          shipping_cost: shipping,
           payment_method: 'stripe',
         }),
       })

@@ -1,20 +1,18 @@
-import { AdminAuth } from '@/components/ui/AdminAuth'
-import AdminShell from '@/components/layout/AdminShell'
-
 export const dynamic = 'force-dynamic'
 
 /**
- * Wraps every admin route once, instead of each page importing AdminAuth and
- * the storefront Navbar for itself.
+ * Everything under /admin, including the login screen.
  *
- * AdminAuth remains a client-side gate with a hardcoded password. It is not
- * real authentication and is documented as such -- see the design spec. This
- * layout only stops it being pasted into three separate pages.
+ * Deliberately bare. The chrome lives one level down in (dashboard), because
+ * the login page must not render a navigation bar full of links to places the
+ * visitor cannot yet reach.
+ *
+ * There is no gate here either. It used to wrap AdminAuth, a client component
+ * comparing a typed password against a literal in the bundle. That check is
+ * middleware now, which runs before the request reaches any of this and --
+ * unlike a layout -- also covers the API routes underneath. A layout can only
+ * hide a page; the data was reachable regardless.
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AdminAuth>
-      <AdminShell>{children}</AdminShell>
-    </AdminAuth>
-  )
+  return <>{children}</>
 }

@@ -1,8 +1,8 @@
-# ModernStore
+# VEMCO
 
-An eCommerce storefront, an admin panel, and a point-of-sale billing system sharing a single SQLite database. Built with Next.js 14 (App Router), TypeScript, and Tailwind CSS, with Stripe Payment Links for online checkout.
+A furniture storefront, an admin panel, and a point-of-sale till sharing a single SQLite database. Next.js 14 (App Router), TypeScript, Tailwind CSS, and Stripe Checkout Sessions. Priced in PKR.
 
-> **Status:** work in progress. The production build does not currently pass type-checking, and several security items are open. See [Known Issues](#known-issues) before deploying.
+> **Status:** the build is green and `npm run verify` runs six gates over it — types, 168 tests, 36 WCAG AA colour pairings, no raw colour literals, a production build, and 132 accessibility checks across 22 routes. The blocking security items listed here previously are fixed; what remains is under [Known Issues](#known-issues).
 
 ---
 
@@ -20,7 +20,7 @@ Plus 12 static content pages (about, contact, FAQ, shipping, careers, press, blo
 
 ## Features
 
-**Storefront** — product catalog with search, category filter, sorting and pagination; product detail with image gallery and related products; cart persisted to `localStorage` with cross-tab sync; favorites/wishlist; Stripe Payment Link checkout with success and cancel pages.
+**Storefront** — product catalog with search, category filter, sorting and pagination; product detail with image gallery and related products; cart persisted to `localStorage` with cross-tab sync; favourites; Stripe Checkout with working success and cancel pages.
 
 **Admin** — full CRUD for products (with image upload), categories (hierarchical), navigation items and social media links; order list with manual "mark as paid"; dashboard stats.
 
@@ -33,7 +33,7 @@ Plus 12 static content pages (about, contact, FAQ, shipping, careers, press, blo
 - **Framework** — Next.js 14.2 (App Router), React 18, TypeScript 5.7 (strict)
 - **Styling** — Tailwind CSS 3.4 with a custom theme, Framer Motion for animation
 - **Database** — SQLite via `better-sqlite3` (synchronous, WAL mode, foreign keys on)
-- **Payments** — Stripe (Payment Links)
+- **Payments** — Stripe (Checkout Sessions)
 - **Icons** — Lucide React
 
 ## Getting Started
@@ -51,7 +51,15 @@ npm run dev
 
 Open <http://localhost:3000>. The SQLite database and its tables are created automatically on the first request — there are no migration commands to run.
 
-The database starts **empty**. Add categories and products through `/admin` (default password is set in `.env.example`; see the auth caveat under Known Issues).
+The database seeds itself with a demo catalogue on first run — twenty products with photographs, descriptions and dimensions. The admin panel can clear it.
+
+Admin access needs one command, because there is deliberately no default password:
+
+```bash
+npm run admin:password
+```
+
+It prints `AUTH_SECRET` and `ADMIN_PASSWORD_HASH` to paste into `.env.local`, and the password to sign in with. Until they are set, `/admin` and `/billing` are closed.
 
 ### Stripe setup
 
@@ -137,31 +145,37 @@ To deploy on serverless infrastructure, the data layer would need to move to Pos
 
 ## Known Issues
 
-These are tracked and unfixed. Read them before putting this in front of real customers or real money.
+**Fixed** — these were the blocking items and are now closed, each with a test that fails if it comes back:
 
-**Blocking**
+- Order prices are read from the catalogue. `POST /api/orders` takes only `product_id` and `quantity`; sending `unit_price: 1` for a Rs 185,000 sofa used to produce an order totalling Rs 1.18, and the payment was raised against that total.
+- One currency. The display said PKR while the payment code said `'usd'` and multiplied a rupee total by 100, so that same sofa was billed at roughly $185,000.
+- The webhook verifies Stripe's signature against the raw body. It previously trusted any JSON posted to it, so a forged request could mark any order paid.
+- Server-side sessions. Admin was a `localStorage` flag and a password literal in the client bundle, guarding a *page* while every API route stayed open: `curl -X PUT /api/products/1` returned 200 with no credentials, and `GET /api/orders` returned every customer's name, email, phone and address. Middleware now covers the pages, the whole mutating API, and the routes that expose customer records.
+- `/order/cancel` is reachable. Payment Links have no cancel destination; Checkout Sessions take both URLs.
+- The `stripe_*` columns are in the schema. They lived only in a migration nothing ever imported, so the payment route wrote to columns that did not exist.
+- Parameterised SQL in the revenue analytics route and a whitelisted sort direction on `/api/products`.
+- Uploads take their extension from the validated MIME type, not the supplied filename, and `DELETE /api/upload` resolves the path and checks it stays inside the uploads directory.
 
-1. **The production build fails.** `npm run build` reports 23 TypeScript errors and does not complete. Dev mode works.
-2. **The Stripe webhook does not verify signatures.** `POST /api/stripe/webhook` trusts its JSON body, so a forged request can mark any order paid.
-3. **Admin auth is client-side only.** The gate is a `localStorage` flag with a hardcoded password. No API route checks it, so all write endpoints — products, categories, orders, uploads, revenue export — are open. `/billing` has no gate at all.
-4. **Stripe columns are missing from the base schema.** A fresh database lacks `stripe_session_id` and the `stripe_*` order columns, which breaks payment verification on first deploy.
-5. **Order prices are taken from the request body.** `POST /api/orders` does not re-read prices from the database, allowing a crafted request to set its own total.
+**Open**
 
-**High**
+1. **Stock is decremented when an order is created, not when it is paid.** An abandoned checkout holds inventory until someone notices. A reserve-then-release model with a TTL is the fix.
+2. **Revenue is never reversed on refund**, and the trigger can double-count if an order's payment status cycles.
+3. **`orders.status` never advances past `processing`.** There is no fulfilment flow.
+4. **Rate limiting is in-process.** It resets on restart and does not span instances, which holds for a single-node SQLite deployment and would not behind more than one.
 
-6. SQL injection via string interpolation in `/api/admin/revenue/analytics` and in the `ORDER BY` clause of `/api/products`.
-7. Path traversal in `DELETE /api/upload`, and the upload handler derives file extensions from the client-supplied filename.
-8. Stock is decremented when an order is created rather than when it is paid, so abandoned checkouts leak inventory permanently.
+**Before going live**
 
-**Medium** — the revenue trigger can double-count if an order's payment status cycles; revenue is never reversed on refund; the admin dashboard's revenue card sums only the last 10 orders and includes unpaid ones; `orders.status` is never advanced past `pending`; `/order/cancel` is unreachable because no `cancel_url` is configured.
+Confirm your Stripe account can settle `NEXT_PUBLIC_CURRENCY`. Stripe does not onboard businesses located in Pakistan, so if that is where this shop trades, the account — not the code — is the constraint to resolve.
 
 ## Roadmap
 
-- [ ] Fix type errors and get the build green
-- [ ] Server-side session auth + middleware over all mutating routes
-- [ ] Stripe webhook signature verification
-- [ ] Server-side price and tax recalculation at order creation
+- [x] Fix type errors and get the build green
+- [x] Server-side session auth + middleware over all mutating routes
+- [x] Stripe webhook signature verification
+- [x] Server-side price and tax recalculation at order creation
+- [x] Test coverage for checkout and the payment path
 - [ ] Reserve-then-release inventory model with a TTL
-- [ ] Order fulfillment status transitions
+- [ ] Order fulfilment status transitions
+- [ ] Refund handling and revenue reversal
 - [ ] Email notifications
-- [ ] Test coverage for checkout and revenue paths
+- [ ] Performance budgets in CI

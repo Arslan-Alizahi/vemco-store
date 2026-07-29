@@ -1,3 +1,5 @@
+import { CURRENCY, CURRENCY_LOCALE } from './currency'
+
 // Formatting utilities
 
 /**
@@ -13,9 +15,9 @@ export const formatCurrency = (amount: number): string => {
   const value = Number.isFinite(amount) ? amount : 0
   const hasFraction = Math.round(value * 100) % 100 !== 0
 
-  return new Intl.NumberFormat('en-PK', {
+  return new Intl.NumberFormat(CURRENCY_LOCALE, {
     style: 'currency',
-    currency: 'PKR',
+    currency: CURRENCY,
     currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: hasFraction ? 2 : 0,
     maximumFractionDigits: hasFraction ? 2 : 0,
@@ -24,7 +26,7 @@ export const formatCurrency = (amount: number): string => {
 
 /** Digits only, for tight table columns where the unit is already in the header. */
 export const formatAmount = (amount: number): string =>
-  new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 }).format(
+  new Intl.NumberFormat(CURRENCY_LOCALE, { maximumFractionDigits: 0 }).format(
     Number.isFinite(amount) ? amount : 0
   )
 

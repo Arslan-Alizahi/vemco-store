@@ -67,12 +67,22 @@ export async function GET(request: NextRequest) {
       params.push(searchTerm, searchTerm, searchTerm)
     }
 
-    // Add sorting
+    /**
+     * Both halves of the ORDER BY come from a fixed set.
+     *
+     * The column already did; the direction did not -- `sort_order` went into
+     * the statement exactly as the query string supplied it. better-sqlite3
+     * refuses multiple statements, so the classic `; DROP TABLE` does not
+     * land, but an unbounded expression in an ORDER BY on a public endpoint
+     * is still an injection point, and the least it buys an attacker is a 500
+     * from any request they like.
+     */
     const sortColumn = filters.sort_by === 'name' ? 'p.name' :
                       filters.sort_by === 'price' ? 'p.price' :
                       filters.sort_by === 'stock' ? 'p.stock_quantity' :
                       'p.created_at'
-    sql += ` ORDER BY ${sortColumn} ${filters.sort_order?.toUpperCase()}`
+    const sortDirection = String(filters.sort_order).toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+    sql += ` ORDER BY ${sortColumn} ${sortDirection}`
 
     // Add pagination
     const offset = (filters.page! - 1) * filters.limit!

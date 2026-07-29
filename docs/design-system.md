@@ -40,7 +40,7 @@ edit rather than a search.
 
 **Every pairing the app renders is verified against WCAG AA.**
 `npm run verify:contrast` reads `tokens.ts` directly — not a copy — and
-asserts 4.5:1 for text and 3:1 for UI boundaries across 33 pairings.
+asserts 4.5:1 for text and 3:1 for UI boundaries across 36 pairings.
 
 ## Type
 
@@ -145,10 +145,10 @@ Notes that are easy to get wrong:
 
 | Command | Asserts |
 | --- | --- |
-| `verify:contrast` | 33 colour pairings meet AA. Reads `tokens.ts` directly. |
+| `verify:contrast` | 36 colour pairings meet AA. Reads `tokens.ts` directly. |
 | `verify:tokens` | No hex, `rgb()`, `hsl()`, Tailwind default palette or bracket colours anywhere outside the token file. Nothing is excluded. |
-| `verify:a11y` | 120 checks over 20 routes, storefront and staff screens alike: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
-| `test` | 76 tests. Design system (tokens, motion, `cn`), cart arithmetic and stock caps, pricing and validation, and the checkout gate rendered in jsdom. |
+| `verify:a11y` | 132 checks over 22 routes, storefront and staff screens alike — the admin ones audited signed in, using a throwaway password the gate mints for the run: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
+| `test` | 168 tests. Design system (tokens, motion, `cn`), cart arithmetic and stock caps, pricing and validation, the checkout gate rendered in jsdom, server-derived order pricing against a real SQLite file, currency conversion, sessions and password hashing, and which routes middleware opens and shuts. |
 
 `verify:a11y` needs a production build; `next dev` overwrites `.next`, so run
 `npm run build` after any dev session.

@@ -1,137 +1,118 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
-import {
-  isStripeConfigured,
-  createStripeProduct,
-  createStripePrice,
-  createStripePaymentLink
-} from '@/lib/stripe'
+import { CURRENCY } from '@/lib/currency'
+import { createCheckoutSession, isStripeConfigured } from '@/lib/stripe'
 
-// POST /api/stripe/create-payment - Create Stripe payment link for order
+/**
+ * Starts payment for an order that already exists.
+ *
+ * The order is the source of truth. Nothing about the amount comes from this
+ * request -- it carries an order id and nothing else -- so the figure the
+ * customer is charged is the figure the order route computed from the
+ * catalogue.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { orderId } = body
+    const orderId = Number(body?.orderId)
 
-    if (!orderId) {
-      return NextResponse.json(
-        apiError('Order ID is required'),
-        { status: 400 }
-      )
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return NextResponse.json(apiError('An order id is required'), { status: 400 })
     }
 
-    // Check if Stripe is configured
     if (!isStripeConfigured()) {
       return NextResponse.json(
-        apiError('Stripe is not configured. Please set STRIPE_SECRET_KEY in environment variables.'),
-        { status: 500 }
+        apiError('Payments are not configured on this deployment'),
+        { status: 503 }
       )
     }
 
     const db = getDb()
 
-    // Fetch order details
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
-
     if (!order) {
-      return NextResponse.json(
-        apiError('Order not found'),
-        { status: 404 }
-      )
+      return NextResponse.json(apiError('We could not find that order'), { status: 404 })
     }
 
-    // Check if order is already paid
     if (order.payment_status === 'paid' || order.payment_status === 'completed') {
-      return NextResponse.json(
-        apiError('Order is already paid'),
-        { status: 400 }
-      )
+      return NextResponse.json(apiError('That order is already paid'), { status: 409 })
     }
 
-    // Check if payment link already exists for this order
-    if (order.stripe_payment_link_url) {
-      // Return existing payment link
-      return NextResponse.json(
-        apiResponse({
-          orderId: order.id,
-          orderNumber: order.order_number,
-          amount: order.total,
-          currency: 'usd',
-          customerEmail: order.customer_email,
-          customerName: order.customer_name,
-          paymentUrl: order.stripe_payment_link_url,
-          message: 'Payment link already exists'
-        })
-      )
-    }
-
-    // Create Stripe payment link
-    console.log('Creating Stripe payment for order:', order.order_number)
-
-    // Step 1: Create Product in Stripe
-    const productName = `Order ${order.order_number}`
-    const productDescription = `Payment for order ${order.order_number} - ${order.customer_name}`
-
-    const stripeProduct = await createStripeProduct(productName, productDescription)
-    console.log('✓ Stripe product created:', stripeProduct.id)
-
-    // Step 2: Create Price in Stripe (amount in cents)
-    const amountInCents = Math.round(order.total * 100)
-    const stripePrice = await createStripePrice(stripeProduct.id, amountInCents, 'usd')
-    console.log('✓ Stripe price created:', stripePrice.id)
-
-    // Step 3: Create Payment Link in Stripe
-    const stripePaymentLink = await createStripePaymentLink(
-      stripePrice.id,
-      1,
-      {
-        order_id: order.id.toString(),
-        order_number: order.order_number
+    /**
+     * Reuse an unexpired session rather than opening a second one.
+     *
+     * Someone who abandons a payment and comes back through /order/cancel
+     * should land on the same checkout, not create a parallel one that could
+     * also be completed. Stripe sessions expire after 24 hours; past that a
+     * fresh one is correct.
+     */
+    if (order.stripe_session_id && order.stripe_session_expires_at) {
+      const expiresAt = Number(order.stripe_session_expires_at)
+      if (Number.isFinite(expiresAt) && expiresAt * 1000 > Date.now() && order.stripe_payment_link_url) {
+        return NextResponse.json(
+          apiResponse({
+            orderId: order.id,
+            orderNumber: order.order_number,
+            amount: order.total,
+            currency: CURRENCY,
+            paymentUrl: order.stripe_payment_link_url,
+          })
+        )
       }
-    )
-    console.log('✓ Stripe payment link created:', stripePaymentLink.url)
+    }
 
-    // Step 4: Save Stripe details to database
-    db.prepare(`
-      UPDATE orders
-      SET stripe_product_id = ?,
-          stripe_price_id = ?,
-          stripe_payment_link_id = ?,
-          stripe_payment_link_url = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(
-      stripeProduct.id,
-      stripePrice.id,
-      stripePaymentLink.id,
-      stripePaymentLink.url,
-      orderId
-    )
+    const items = db
+      .prepare('SELECT product_name, product_sku, quantity, unit_price FROM order_items WHERE order_id = ?')
+      .all(orderId) as Array<{
+      product_name: string
+      product_sku: string | null
+      quantity: number
+      unit_price: number
+    }>
 
-    console.log('✓ Stripe details saved to database')
+    if (items.length === 0) {
+      return NextResponse.json(apiError('That order has nothing in it'), { status: 409 })
+    }
+
+    const session = await createCheckoutSession({
+      orderId: order.id,
+      orderNumber: order.order_number,
+      customerEmail: order.customer_email,
+      lines: items.map(item => ({
+        name: item.product_name,
+        description: item.product_sku ?? undefined,
+        unitAmount: item.unit_price,
+        quantity: item.quantity,
+      })),
+      shipping: order.shipping_cost,
+      tax: order.tax,
+    })
+
+    if (!session.url) {
+      return NextResponse.json(apiError('Stripe did not return a checkout URL'), { status: 502 })
+    }
+
+    db.prepare(
+      `UPDATE orders
+       SET stripe_session_id = ?,
+           stripe_payment_link_url = ?,
+           stripe_session_expires_at = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`
+    ).run(session.id, session.url, session.expires_at ?? null, orderId)
 
     return NextResponse.json(
       apiResponse({
         orderId: order.id,
         orderNumber: order.order_number,
         amount: order.total,
-        currency: 'usd',
-        customerEmail: order.customer_email,
-        customerName: order.customer_name,
-        paymentUrl: stripePaymentLink.url,
-        stripeProductId: stripeProduct.id,
-        stripePriceId: stripePrice.id,
-        stripePaymentLinkId: stripePaymentLink.id,
-        message: 'Stripe payment link created successfully'
+        currency: CURRENCY,
+        paymentUrl: session.url,
       })
     )
-  } catch (error: any) {
-    console.error('Error creating payment:', error)
-    return NextResponse.json(
-      apiError(error.message || 'Failed to create payment'),
-      { status: 500 }
-    )
+  } catch (error) {
+    console.error('Error creating checkout session:', error)
+    return NextResponse.json(apiError('We could not start the payment'), { status: 500 })
   }
 }
-

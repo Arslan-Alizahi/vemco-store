@@ -1,44 +1,43 @@
-import { getDb } from '../index'
+import type { Database } from 'better-sqlite3'
 
 /**
- * Migration: Add Stripe-related columns to orders table
+ * Columns the payment path needs on `orders`.
+ *
+ * These were never in schema.ts, and the migration that added them was never
+ * called from anywhere -- nothing imported it. The payment route wrote
+ * `stripe_product_id` and friends regardless, so the first genuine attempt to
+ * pay would have failed on "no such column". The flow had not worked end to
+ * end at any point.
+ *
+ * They are in schema.ts now for new databases; this handles the ones that
+ * already exist. It takes the open connection rather than calling getDb(),
+ * because it runs during initialisation, before getDb() has finished
+ * returning.
  */
-export function addStripeColumns() {
-  const db = getDb()
+const COLUMNS: Array<{ name: string; type: string }> = [
+  { name: 'stripe_session_id', type: 'TEXT' },
+  { name: 'stripe_session_expires_at', type: 'INTEGER' },
+  { name: 'stripe_payment_link_url', type: 'TEXT' },
+  { name: 'stripe_payment_intent_id', type: 'TEXT' },
+  { name: 'paid_at', type: 'DATETIME' },
+]
 
+export function addStripeColumns(db: Database): boolean {
   try {
-    // Check if columns already exist
-    const tableInfo = db.prepare("PRAGMA table_info(orders)").all() as any[]
-    const columnNames = tableInfo.map((col: any) => col.name)
+    const existing = new Set(
+      (db.prepare('PRAGMA table_info(orders)').all() as Array<{ name: string }>).map(
+        column => column.name
+      )
+    )
 
-    const columnsToAdd = [
-      { name: 'stripe_product_id', type: 'TEXT' },
-      { name: 'stripe_price_id', type: 'TEXT' },
-      { name: 'stripe_payment_link_id', type: 'TEXT' },
-      { name: 'stripe_payment_link_url', type: 'TEXT' },
-      { name: 'stripe_payment_intent_id', type: 'TEXT' }
-    ]
-
-    for (const column of columnsToAdd) {
-      if (!columnNames.includes(column.name)) {
-        console.log(`Adding column ${column.name} to orders table...`)
-        db.prepare(`ALTER TABLE orders ADD COLUMN ${column.name} ${column.type}`).run()
-        console.log(`✓ Column ${column.name} added successfully`)
-      } else {
-        console.log(`Column ${column.name} already exists, skipping...`)
-      }
+    for (const column of COLUMNS) {
+      if (existing.has(column.name)) continue
+      db.prepare(`ALTER TABLE orders ADD COLUMN ${column.name} ${column.type}`).run()
     }
 
-    console.log('✓ Stripe columns migration completed')
     return true
   } catch (error) {
-    console.error('Error adding Stripe columns:', error)
+    console.error('Failed to add payment columns to orders:', error)
     return false
   }
 }
-
-// Run migration if this file is executed directly
-if (require.main === module) {
-  addStripeColumns()
-}
-

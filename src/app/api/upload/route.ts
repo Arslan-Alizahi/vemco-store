@@ -39,11 +39,23 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadsDir, { recursive: true })
     }
 
-    // Generate unique filename
+    /**
+     * The extension comes from the MIME type we already validated, never from
+     * the supplied name. file.name is entirely under the caller's control, so
+     * uploading "x.html" wrote x.html into a directory the web server hands
+     * out verbatim. The name itself is discarded.
+     */
+    const EXTENSIONS: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    }
+
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(2, 15)
-    const extension = file.name.split('.').pop()
-    const filename = `${timestamp}-${randomString}.${extension}`
+    const filename = `${timestamp}-${randomString}.${EXTENSIONS[file.type]}`
     
     // Convert file to buffer and save
     const bytes = await file.arrayBuffer()
@@ -82,8 +94,22 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const filepath = path.join(process.cwd(), 'public', 'uploads', 'products', filename)
-    
+    /**
+     * Resolved and then checked, rather than trusted.
+     *
+     * path.join happily normalises "../../../.env" straight out of the
+     * uploads folder, and this endpoint deletes whatever it is pointed at.
+     * Taking the basename discards any directory part, and comparing the
+     * resolved path against the directory catches anything the first step
+     * missed.
+     */
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'products')
+    const filepath = path.resolve(uploadsDir, path.basename(filename))
+
+    if (!filepath.startsWith(path.resolve(uploadsDir) + path.sep)) {
+      return NextResponse.json({ error: 'Invalid filename' }, { status: 400 })
+    }
+
     if (existsSync(filepath)) {
       const { unlink } = await import('fs/promises')
       await unlink(filepath)

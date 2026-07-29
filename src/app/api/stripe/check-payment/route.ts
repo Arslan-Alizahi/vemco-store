@@ -1,49 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
+import { getCheckoutSession, isStripeConfigured } from '@/lib/stripe'
+import { markOrderPaid } from '@/lib/orders'
 
-// GET /api/stripe/check-payment?orderId=123 - Check payment status for order
+/**
+ * Order status for the success and cancel pages, reconciled against Stripe.
+ *
+ * The webhook is the authority, but it is not always there: it has to be
+ * configured per deployment and it does not reach a developer's laptop at
+ * all, so an order could sit at "pending" indefinitely while the customer
+ * looked at a confirmation page. If the order is still unpaid and has a
+ * session, this asks Stripe directly and reconciles.
+ *
+ * It cannot be used to fake a payment. The answer comes from Stripe, against
+ * a session id stored on the order rather than one supplied by the caller,
+ * and markOrderPaid still checks the amount before it writes anything.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const orderId = searchParams.get('orderId')
+    const orderId = Number(searchParams.get('orderId'))
 
-    if (!orderId) {
-      return NextResponse.json(
-        apiError('Order ID is required'),
-        { status: 400 }
-      )
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return NextResponse.json(apiError('An order id is required'), { status: 400 })
     }
 
     const db = getDb()
-
-    // Fetch order details
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
+    let order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
 
     if (!order) {
-      return NextResponse.json(
-        apiError('Order not found'),
-        { status: 404 }
-      )
+      return NextResponse.json(apiError('We could not find that order'), { status: 404 })
     }
 
-    // Return payment status
+    if (order.payment_status !== 'paid' && order.stripe_session_id && isStripeConfigured()) {
+      try {
+        const session = await getCheckoutSession(order.stripe_session_id)
+        if (session.payment_status === 'paid') {
+          markOrderPaid(orderId, {
+            amountFromStripe: session.amount_total,
+            sessionId: session.id,
+            paymentIntentId:
+              typeof session.payment_intent === 'string' ? session.payment_intent : null,
+          })
+          order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
+        }
+      } catch (error) {
+        // Reconciliation is a convenience. If Stripe is unreachable the page
+        // should still render the order we have rather than fail outright.
+        console.error(`Could not reconcile order ${orderId} with Stripe:`, error)
+      }
+    }
+
+    const isPaid = order.payment_status === 'paid' || order.payment_status === 'completed'
+
     return NextResponse.json(
       apiResponse({
         orderId: order.id,
         orderNumber: order.order_number,
+        status: order.status,
         paymentStatus: order.payment_status,
         paymentMethod: order.payment_method,
         total: order.total,
-        isPaid: order.payment_status === 'paid' || order.payment_status === 'completed'
+        isPaid,
+        // Nothing to resume once it is paid.
+        paymentUrl: isPaid ? null : order.stripe_payment_link_url,
       })
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error checking payment:', error)
-    return NextResponse.json(
-      apiError(error.message || 'Failed to check payment'),
-      { status: 500 }
-    )
+    return NextResponse.json(apiError('We could not check that order'), { status: 500 })
   }
 }
-

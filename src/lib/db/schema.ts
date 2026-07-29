@@ -65,6 +65,13 @@ export const createTables = `
     payment_method TEXT,
     payment_status TEXT DEFAULT 'pending',
     notes TEXT,
+    -- Payment state. These lived only in a migration nothing ever called, so
+    -- the payment route wrote to columns that did not exist.
+    stripe_session_id TEXT,
+    stripe_session_expires_at INTEGER,
+    stripe_payment_link_url TEXT,
+    stripe_payment_intent_id TEXT,
+    paid_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );

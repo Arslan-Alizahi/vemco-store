@@ -1,93 +1,107 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 import { getDb } from '@/lib/db'
-import { apiResponse, apiError } from '@/lib/utils'
+import { constructWebhookEvent } from '@/lib/stripe'
+import { markOrderFailed, markOrderPaid } from '@/lib/orders'
 
 /**
- * Stripe Webhook Handler
- * This endpoint will be called by Stripe when payment events occur
- * For now, it's a placeholder for future webhook integration
+ * Stripe webhook.
+ *
+ * The previous version read `request.json()` and believed whatever it found.
+ * Any request at all could claim `checkout.session.completed` for an order id
+ * and have that order marked paid -- free furniture to anyone who could type
+ * a curl command at a URL that is, by design, publicly reachable.
+ *
+ * Every event is now verified against the signing secret before anything is
+ * read from it, and the raw bytes are used to do it: the signature covers
+ * exactly what Stripe sent, and a JSON round trip does not reliably reproduce
+ * those bytes.
  */
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
+  const signature = request.headers.get('stripe-signature')
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
+  }
+
+  let event: Stripe.Event
   try {
-    const body = await request.json()
-    const { type, data } = body
+    // Raw text, not .json(). The signature is over these exact bytes.
+    const rawBody = await request.text()
+    event = constructWebhookEvent(rawBody, signature)
+  } catch (error) {
+    // Anything that fails verification is refused outright and never reaches
+    // the database. 400 rather than 500, so Stripe stops redelivering it.
+    console.error('Rejected an unverified webhook:', error)
+    return NextResponse.json({ error: 'Signature verification failed' }, { status: 400 })
+  }
 
-    console.log('Stripe webhook received:', type)
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session
+        const orderId = session.metadata?.order_id
+        if (!orderId || session.payment_status !== 'paid') break
 
-    const db = getDb()
-
-    // Handle different webhook events
-    switch (type) {
-      case 'checkout.session.completed':
-        // Payment Link checkout session completed
-        const session = data.object
-        const sessionOrderId = session.metadata?.order_id
-
-        if (sessionOrderId && session.payment_status === 'paid') {
-          // Update order status
-          db.prepare(`
-            UPDATE orders
-            SET payment_status = 'paid',
-                payment_method = 'stripe',
-                stripe_session_id = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-          `).run(session.id, sessionOrderId)
-
-          console.log(`✓ Order ${sessionOrderId} marked as paid via checkout.session.completed webhook`)
-          console.log(`✓ Revenue transaction created by database trigger`)
-        }
+        markOrderPaid(orderId, {
+          amountFromStripe: session.amount_total,
+          sessionId: session.id,
+          paymentIntentId:
+            typeof session.payment_intent === 'string' ? session.payment_intent : null,
+        })
         break
+      }
 
-      case 'payment_intent.succeeded':
-        // Direct Payment Intent succeeded
-        const paymentIntent = data.object
-        const orderId = paymentIntent.metadata?.order_id
-
+      case 'payment_intent.succeeded': {
+        const intent = event.data.object as Stripe.PaymentIntent
+        const orderId = intent.metadata?.order_id
         if (orderId) {
-          // Update order status
-          db.prepare(`
-            UPDATE orders
-            SET payment_status = 'paid',
-                payment_method = 'stripe',
-                stripe_payment_intent_id = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-          `).run(paymentIntent.id, orderId)
-
-          console.log(`✓ Order ${orderId} marked as paid via payment_intent.succeeded webhook`)
-          console.log(`✓ Revenue transaction created by database trigger`)
+          markOrderPaid(orderId, {
+            amountFromStripe: intent.amount_received,
+            paymentIntentId: intent.id,
+          })
         }
         break
+      }
 
-      case 'payment_intent.payment_failed':
-        // Payment failed
-        const failedPayment = data.object
-        const failedOrderId = failedPayment.metadata?.order_id
+      case 'payment_intent.payment_failed': {
+        const intent = event.data.object as Stripe.PaymentIntent
+        const orderId = intent.metadata?.order_id
+        if (orderId) markOrderFailed(orderId)
+        break
+      }
 
-        if (failedOrderId) {
-          db.prepare(`
-            UPDATE orders 
-            SET payment_status = 'failed',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-          `).run(failedOrderId)
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session
+        const orderId = session.metadata?.order_id
 
-          console.log(`Order ${failedOrderId} marked as failed via webhook`)
+        // Clear the stale URL so /order/cancel opens a fresh checkout rather
+        // than sending the customer to a session Stripe has already closed.
+        if (orderId) {
+          getDb()
+            .prepare(
+              `UPDATE orders
+               SET stripe_payment_link_url = NULL,
+                   stripe_session_expires_at = NULL,
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE id = ? AND payment_status != 'paid'`
+            )
+            .run(orderId)
         }
         break
+      }
 
       default:
-        console.log(`Unhandled webhook event: ${type}`)
+        break
     }
 
-    return NextResponse.json(apiResponse({ received: true }))
-  } catch (error: any) {
-    console.error('Webhook error:', error)
-    return NextResponse.json(
-      apiError(error.message || 'Webhook processing failed'),
-      { status: 500 }
-    )
+    return NextResponse.json({ received: true })
+  } catch (error) {
+    // 500 so Stripe retries: the event was genuine, we simply failed to
+    // record it, and dropping it would lose a real payment.
+    console.error(`Failed to handle ${event.type}:`, error)
+    return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
   }
 }
-

@@ -24,8 +24,37 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { randomBytes, scrypt } from 'node:crypto'
+import { promisify } from 'node:util'
 import { chromium } from 'playwright'
 import AxeBuilder from '@axe-core/playwright'
+
+const scryptAsync = promisify(scrypt)
+
+/**
+ * Credentials for this run only, generated here and handed to the server we
+ * start. The staff screens sit behind a session now, so auditing them means
+ * holding one -- and inventing a throwaway password beats either weakening
+ * the gate to let it in or leaving admin unaudited.
+ */
+const buildCredentials = async () => {
+  const password = randomBytes(12).toString('base64url')
+  const salt = randomBytes(16)
+  const derived = await scryptAsync(password, salt, 32, {
+    N: 32_768,
+    r: 8,
+    p: 1,
+    maxmem: 64 * 1024 * 1024,
+  })
+
+  return {
+    password,
+    env: {
+      AUTH_SECRET: randomBytes(32).toString('base64'),
+      ADMIN_PASSWORD_HASH: `scrypt$${salt.toString('base64')}$${derived.toString('base64')}`,
+    },
+  }
+}
 
 const PORT = process.env.A11Y_PORT || 3210
 const ORIGIN = `http://127.0.0.1:${PORT}`
@@ -60,13 +89,14 @@ const STATIC_ROUTES = [
   '/policies/terms',
   '/policies/returns',
   '/policies/cookies',
-  // The staff screens too, now that they have been migrated. They are behind
-  // a client-side gate that renders the login form rather than redirecting,
-  // so what gets audited here is that form -- worth covering in its own
-  // right, since it is the first thing an admin ever meets.
+  // The staff screens, audited signed in. The gate mints a throwaway password
+  // and holds a session, so these are the real dashboards rather than four
+  // copies of the login screen a redirect would have produced.
+  '/admin/login',
   '/admin',
   '/billing',
   '/admin/revenue',
+  '/admin/revenue/transactions',
 ]
 
 /**
@@ -124,11 +154,11 @@ const requireBuild = () => {
   process.exit(1)
 }
 
-const startServer = () => {
+const startServer = env => {
   const server = spawn(
     process.platform === 'win32' ? 'npx.cmd' : 'npx',
     ['next', 'start', '--port', String(PORT)],
-    { stdio: 'ignore', shell: process.platform === 'win32' }
+    { stdio: 'ignore', shell: process.platform === 'win32', env: { ...process.env, ...env } }
   )
   server.on('error', error => {
     console.error('Could not start the server:', error.message)
@@ -314,7 +344,9 @@ const findUnfocusableStops = async (page, limit = 25) => {
 const run = async () => {
   requireBuild()
   await requireFreePort()
-  const server = startServer()
+
+  const credentials = await buildCredentials()
+  const server = startServer(credentials.env)
   let browser
 
   try {
@@ -322,6 +354,35 @@ const run = async () => {
 
     const routes = [...STATIC_ROUTES, ...(await discoverProductRoute())]
     browser = await chromium.launch()
+
+    /**
+     * Sign in once and reuse the cookie for every context below.
+     *
+     * Without it the staff routes would redirect to the login screen and the
+     * gate would quietly audit that page four times over while reporting
+     * /admin, /billing and /admin/revenue as passing.
+     */
+    const signIn = await fetch(`${ORIGIN}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: credentials.password }),
+    })
+
+    const setCookie = signIn.headers.get('set-cookie') || ''
+    const sessionValue = setCookie.split(';')[0]?.split('=').slice(1).join('=')
+
+    if (!signIn.ok || !sessionValue) {
+      console.error('  Could not sign in to audit the staff screens.\n')
+      process.exitCode = 1
+      return
+    }
+
+    const sessionCookie = {
+      name: setCookie.split('=')[0],
+      value: sessionValue,
+      domain: '127.0.0.1',
+      path: '/',
+    }
 
     const failures = []
     let checks = 0
@@ -331,6 +392,7 @@ const run = async () => {
 
     for (const viewport of VIEWPORTS) {
       const context = await browser.newContext({
+        storageState: { cookies: [sessionCookie], origins: [] },
         viewport: { width: viewport.width, height: viewport.height },
       })
       const page = await context.newPage()
@@ -360,6 +422,7 @@ const run = async () => {
 
     for (const width of REFLOW_WIDTHS) {
       const context = await browser.newContext({
+        storageState: { cookies: [sessionCookie], origins: [] },
         viewport: { width: width.width, height: width.height },
       })
       const page = await context.newPage()
@@ -386,6 +449,7 @@ const run = async () => {
     console.log('')
 
     const reducedContext = await browser.newContext({
+        storageState: { cookies: [sessionCookie], origins: [] },
       viewport: { width: 1280, height: 900 },
       reducedMotion: 'reduce',
     })
@@ -411,7 +475,8 @@ const run = async () => {
 
     console.log('')
 
-    const focusContext = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+    const focusContext = await browser.newContext({
+        storageState: { cookies: [sessionCookie], origins: [] }, viewport: { width: 1280, height: 900 } })
     const focusPage = await focusContext.newPage()
 
     for (const route of routes) {

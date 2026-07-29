@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb, runQuery, runTransaction } from '@/lib/db'
 import { Order } from '@/types/order'
 import { apiResponse, apiError, generateOrderNumber, calculateTax, calculateTotal } from '@/lib/utils'
+import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING } from '@/lib/shipping'
 
 // GET /api/orders - Get all orders
 export async function GET(request: NextRequest) {
@@ -52,30 +53,105 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * What the client is allowed to say about an item: which product, how many.
+ *
+ * Everything else -- price, name, SKU, image, the line subtotal, the order
+ * total -- is read from the database. This route used to take `unit_price`
+ * straight off the request and multiply it out, so posting
+ * `{"product_id":1,"quantity":1,"unit_price":1}` for a Rs 185,000 sofa
+ * produced an order with a total of Rs 1.18, and the payment link was
+ * generated from that total. Anyone who could open the developer tools could
+ * name their own price.
+ */
+interface RequestedItem {
+  product_id: number
+  quantity: number
+}
+
+const parseItems = (raw: unknown): RequestedItem[] => {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw Object.assign(new Error('An order needs at least one item'), { status: 400 })
+  }
+
+  return raw.map(entry => {
+    const productId = Number((entry as any)?.product_id)
+    const quantity = Number((entry as any)?.quantity)
+
+    if (!Number.isInteger(productId) || productId <= 0) {
+      throw Object.assign(new Error('An item is missing a valid product'), { status: 400 })
+    }
+    if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 999) {
+      throw Object.assign(new Error('An item has an invalid quantity'), { status: 400 })
+    }
+
+    return { product_id: productId, quantity }
+  })
+}
+
 // POST /api/orders - Create new order
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const db = getDb()
 
-    // Validate required fields
-    if (!body.items || body.items.length === 0) {
-      return NextResponse.json(
-        apiError('Order must have at least one item'),
-        { status: 400 }
-      )
+    const requested = parseItems(body.items)
+
+    // Two lines for the same product would each pass the stock check on their
+    // own and together take more than there is.
+    const merged = new Map<number, number>()
+    for (const item of requested) {
+      merged.set(item.product_id, (merged.get(item.product_id) ?? 0) + item.quantity)
     }
 
     return runTransaction(db => {
-      // Calculate totals
-      let subtotal = 0
-      for (const item of body.items) {
-        subtotal += item.unit_price * item.quantity
-      }
+      const findProduct = db.prepare(
+        'SELECT id, name, sku, price, stock_quantity, is_active FROM products WHERE id = ?'
+      )
+      const findImage = db.prepare(
+        `SELECT image_url FROM product_images
+         WHERE product_id = ? ORDER BY is_primary DESC, display_order ASC LIMIT 1`
+      )
 
-      const tax = body.tax || calculateTax(subtotal)
-      const shipping = body.shipping_cost || 0
-      const discount = body.discount || 0
+      const lines = Array.from(merged.entries()).map(([productId, quantity]) => {
+        const product = findProduct.get(productId) as
+          | { id: number; name: string; sku: string; price: number; stock_quantity: number; is_active: number }
+          | undefined
+
+        if (!product || !product.is_active) {
+          throw Object.assign(new Error('One of those pieces is no longer available'), {
+            status: 400,
+          })
+        }
+        if (product.stock_quantity < quantity) {
+          throw Object.assign(
+            new Error(
+              `We only have ${product.stock_quantity} of ${product.name} left`
+            ),
+            { status: 409 }
+          )
+        }
+
+        const image = findImage.get(productId) as { image_url: string } | undefined
+
+        return {
+          product_id: product.id,
+          product_name: product.name,
+          product_sku: product.sku,
+          product_image: image?.image_url ?? null,
+          quantity,
+          // From the catalogue, never from the caller.
+          unit_price: product.price,
+          subtotal: product.price * quantity,
+        }
+      })
+
+      const subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0)
+      // Tax and shipping are policy, not customer input. Free delivery over
+      // Rs 100,000 is the same rule the cart shows.
+      const tax = calculateTax(subtotal)
+      const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING
+      const discount = 0
       const total = calculateTotal(subtotal, tax, shipping, discount)
 
       // Create order
@@ -106,7 +182,6 @@ export async function POST(request: NextRequest) {
 
       const orderId = orderResult.lastInsertRowid
 
-      // Add order items and update stock
       const insertItem = db.prepare(`
         INSERT INTO order_items (
           order_id, product_id, product_name, product_sku, product_image,
@@ -114,27 +189,31 @@ export async function POST(request: NextRequest) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `)
 
+      // The WHERE guard is the real check. Between reading the stock above and
+      // writing it here another order can land, and the conditional update is
+      // what makes the pair atomic rather than merely sequential.
       const updateStock = db.prepare(
         'UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?'
       )
 
-      for (const item of body.items) {
-        // Insert order item
+      for (const line of lines) {
         insertItem.run(
           orderId,
-          item.product_id,
-          item.product_name,
-          item.product_sku || null,
-          item.product_image || null,
-          item.quantity,
-          item.unit_price,
-          item.unit_price * item.quantity
+          line.product_id,
+          line.product_name,
+          line.product_sku,
+          line.product_image,
+          line.quantity,
+          line.unit_price,
+          line.subtotal
         )
 
-        // Update stock
-        const stockResult = updateStock.run(item.quantity, item.product_id, item.quantity)
+        const stockResult = updateStock.run(line.quantity, line.product_id, line.quantity)
         if (stockResult.changes === 0) {
-          throw new Error(`Insufficient stock for product ${item.product_name}`)
+          throw Object.assign(
+            new Error(`${line.product_name} sold out while you were checking out`),
+            { status: 409 }
+          )
         }
       }
 
@@ -148,10 +227,15 @@ export async function POST(request: NextRequest) {
       )
     })
   } catch (error: any) {
-    console.error('Error creating order:', error)
+    // A rejected order is usually the customer's to fix -- out of stock, a
+    // piece withdrawn, a bad quantity -- and answering 500 to all of it told
+    // them the shop was broken when it was not.
+    const status = typeof error?.status === 'number' ? error.status : 500
+    if (status >= 500) console.error('Error creating order:', error)
+
     return NextResponse.json(
-      apiError(error.message || 'Failed to create order'),
-      { status: 500 }
+      apiError(status >= 500 ? 'We could not place that order' : error.message),
+      { status }
     )
   }
 }

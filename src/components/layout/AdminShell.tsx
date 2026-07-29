@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowUpRight, BarChart3, LayoutDashboard, Receipt } from 'lucide-react'
+import { ArrowUpRight, BarChart3, LayoutDashboard, LogOut, Receipt } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import Container from './Container'
 import Logo from './Logo'
@@ -30,21 +30,27 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href)
 
+  const signOut = async () => {
+    await fetch('/api/admin/login', { method: 'DELETE' })
+    // A full navigation, so middleware sees the cleared cookie.
+    window.location.href = '/admin/login'
+  }
+
   return (
     <AppFrame
       className="bg-surface-subtle text-ui"
       header={
         <header className="sticky top-0 z-sticky border-b border-border-subtle bg-surface">
           <Container size="wide">
-            <div className="flex h-14 items-center justify-between gap-6">
+            <div className="flex h-14 items-center justify-between gap-3 sm:gap-6">
               <div className="flex items-center gap-6">
                 <Logo size="sm" href="/admin" />
-                <span className="hidden rounded-xs bg-surface-subtle px-2 py-0.5 text-overline uppercase text-text-tertiary sm:inline">
+                <span className="hidden rounded-xs bg-surface-subtle px-2 py-0.5 text-overline uppercase text-text-secondary sm:inline">
                   Admin
                 </span>
               </div>
 
-              <nav aria-label="Admin sections" className="flex items-center gap-1">
+              <nav aria-label="Admin sections" className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto px-1">
                 {SECTIONS.map(section => {
                   const active = isActive(section.href, section.exact)
                   return (
@@ -76,11 +82,24 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 <Link
                   href="/"
                   aria-label="View store"
-                  className="ml-2 flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-tertiary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="ml-2 flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="hidden sm:inline">View store</span>
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
+
+                {/* Signing out clears the cookie on the server. The old one
+                    deleted a localStorage flag, which left nothing to clear
+                    because there was nothing holding the session. */}
+                <button
+                  type="button"
+                  onClick={signOut}
+                  aria-label="Sign out"
+                  className="flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
               </nav>
             </div>
           </Container>

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from 'fs'
 import { dirname } from 'path'
 import { createTables, createTriggers } from './schema'
 import { createDemoSeedTable, isDatabaseEmpty, seedDemoData } from './seed'
+import { addStripeColumns } from './migrations/add-stripe-columns'
 
 const DATABASE_PATH = process.env.DATABASE_PATH || './data/ecommerce.db'
 
@@ -69,6 +70,12 @@ export const getDb = (): Database.Database => {
           console.error('Failed to run revenue migration:', error)
         }
       }
+
+      // Unconditional and cheap: it reads the table definition and adds only
+      // what is missing. The previous version of this was never called at
+      // all, which is why the payment path wrote to columns that did not
+      // exist on any database created before today.
+      addStripeColumns(db)
     }
 
     // Demo catalogue. Only fires when the store has never been populated, so

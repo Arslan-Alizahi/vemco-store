@@ -134,16 +134,16 @@ export default function TransactionsPage() {
           <div className="mb-6">
             <Link
               href="/admin/revenue"
-              className="inline-flex items-center text-caramel-600 hover:text-caramel-700 mb-4 transition-colors"
+              className="mb-4 inline-flex items-center text-caramel-700 transition-colors hover:text-caramel-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Revenue Dashboard
             </Link>
 
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-text-primary">All Transactions</h1>
-                <p className="text-text-secondary">
+                <h1 className="text-h1 text-text-primary">All Transactions</h1>
+                <p className="text-body text-text-secondary">
                   {pagination.total} total transactions
                 </p>
               </div>
@@ -176,6 +176,7 @@ export default function TransactionsPage() {
                 {/* Type Filter */}
                 <div className="lg:col-span-2">
                   <Select
+                    label="Source"
                     value={filters.type}
                     onChange={(e) => handleFilterChange('type', e.target.value)}
                     options={[
@@ -189,6 +190,7 @@ export default function TransactionsPage() {
                 {/* Payment Method Filter */}
                 <div className="lg:col-span-2">
                   <Select
+                    label="Payment method"
                     value={filters.paymentMethod}
                     onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
                     options={[
@@ -239,7 +241,12 @@ export default function TransactionsPage() {
 
           {/* Transactions Table */}
           <Card noPadding>
-            <div className="overflow-x-auto">
+            <div
+              className="overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Transactions, scrolls sideways"
+            >
               <table className="w-full">
                 <thead className="bg-canvas border-b">
                   <tr>
@@ -351,7 +358,7 @@ export default function TransactionsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleViewDetails(transaction)}
-                            className="text-caramel-600 hover:text-caramel-900 hover:bg-caramel-50 p-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                            className="inline-flex items-center gap-2 rounded-sm p-2 text-caramel-700 transition-colors hover:bg-caramel-50 hover:text-caramel-900"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
@@ -526,7 +533,7 @@ export default function TransactionsPage() {
                   )}
                   <div className="flex justify-between text-lg font-bold pt-3 border-t">
                     <span>Total</span>
-                    <span className="text-caramel-600">
+                    <span className="text-caramel-700">
                       {formatCurrency(selectedTransaction.total)}
                     </span>
                   </div>

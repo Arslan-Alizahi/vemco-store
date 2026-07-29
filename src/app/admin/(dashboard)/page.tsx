@@ -556,7 +556,10 @@ export default function AdminPage() {
         <div
           role="tablist"
           aria-label="Admin sections"
-          className="mb-6 flex space-x-1 border-b border-border-subtle"
+          // Six tabs do not fit a phone. Scrolling the strip keeps them all
+          // reachable; wrapping would push the content down a line on every
+          // narrow screen.
+          className="no-scrollbar mb-6 flex space-x-1 overflow-x-auto border-b border-border-subtle"
         >
           {tabs.map(tab => (
             <button
@@ -566,7 +569,7 @@ export default function AdminPage() {
               aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-2 border-b-2 px-4 py-2 text-ui font-medium',
+                'flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2 text-ui font-medium',
                 'transition-colors duration-fast ease-standard',
                 activeTab === tab.id
                   ? 'border-caramel-600 text-caramel-800'
@@ -588,7 +591,7 @@ export default function AdminPage() {
                   <CardTitle>Total Products</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-caramel-600">{totalProducts}</p>
+                  <p className="text-h1 text-text-primary">{totalProducts}</p>
                 </CardContent>
               </Card>
 
@@ -1029,7 +1032,7 @@ export default function AdminPage() {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-caramel-600 hover:underline truncate flex-1"
+                          className="truncate flex-1 text-caramel-700 hover:underline"
                         >
                           {link.url}
                         </a>
