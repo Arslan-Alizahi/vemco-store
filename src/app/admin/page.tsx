@@ -21,6 +21,12 @@ import { Product } from '@/types/product'
 import { Category } from '@/types/category'
 import { SocialMediaLink } from '@/types/social-media'
 
+/** "products", "products and orders", "products, orders and receipts". */
+const formatList = (items: string[]): string =>
+  items.length <= 1
+    ? items.join('')
+    : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+
 export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -39,6 +45,9 @@ export default function AdminPage() {
   const [editingNav, setEditingNav] = useState<any | null>(null)
   const [demoData, setDemoData] = useState<{ present: boolean; productCount: number } | null>(null)
   const [demoBusy, setDemoBusy] = useState(false)
+  /** Resources whose last load failed, keyed by name. */
+  const [failed, setFailed] = useState<Record<string, true>>({})
+  const failedResources = Object.keys(failed)
   // One dialog serves every destructive action on this screen. Each handler
   // describes what it is about to do; the dialog just renders it.
   const [confirmState, setConfirmState] = useState<{
@@ -92,62 +101,48 @@ export default function AdminPage() {
     fetchData()
   }, [])
 
+  /**
+   * Loads one resource and records it if it does not arrive.
+   *
+   * Each of these was its own copy of `.then(d => { if (d.success) set(...) })
+   * .catch(console.error)`, which fails silently twice over: a network error
+   * went to the console, and a `success: false` response was not even looked
+   * at. Either way a tab rendered as though the shop genuinely had no
+   * products, no orders, no receipts -- with nothing to click to find out
+   * otherwise.
+   */
+  const load = async (
+    resource: string,
+    url: string,
+    apply: (data: any) => void
+  ): Promise<void> => {
+    try {
+      const res = await fetch(url)
+      const body = await res.json()
+      if (!res.ok || !body.success) throw new Error(body.message || 'Request failed')
+      apply(body.data)
+      setFailed(current => {
+        if (!current[resource]) return current
+        const next = { ...current }
+        delete next[resource]
+        return next
+      })
+    } catch (error) {
+      console.error(`Failed to load ${resource}:`, error)
+      setFailed(current => ({ ...current, [resource]: true }))
+    }
+  }
+
   const fetchData = async () => {
-    // Fetch products
-    fetch('/api/products?limit=100')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setProducts(data.data.products || [])
-      })
-      .catch(error => console.error('Error fetching products:', error))
-
-    // Fetch categories
-    fetch('/api/categories')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setCategories(data.data || [])
-      })
-      .catch(error => console.error('Error fetching categories:', error))
-
-    // Fetch orders
-    fetch('/api/orders?limit=10')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setOrders(data.data || [])
-      })
-      .catch(error => console.error('Error fetching orders:', error))
-
-    // Fetch receipts
-    fetch('/api/billing')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setReceipts(data.data || [])
-      })
-      .catch(error => console.error('Error fetching receipts:', error))
-
-    // Fetch social media links
-    fetch('/api/social-media')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setSocialLinks(data.data.links || [])
-      })
-      .catch(error => console.error('Error fetching social links:', error))
-
-    // Fetch navigation items
-    fetch('/api/nav')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setNavItems(data.data || [])
-      })
-      .catch(error => console.error('Error fetching nav items:', error))
-
-    // Demo catalogue status
-    fetch('/api/admin/demo-data')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setDemoData(data.data)
-      })
-      .catch(error => console.error('Error fetching demo data status:', error))
+    await Promise.all([
+      load('products', '/api/products?limit=100', data => setProducts(data.products || [])),
+      load('categories', '/api/categories', data => setCategories(data || [])),
+      load('orders', '/api/orders?limit=10', data => setOrders(data || [])),
+      load('receipts', '/api/billing', data => setReceipts(data || [])),
+      load('social links', '/api/social-media', data => setSocialLinks(data.links || [])),
+      load('navigation', '/api/nav', data => setNavItems(data || [])),
+      load('demo data status', '/api/admin/demo-data', data => setDemoData(data)),
+    ])
   }
 
   const handleSeedDemo = async () => {
@@ -536,23 +531,49 @@ export default function AdminPage() {
       <div className="min-h-screen bg-canvas">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
-          <p className="text-text-secondary">Manage your store</p>
+          <h1 className="text-h1 text-text-primary">Admin dashboard</h1>
+          <p className="text-body text-text-secondary">Manage the shop</p>
         </div>
 
+        {/* Says which loads failed, rather than letting the affected tabs
+            render as convincingly empty. */}
+        {failedResources.length > 0 && (
+          <div
+            role="alert"
+            className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger-100 bg-danger-50 p-4"
+          >
+            <p className="text-ui text-danger-900">
+              Could not load {formatList(failedResources)}. What you see below may be
+              incomplete.
+            </p>
+            <Button variant="outline" size="sm" onClick={fetchData}>
+              Try again
+            </Button>
+          </div>
+        )}
+
         {/* Tabs */}
-        <div className="flex space-x-1 mb-6 border-b">
+        <div
+          role="tablist"
+          aria-label="Admin sections"
+          className="mb-6 flex space-x-1 border-b border-border-subtle"
+        >
           {tabs.map(tab => (
             <button
               key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+              className={cn(
+                'flex items-center gap-2 border-b-2 px-4 py-2 text-ui font-medium',
+                'transition-colors duration-fast ease-standard',
                 activeTab === tab.id
-                  ? 'border-caramel-600 text-caramel-600'
-                  : 'border-transparent text-text-tertiary hover:text-bark-700'
-              }`}
+                  ? 'border-caramel-600 text-caramel-800'
+                  : 'border-transparent text-text-tertiary hover:text-text-primary'
+              )}
             >
-              <tab.icon className="h-5 w-5" />
+              <tab.icon className="h-4 w-4" aria-hidden="true" />
               {tab.label}
             </button>
           ))}

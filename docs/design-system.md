@@ -148,7 +148,7 @@ Notes that are easy to get wrong:
 | `verify:contrast` | 33 colour pairings meet AA. Reads `tokens.ts` directly. |
 | `verify:tokens` | No hex, `rgb()`, `hsl()`, Tailwind default palette or bracket colours anywhere outside the token file. Nothing is excluded. |
 | `verify:a11y` | 120 checks over 20 routes, storefront and staff screens alike: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
-| `test` | Token, motion and `cn` behaviour. |
+| `test` | 76 tests. Design system (tokens, motion, `cn`), cart arithmetic and stock caps, pricing and validation, and the checkout gate rendered in jsdom. |
 
 `verify:a11y` needs a production build; `next dev` overwrites `.next`, so run
 `npm run build` after any dev session.
