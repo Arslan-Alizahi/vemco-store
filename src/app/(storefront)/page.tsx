@@ -113,11 +113,16 @@ export default function HomePage() {
       {/* ---------------------------------------------------------------- */}
       <section className="relative isolate overflow-hidden bg-bark-950">
         <Parallax distance={60} className="absolute inset-0 -z-10 scale-110">
+          {/* Decorative, at 40% opacity behind a scrim, so it does not need
+              the quality a product photograph does. At q=75 this was 192KB and
+              the largest thing on the page -- the LCP element. At q=40 it is
+              60KB and, at this opacity, indistinguishable. */}
           <Image
             src="/seed/products/classic-sofa-set-lg.webp"
             alt=""
             fill
             priority
+            quality={40}
             sizes="100vw"
             className="object-cover opacity-40"
           />
@@ -365,6 +370,7 @@ export default function HomePage() {
             src="/seed/products/grand-dining-table-lg.webp"
             alt=""
             fill
+            quality={40}
             sizes="100vw"
             className="object-cover opacity-30"
           />
