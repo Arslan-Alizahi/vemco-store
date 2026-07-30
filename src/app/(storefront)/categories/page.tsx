@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Reveal from '@/components/ui/motion/Reveal'
+import { Tilt } from '@/components/ui/motion/Tilt'
 import { getCategoryOverview, getChildCategories } from '@/lib/categories'
 
 export const dynamic = 'force-dynamic'
@@ -55,19 +56,25 @@ export default function CategoriesPage() {
 
             return (
               <Reveal as="li" key={category.id} index={index}>
-                <Card interactive noPadding className="group relative flex h-full flex-col">
-                  {/* Same 4:5 media frame and hover scale as ProductCard, so a
-                      category tile and a product tile read as one family. */}
+                <Card
+                  interactive
+                  noPadding
+                  className="stage lift-on-hover group relative flex h-full flex-col"
+                >
+                  {/* Same 4:5 media frame, tilt and hover scale as ProductCard,
+                      so a category tile and a product tile read as one family. */}
                   <div className="relative aspect-[4/5] overflow-hidden bg-surface-subtle">
                     {category.cover_image ? (
-                      <Image
-                        src={category.cover_image}
-                        alt={category.cover_alt || ''}
-                        fill
-                        sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
-                        priority={index < 3}
-                        className="object-cover transition-transform duration-slow ease-standard group-hover:scale-[1.04]"
-                      />
+                      <Tilt max={5} className="h-full w-full">
+                        <Image
+                          src={category.cover_image}
+                          alt={category.cover_alt || ''}
+                          fill
+                          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
+                          priority={index < 3}
+                          className="scale-105 object-cover transition-transform duration-slow ease-standard group-hover:scale-110"
+                        />
+                      </Tilt>
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <Package className="h-10 w-10 text-text-tertiary" aria-hidden="true" />
@@ -76,9 +83,10 @@ export default function CategoriesPage() {
 
                     {/* Scrim, so the name stays legible over any photo rather
                         than depending on how dark that particular room was. */}
+                    <div aria-hidden="true" className="scrim-fade" />
                     <div
                       aria-hidden="true"
-                      className="absolute inset-0 bg-gradient-to-t from-bark-950/75 via-bark-950/10 to-transparent"
+                      className="pointer-events-none absolute inset-0 bg-sheen opacity-0 transition-opacity duration-slow ease-standard group-hover:opacity-100"
                     />
 
                     <div className="absolute inset-x-0 bottom-0 p-5 text-white">

@@ -83,6 +83,44 @@ Serif (`font-serif`) is for page and section titles. Everything else is sans.
 - **Stacking** is named, not numbered: `z-dropdown`, `z-sticky`, `z-overlay`,
   `z-modal`, `z-popover`, `z-toast`, `z-tooltip`.
 
+## Depth
+
+Three shadows beyond the flat scale, plus the helpers that use them.
+
+| Token | For |
+| --- | --- |
+| `shadow-lift` | What a card rises to under the pointer |
+| `shadow-float` | Hero panels and glass, clearly in front of the page |
+| `shadow-well` | Inset. Pressed states and recessed wells |
+| `shadow-rim` | A warm inner highlight, for dark panels where a grey ring reads cold |
+
+And four utilities in `globals.css`:
+
+- **`.stage`** sets `perspective` on the parent. A rotation without it
+  projects orthographically and reads as a skew rather than a tilt.
+- **`.lift-on-hover`** raises a card 4px and swaps `shadow-e2` for
+  `shadow-lift`. Transform and shadow only — never colour, so nothing inside
+  it can drift out of contrast. It flattens under reduced motion.
+- **`.glass-dark`** is the panel used over the dark hero. The blur is
+  decoration; the **background alpha** is what keeps white text readable
+  whatever scrolls behind it. Never rely on `backdrop-blur` alone for
+  contrast — it makes the composited result depend on the photograph.
+- **`.scrim-fade`** is the gradient that sits between a photograph and any
+  text laid over it.
+
+Two gradients are named rather than mixed inline, so the colour gate does not
+have to allow arbitrary values through: `bg-grain-warm` (the hero wash),
+`bg-sheen` (the highlight that sweeps a card on hover), `bg-fade-up` (what
+`.scrim-fade` uses).
+
+**`Tilt` goes on a media frame, never on a card containing text.** Rotating
+type destroys subpixel antialiasing, and rotating a card pushes its corners
+into the grid gutter. Inside a clipped frame it costs nothing. It disables
+itself under reduced motion and on touch, where there is no hover to drive it.
+
+**`Parallax` is for hero layers only.** Scroll-linked transform on a long
+reading page fights the reader.
+
 ## Motion
 
 ```

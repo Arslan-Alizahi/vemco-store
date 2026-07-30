@@ -14,6 +14,7 @@ import IconButton from '@/components/ui/IconButton'
 import Spinner from '@/components/ui/Spinner'
 import ErrorState from '@/components/ui/ErrorState'
 import ProductCard from '@/components/storefront/ProductCard'
+import { Tilt } from '@/components/ui/motion/Tilt'
 import { useCart } from '@/hooks/useCart'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useToast } from '@/components/ui/Toast'
@@ -162,15 +163,17 @@ export default function ProductDetailPage() {
 
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
-            <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-surface-subtle">
-              <Image
-                src={product.images?.[selectedImage]?.image_url || '/placeholder.png'}
-                alt={product.images?.[selectedImage]?.alt_text || product.name}
-                fill
-                sizes="(min-width: 1024px) 45vw, 92vw"
-                priority
-                className="object-cover"
-              />
+            <div className="stage relative aspect-[4/5] overflow-hidden rounded-lg bg-surface-subtle shadow-e2">
+              <Tilt max={4} className="h-full w-full">
+                <Image
+                  src={product.images?.[selectedImage]?.image_url || '/placeholder.png'}
+                  alt={product.images?.[selectedImage]?.alt_text || product.name}
+                  fill
+                  sizes="(min-width: 1024px) 45vw, 92vw"
+                  priority
+                  className="scale-105 object-cover"
+                />
+              </Tilt>
             </div>
 
             {product.images?.length > 1 && (

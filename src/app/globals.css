@@ -77,6 +77,44 @@
     @apply bg-surface/80 backdrop-blur-lg;
   }
 
+  /* Glass over the dark hero. Text on it is white, and the panel is opaque
+     enough that the composited contrast holds whatever scrolls behind. The
+     rule is the same one the light .glass follows: blur is decoration, the
+     background alpha is what keeps the type readable. */
+  .glass-dark {
+    @apply border border-white/10 bg-bark-950/55 backdrop-blur-glass;
+    box-shadow: theme('boxShadow.rim');
+  }
+
+  /* A card that rises under the pointer. Transform and shadow only — no
+     colour change, so nothing it contains can drift out of contrast. */
+  .lift-on-hover {
+    @apply transition-[transform,box-shadow] duration-base ease-standard;
+  }
+
+  .lift-on-hover:hover {
+    @apply -translate-y-1 shadow-lift;
+  }
+
+  /* A stage for a tilted child. perspective has to sit on the parent, or the
+     rotation projects orthographically and reads as a skew. */
+  .stage {
+    perspective: 1000px;
+    perspective-origin: 50% 50%;
+  }
+
+  /* Sits above an image and keeps overlaid text legible regardless of what
+     the photograph happens to be doing underneath. */
+  .scrim-fade {
+    @apply pointer-events-none absolute inset-0 bg-fade-up;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lift-on-hover:hover {
+      @apply translate-y-0 shadow-e2;
+    }
+  }
+
   /* Shimmer, not pulse. The previous implementation relied on animate-pulse,
      which a bare @keyframes pulse in this file was silently overriding with
      an expanding red ring. */

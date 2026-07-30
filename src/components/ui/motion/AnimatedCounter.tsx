@@ -53,8 +53,19 @@ export function AnimatedCounter({
     return () => cancelAnimationFrame(raf)
   }, [inView, reduced, value, durationMs])
 
+  /**
+   * The final figure is real text, hidden visually; the ticking one is hidden
+   * from assistive technology.
+   *
+   * The previous version put aria-label on a bare <span>, which is invalid --
+   * aria-label is only honoured on elements with a role that supports a name,
+   * and a span has none. Browsers vary in whether they expose it at all, so
+   * the number a screen reader announced was anyone's guess. Two spans and no
+   * ARIA naming at all is both correct and simpler.
+   */
   return (
-    <span ref={ref} className={cn('tabular-nums', className)} aria-label={format(value)}>
+    <span ref={ref} className={cn('tabular-nums', className)}>
+      <span className="sr-only">{format(value)}</span>
       <span aria-hidden="true">{format(display)}</span>
     </span>
   )

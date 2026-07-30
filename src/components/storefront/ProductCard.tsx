@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card'
 import Badge, { StockBadge } from '@/components/ui/Badge'
 import Money from '@/components/ui/Money'
 import IconButton from '@/components/ui/IconButton'
+import { Tilt } from '@/components/ui/motion/Tilt'
 import type { Product } from '@/types/product'
 
 export interface ProductCardProps {
@@ -43,30 +44,46 @@ export function ProductCard({
   const outOfStock = product.stock_quantity <= 0
 
   return (
-    <Card interactive noPadding className={cn('group relative flex h-full flex-col', className)}>
-      {/* 4:5 portrait — furniture reads taller than square. The transform is on
-          the image inside its own clipped frame, never on the card, so type
-          stays sharp and nothing spills into the grid gutter. */}
+    <Card
+      interactive
+      noPadding
+      className={cn('stage lift-on-hover group relative flex h-full flex-col', className)}
+    >
+      {/* 4:5 portrait — furniture reads taller than square.
+
+          The tilt is on the image inside its own clipped frame, never on the
+          card. Rotating the card would take the type with it, which destroys
+          subpixel antialiasing, and would push the corners into the grid
+          gutter. Inside the frame it costs nothing and reads as depth. */}
       <div className="relative aspect-[4/5] overflow-hidden bg-surface-subtle">
         {image ? (
-          <Image
-            src={image}
-            alt={product.name}
-            fill
-            sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, (min-width: 640px) 45vw, 90vw"
-            priority={priority}
-            className="object-cover transition-transform duration-slow ease-standard group-hover:scale-[1.04]"
-          />
+          <Tilt max={5} className="h-full w-full">
+            <Image
+              src={image}
+              alt={product.name}
+              fill
+              sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, (min-width: 640px) 45vw, 90vw"
+              priority={priority}
+              className="scale-105 object-cover transition-transform duration-slow ease-standard group-hover:scale-110"
+            />
+          </Tilt>
         ) : (
           <div className="flex h-full items-center justify-center text-caption text-text-tertiary">
             No image
           </div>
         )}
 
+        {/* A sheen that sweeps as the pointer arrives. Pure white at low
+            alpha over the photograph, above nothing readable. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-sheen opacity-0 transition-opacity duration-slow ease-standard group-hover:opacity-100"
+        />
+
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           <div className="pointer-events-auto flex flex-col items-start gap-2">
             {onSale && (
-              <Badge variant="sale" size="sm">
+              <Badge variant="sale" size="sm" className="shadow-e2">
                 Sale
               </Badge>
             )}
