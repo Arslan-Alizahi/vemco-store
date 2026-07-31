@@ -21,9 +21,16 @@ export const controlSize = {
 
 export type ControlSize = keyof typeof controlSize
 
-/** Shared surface treatment for text inputs and selects. */
+/**
+ * Shared surface treatment for text inputs and selects.
+ *
+ * `shadow-well` is what makes a field read as somewhere to put something. A
+ * flat bordered box is a rectangle; an inset shadow along the top edge says
+ * the surface is recessed, and the text sits down inside it. It is the same
+ * cue a physical form has, and it costs one shadow.
+ */
 export const controlBase = cn(
-  'block w-full rounded-sm border bg-surface text-text-primary',
+  'block w-full rounded-sm border bg-surface text-text-primary shadow-well',
   'border-border-strong placeholder:text-text-tertiary',
   'transition-colors duration-fast ease-standard',
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring',

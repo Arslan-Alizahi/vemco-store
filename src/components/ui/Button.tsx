@@ -14,7 +14,12 @@ const buttonVariants = cva(
     // with a 20px shadow.
     'transition-colors duration-fast ease-standard',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-    'disabled:pointer-events-none disabled:opacity-50'
+    // A pressed state. There was none at all before -- a button changed
+    // colour on hover and then did nothing under the finger, so on touch,
+    // where there is no hover, pressing it gave no feedback whatsoever until
+    // the next screen arrived.
+    'active:shadow-well',
+    'disabled:pointer-events-none disabled:opacity-50 disabled:active:shadow-none'
   ),
   {
     variants: {

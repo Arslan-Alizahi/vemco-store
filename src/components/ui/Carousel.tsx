@@ -186,7 +186,9 @@ export function Carousel({
       {(showArrows || showDots || canAutoplay) && (
         <div className="mt-5 flex items-center justify-between gap-4">
           {showDots ? (
-            <div className="flex items-center gap-2">
+            /* A recessed track, so the dots read as running along something
+               rather than floating loose on the page. */
+            <div className="flex items-center gap-2 rounded-full bg-surface-subtle px-2.5 py-1.5 shadow-well">
               {children.map((_, index) => (
                 <button
                   key={index}

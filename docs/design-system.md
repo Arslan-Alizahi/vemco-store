@@ -91,7 +91,7 @@ Three shadows beyond the flat scale, plus the helpers that use them.
 | --- | --- |
 | `shadow-lift` | What a card rises to under the pointer |
 | `shadow-float` | Hero panels and glass, clearly in front of the page |
-| `shadow-well` | Inset. Pressed states and recessed wells |
+| `shadow-well` | Inset. Inputs, pressed buttons, stepper and carousel tracks |
 | `shadow-rim` | A warm inner highlight, for dark panels where a grey ring reads cold |
 
 And four utilities in `globals.css`:
@@ -120,6 +120,24 @@ itself under reduced motion and on touch, where there is no hover to drive it.
 
 **`Parallax` is for hero layers only.** Scroll-linked transform on a long
 reading page fights the reader.
+
+`shadow-well` is the one shadow that pushes *in* rather than up. It is what
+makes a field read as somewhere to put something rather than a rectangle:
+inputs and selects, the quantity steppers, a button's `:active` state — there
+was none before, so on touch a press gave no feedback at all — and the
+carousel's dot track.
+
+`animate-ring-pulse` rings the cart badge when the count goes up, and runs
+**twice, then stops**. It was `infinite`, which fails WCAG 2.2.2 the moment
+anything blinks past five seconds with no way to pause it, and a badge that
+pulses forever stops meaning "something just changed" by the second time you
+look at it.
+
+Run `npm run find-unused` to list tokens, utilities and components that exist
+with no call site. Three motion components sat unused until somebody asked
+where the animation had gone; the script exists so that list is visible rather
+than discovered. It reports, it does not fail — a scale can legitimately hold
+a step in reserve, and that judgement stays with a person.
 
 ## Motion
 

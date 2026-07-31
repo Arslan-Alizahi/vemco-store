@@ -248,7 +248,7 @@ export default function ProductDetailPage() {
               <div className="mt-8 space-y-4">
                 <div className="flex items-center gap-4">
                   <span className="text-ui font-medium text-text-secondary">Quantity</span>
-                  <div className="flex items-center rounded-sm border border-border-subtle">
+                  <div className="flex items-center rounded-sm border border-border-subtle bg-surface shadow-well">
                     <IconButton
                       label="Decrease quantity"
                       size="sm"

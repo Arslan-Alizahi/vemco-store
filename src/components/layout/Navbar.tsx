@@ -28,6 +28,33 @@ export default function Navbar({ links }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const { itemCount } = useCart()
+
+  /**
+   * Rings the cart badge for a moment when the count goes up.
+   *
+   * Adding to the cart happens on the product page, and the confirmation is a
+   * toast in the opposite corner from the thing that actually changed. This
+   * points at the change itself.
+   *
+   * Only on an increase, and only after the first render: it should mark
+   * something the person just did, not fire on every page load because a
+   * saved cart came back out of localStorage.
+   */
+  const [cartJustChanged, setCartJustChanged] = useState(false)
+  const previousCount = useRef<number | null>(null)
+
+  useEffect(() => {
+    const previous = previousCount.current
+    previousCount.current = itemCount
+
+    if (previous === null || itemCount <= previous) return
+
+    setCartJustChanged(true)
+    // Slightly longer than the two iterations, so the class is removed after
+    // the animation rather than cutting it short.
+    const timer = setTimeout(() => setCartJustChanged(false), 2600)
+    return () => clearTimeout(timer)
+  }, [itemCount])
   const { count: favoritesCount } = useFavorites()
   const menuRef = useRef<HTMLDivElement>(null)
   const toggleRef = useRef<HTMLButtonElement>(null)
@@ -145,7 +172,9 @@ export default function Navbar({ links }: NavbarProps) {
             >
               <ShoppingCart className="h-5 w-5" aria-hidden="true" />
               {itemCount > 0 && (
-                <span className={countPill}>{itemCount > 99 ? '99+' : itemCount}</span>
+                <span className={cn(countPill, cartJustChanged && 'animate-ring-pulse')}>
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
               )}
             </Link>
 

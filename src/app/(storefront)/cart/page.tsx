@@ -231,7 +231,7 @@ export default function CartPage() {
                   <Money amount={item.unit_price} className="mt-1 text-body text-text-primary" />
 
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-1 rounded-sm border border-border-subtle">
+                    <div className="flex items-center gap-1 rounded-sm border border-border-subtle bg-surface shadow-well">
                       <IconButton
                         label={`Decrease quantity of ${item.product_name}`}
                         size="sm"

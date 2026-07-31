@@ -106,6 +106,22 @@ export const danger: Record<string, string> = {
  * Components consume these, never a raw ramp step. The indirection is what
  * makes a future dark theme a token swap rather than a rewrite.
  */
+/**
+ * The ink every shadow and scrim is mixed from.
+ *
+ * Deliberately its own value rather than a step off the bark ramp: a shadow
+ * wants to be a shade cooler and darker than the darkest surface, or it reads
+ * as a brown smear rather than an absence of light. It is a token so the
+ * shadow scale cannot quietly drift away from the scrim.
+ */
+export const shadowInk = '#1C1812'
+
+/** `#RRGGBB` to the `R G B` form the modern rgb() syntax takes. */
+export const rgbOf = (hex: string): string => {
+  const value = parseInt(hex.slice(1), 16)
+  return `${(value >> 16) & 255} ${(value >> 8) & 255} ${value & 255}`
+}
+
 export const semantic = {
   canvas: bark[50],
   surface: '#FFFFFF',
@@ -116,5 +132,5 @@ export const semantic = {
   'text-secondary': bark[600],
   'text-tertiary': bark[500],
   ring: caramel[600],
-  scrim: 'rgb(32 26 20 / 0.32)',
+  scrim: `rgb(${rgbOf(shadowInk)} / 0.32)`,
 } as const

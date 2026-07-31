@@ -33,6 +33,13 @@ const OUT_OF_SCOPE = []
 /** The one file allowed to state a colour value. */
 const TOKEN_FILE = join('src', 'design', 'tokens.ts')
 
+/**
+ * `rgb(${rgbOf(token)} / 0.08)` is the sanctioned way to give a ramp colour an
+ * alpha, so the whole construct is stripped before matching -- not just the
+ * rgbOf call, which would leave a bare `rgb(` behind and fail anyway.
+ */
+const TOKEN_COLOUR = /rgb\(\$\{rgbOf\([^)]*\)\}[^)]*\)/g
+
 const TAILWIND_DEFAULT_PALETTE = [
   'slate', 'gray', 'zinc', 'neutral', 'stone',
   'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
@@ -83,6 +90,7 @@ const strip = source =>
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
     .replace(/theme\([^)]*\)/g, ' ')
+    .replace(TOKEN_COLOUR, ' ')
 
 const walk = dir => {
   const entries = []
@@ -95,7 +103,15 @@ const walk = dir => {
   return entries
 }
 
-const files = walk(join(ROOT, 'src'))
+/**
+ * tailwind.config.ts is scanned too.
+ *
+ * It was not, and that is where the drift went to hide: a keyframe carried
+ * rgb(184 68 47), a red belonging to no ramp here, and two gradients restated
+ * bark-950 and caramel-800 by hand in rgb() form. The one file that defines
+ * the palette was the one file nothing checked.
+ */
+const files = [...walk(join(ROOT, 'src')), join(ROOT, 'tailwind.config.ts')]
 const failures = []
 let outOfScopeCount = 0
 

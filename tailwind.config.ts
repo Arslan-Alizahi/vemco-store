@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 import defaultTheme from 'tailwindcss/defaultTheme'
-import { bark, caramel, sage, success, warning, danger, semantic } from './src/design/tokens'
+import { bark, caramel, sage, success, warning, danger, semantic, shadowInk, rgbOf } from './src/design/tokens'
 import { durationCss, easing } from './src/design/motion'
 import { fontSize } from './src/design/typography'
 
@@ -57,35 +57,40 @@ const config: Config = {
         'section-lg': '7rem',
       },
       // Layered low-opacity shadow plus a hairline ring, in desaturated ink
-      // rather than pure black. e0 is the Card default: hairline only. Today
-      // shadow-md is the resting state of every surface, so depth encodes
-      // nothing.
+      // rather than pure black. e0 is the Card default: hairline only -- if
+      // everything is raised, depth encodes nothing.
+      //
+      // Every shadow is mixed from one ink token, and the gradients below are
+      // built from ramp colours rather than restated by hand. bg-fade-up was
+      // rgb(20 17 14), which is bark-950 written out, and bg-grain-warm was
+      // rgb(97 58 19), which is caramel-800: two palette colours living
+      // outside the palette, in the one file the colour gate never read.
       boxShadow: {
-        e0: '0 0 0 1px rgb(28 24 18 / 0.05)',
-        e1: '0 1px 2px rgb(28 24 18 / 0.04), 0 0 0 1px rgb(28 24 18 / 0.05)',
-        e2: '0 4px 8px -2px rgb(28 24 18 / 0.06), 0 2px 4px -2px rgb(28 24 18 / 0.04), 0 0 0 1px rgb(28 24 18 / 0.06)',
-        e3: '0 16px 32px -8px rgb(28 24 18 / 0.12), 0 4px 8px -4px rgb(28 24 18 / 0.06), 0 0 0 1px rgb(28 24 18 / 0.06)',
-        e4: '0 -4px 16px -4px rgb(28 24 18 / 0.08)',
+        e0: `0 0 0 1px rgb(${rgbOf(shadowInk)} / 0.05)`,
+        e1: `0 1px 2px rgb(${rgbOf(shadowInk)} / 0.04), 0 0 0 1px rgb(${rgbOf(shadowInk)} / 0.05)`,
+        e2: `0 4px 8px -2px rgb(${rgbOf(shadowInk)} / 0.06), 0 2px 4px -2px rgb(${rgbOf(shadowInk)} / 0.04), 0 0 0 1px rgb(${rgbOf(shadowInk)} / 0.06)`,
+        e3: `0 16px 32px -8px rgb(${rgbOf(shadowInk)} / 0.12), 0 4px 8px -4px rgb(${rgbOf(shadowInk)} / 0.06), 0 0 0 1px rgb(${rgbOf(shadowInk)} / 0.06)`,
+        e4: `0 -4px 16px -4px rgb(${rgbOf(shadowInk)} / 0.08)`,
         // Lift: what a card rises to under the pointer. Two shadows at
         // different blurs read as a real object above a surface, where one
         // soft blur reads as a smudge.
-        lift: '0 24px 48px -12px rgb(28 24 18 / 0.18), 0 8px 16px -8px rgb(28 24 18 / 0.10), 0 0 0 1px rgb(28 24 18 / 0.06)',
+        lift: `0 24px 48px -12px rgb(${rgbOf(shadowInk)} / 0.18), 0 8px 16px -8px rgb(${rgbOf(shadowInk)} / 0.10), 0 0 0 1px rgb(${rgbOf(shadowInk)} / 0.06)`,
         // Float: hero panels and glass. Deep enough to sit clearly in front.
-        float: '0 40px 80px -20px rgb(28 24 18 / 0.28), 0 12px 24px -12px rgb(28 24 18 / 0.14)',
+        float: `0 40px 80px -20px rgb(${rgbOf(shadowInk)} / 0.28), 0 12px 24px -12px rgb(${rgbOf(shadowInk)} / 0.14)`,
         // Inset, for pressed states and recessed wells.
-        well: 'inset 0 2px 4px rgb(28 24 18 / 0.08), inset 0 0 0 1px rgb(28 24 18 / 0.05)',
+        well: `inset 0 2px 4px rgb(${rgbOf(shadowInk)} / 0.08), inset 0 0 0 1px rgb(${rgbOf(shadowInk)} / 0.05)`,
         // A warm rim, for the dark hero where a grey ring would read cold.
-        rim: 'inset 0 1px 0 rgb(255 255 255 / 0.10), 0 1px 0 rgb(28 24 18 / 0.30)',
+        rim: `inset 0 1px 0 rgb(${rgbOf(semantic.surface)} / 0.10), 0 1px 0 rgb(${rgbOf(shadowInk)} / 0.30)`,
       },
       backgroundImage: {
         // Named gradients, so a panel cannot be built from a hand-mixed
         // colour that the token gate would have to allow through.
         'grain-warm':
-          'radial-gradient(120% 100% at 50% 0%, rgb(97 58 19 / 0.55) 0%, transparent 62%)',
+          `radial-gradient(120% 100% at 50% 0%, rgb(${rgbOf(caramel[800])} / 0.55) 0%, transparent 62%)`,
         'sheen':
-          'linear-gradient(135deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0) 45%)',
+          `linear-gradient(135deg, rgb(${rgbOf(semantic.surface)} / 0.14) 0%, rgb(${rgbOf(semantic.surface)} / 0) 45%)`,
         'fade-up':
-          'linear-gradient(to top, rgb(20 17 14 / 0.82) 0%, rgb(20 17 14 / 0.10) 55%, transparent 100%)',
+          `linear-gradient(to top, rgb(${rgbOf(bark[950])} / 0.82) 0%, rgb(${rgbOf(bark[950])} / 0.10) 55%, transparent 100%)`,
       },
       blur: {
         glass: '14px',
@@ -111,15 +116,24 @@ const config: Config = {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        // A ring that expands out of an element and fades, to say "this just
+        // changed". Was rgb(184 68 47) -- a red belonging to no ramp in this
+        // system, left over from the original template. It is caramel now,
+        // the accent everything else uses to draw the eye.
         'ring-pulse': {
-          '0%': { boxShadow: '0 0 0 0 rgb(184 68 47 / 0.7)' },
-          '70%': { boxShadow: '0 0 0 10px rgb(184 68 47 / 0)' },
-          '100%': { boxShadow: '0 0 0 0 rgb(184 68 47 / 0)' },
+          '0%': { boxShadow: `0 0 0 0 ${caramel[600]}b3` },
+          '70%': { boxShadow: `0 0 0 10px ${caramel[600]}00` },
+          '100%': { boxShadow: `0 0 0 0 ${caramel[600]}00` },
         },
       },
       animation: {
+        // A skeleton is by definition temporary, so this one may loop.
         shimmer: 'shimmer 1.4s linear infinite',
-        'ring-pulse': 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        // Twice, then it stops. It used to be `infinite`, which is a WCAG
+        // 2.2.2 failure the moment anything blinks for more than five seconds
+        // without a way to pause it -- and a badge that pulses forever stops
+        // meaning "something changed" by the second time you look at it.
+        'ring-pulse': 'ring-pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) 2',
       },
     },
   },
