@@ -15,7 +15,7 @@ import { cn } from '@/lib/cn'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
 import { PrintReceipt } from '@/components/ui/PrintReceipt'
-import { Search, Plus, Minus, Trash2, Receipt, Package } from 'lucide-react'
+import { Search, Plus, Minus, Trash2, Receipt, Package, UserRound } from 'lucide-react'
 import { formatCurrency, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { Product } from '@/types/product'
 import { BillingCartItem } from '@/types/billing'
@@ -29,6 +29,9 @@ export default function BillingPage() {
   const [paymentModal, setPaymentModal] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [amountPaid, setAmountPaid] = useState('')
+  const [customerName, setCustomerName] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [knownCustomer, setKnownCustomer] = useState<{ id: number; name: string } | null>(null)
   const [currentReceipt, setCurrentReceipt] = useState<any>(null)
   const [showReceipt, setShowReceipt] = useState(false)
   const { addToast } = useToast()
@@ -112,6 +115,9 @@ export default function BillingPage() {
   const clearCart = () => {
     setCart([])
     setAmountPaid('')
+    setCustomerName('')
+    setCustomerPhone('')
+    setKnownCustomer(null)
   }
 
   const processBilling = async () => {
@@ -136,6 +142,8 @@ export default function BillingPage() {
           amount_paid: paid,
           tax,
           discount: 0,
+          customer_name: customerName.trim() || null,
+          customer_phone: customerPhone.trim() || null,
         }),
       })
 
@@ -159,6 +167,45 @@ export default function BillingPage() {
     }
   }
 
+  /**
+   * Looks the number up as it is typed and fills the name in.
+   *
+   * Debounced, because a cashier types a phone number faster than a round
+   * trip, and only once there are enough digits to be a real number rather
+   * than the first two of one.
+   */
+  useEffect(() => {
+    const digits = customerPhone.replace(/\D/g, '')
+    if (digits.length < 7) {
+      setKnownCustomer(null)
+      return
+    }
+
+    let cancelled = false
+    const timer = setTimeout(() => {
+      fetch(`/api/customers/lookup?phone=${encodeURIComponent(digits)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (cancelled || !data.success || !data.data) {
+            if (!cancelled) setKnownCustomer(null)
+            return
+          }
+          setKnownCustomer(data.data)
+          // Only fills a blank. Overwriting what the cashier just typed would
+          // fight them over the spelling of somebody's name.
+          setCustomerName(current => current.trim() || data.data.name)
+        })
+        .catch(() => {
+          if (!cancelled) setKnownCustomer(null)
+        })
+    }, 350)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [customerPhone])
+
   const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.sku.toLowerCase().includes(searchQuery.toLowerCase())
@@ -166,8 +213,10 @@ export default function BillingPage() {
 
   const changeAmount = (parseFloat(amountPaid) || total) - total
 
+  // The page no longer carries a data-print hook: printing works by rendering
+  // the receipt into a container on <body>, not by hiding the page around it.
   return (
-    <div className="min-h-screen bg-canvas" data-print="receipt-host">
+    <div className="min-h-screen bg-canvas">
 
       <Container className="py-section-sm">
         <PageHeader
@@ -378,6 +427,43 @@ export default function BillingPage() {
         size="md"
       >
         <div className="space-y-4">
+          {/* Who this is for.
+              Optional by design -- a walk-in who does not want to leave a
+              number should not be held up at the counter -- but the phone is
+              asked for first, because it is what turns a stranger into a
+              returning customer with a history. */}
+          <div className="rounded-md border border-border-subtle bg-surface-subtle p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <UserRound className="h-4 w-4 text-text-secondary" aria-hidden="true" />
+              <p className="text-ui font-medium text-text-primary">Customer</p>
+              <span className="text-caption text-text-tertiary">optional</span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input
+                label="Phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="off"
+                placeholder="0300 1234567"
+                value={customerPhone}
+                onChange={e => setCustomerPhone(e.target.value)}
+                helperText={
+                  knownCustomer
+                    ? `Returning customer — ${knownCustomer.name}`
+                    : 'We will look them up as you type'
+                }
+              />
+              <Input
+                label="Name"
+                autoComplete="off"
+                placeholder="Bilal Ahmed"
+                value={customerName}
+                onChange={e => setCustomerName(e.target.value)}
+              />
+            </div>
+          </div>
+
           <Select
             label="Payment method"
             value={paymentMethod}

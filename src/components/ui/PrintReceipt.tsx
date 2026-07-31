@@ -1,6 +1,7 @@
 'use client'
 
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
+import PrintDocument from './PrintDocument'
 
 interface ReceiptItem {
   product_name: string
@@ -13,6 +14,8 @@ interface ReceiptItem {
 interface Receipt {
   id: number
   receipt_number: string
+  customer_name?: string | null
+  customer_phone?: string | null
   items: ReceiptItem[]
   subtotal: number
   tax: number
@@ -29,157 +32,137 @@ interface PrintReceiptProps {
   onClose: () => void
 }
 
+/**
+ * A till receipt, laid out as a document rather than a dialog.
+ *
+ * The previous version printed nothing at all: the print stylesheet hid the
+ * page with selectors that assumed a particular DOM shape, and once the till
+ * gained a shell the receipt fell outside them. What came out of the printer
+ * was the POS header on an otherwise blank sheet. PrintDocument renders into
+ * a container attached to <body>, so the print rule has one job and no
+ * layout above can break it.
+ */
 export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
-  const handlePrint = () => {
-    // Add print class to body
-    document.body.classList.add('printing-receipt')
-
-    // Trigger print
-    window.print()
-
-    // Remove print class after printing
-    setTimeout(() => {
-      document.body.classList.remove('printing-receipt')
-    }, 100)
-  }
+  const paymentLabel = receipt.payment_method.replace(/_/g, ' ')
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-scrim print:static print:inset-auto print:block print:bg-surface">
-      <div className="print-receipt-content bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto print:shadow-none print:max-w-full print:max-h-full print:overflow-visible print:rounded-none">
-        {/* Print-only header */}
-        <div className="hidden print:block text-center mb-6">
-          <h1 className="text-3xl font-bold">VEMCO</h1>
-          <p className="text-sm text-text-secondary">Your trusted shopping partner</p>
-          <p className="text-xs text-text-tertiary mt-1">
-            123 Main Street, City, State 12345 | Phone: (555) 123-4567
-          </p>
+    <PrintDocument title="Receipt" onClose={onClose}>
+      <header className="border-b border-border-strong pb-5 text-center">
+        <p className="font-serif text-h1 text-text-primary">VEMCO</p>
+        <p className="mt-1 text-ui text-text-secondary">Furniture for considered spaces</p>
+        <p className="mt-2 text-caption text-text-secondary">
+          Showroom 14, Gulberg III, Lahore · +92 42 3500 0000 · hello@vemco.pk
+        </p>
+      </header>
+
+      <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2 text-ui">
+        <div className="flex justify-between">
+          <dt className="text-text-secondary">Receipt</dt>
+          <dd className="font-mono font-medium text-text-primary">{receipt.receipt_number}</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-text-secondary">Date</dt>
+          <dd className="text-text-primary">{formatDateTime(receipt.created_at)}</dd>
         </div>
 
-        {/* Screen-only header */}
-        <div className="p-6 border-b print:hidden">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Receipt</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-text-tertiary hover:text-bark-700"
-            >
-              ✕
-            </button>
+        {/* Only when there is one. An empty "Customer: —" row on a walk-in
+            receipt is noise on a piece of paper that has none to spare. */}
+        {receipt.customer_name && (
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Customer</dt>
+            <dd className="text-text-primary">{receipt.customer_name}</dd>
           </div>
-        </div>
-
-        {/* Receipt content */}
-        <div className="p-6 print:p-8">
-          {/* Receipt info */}
-          <div className="mb-6 pb-4 border-b border-dashed">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-text-secondary">Receipt #</p>
-                <p className="font-semibold">{receipt.receipt_number}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-text-secondary">Date</p>
-                <p className="font-semibold">{formatDate(receipt.created_at)}</p>
-              </div>
-            </div>
+        )}
+        {receipt.customer_phone && (
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Phone</dt>
+            <dd className="font-mono text-text-primary">{receipt.customer_phone}</dd>
           </div>
+        )}
+      </dl>
 
-          {/* Items table */}
-          <table className="w-full mb-6">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 text-sm font-semibold">Item</th>
-                <th className="text-center py-2 text-sm font-semibold">Qty</th>
-                <th className="text-right py-2 text-sm font-semibold">Price</th>
-                <th className="text-right py-2 text-sm font-semibold">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {receipt.items.map((item, index) => (
-                <tr key={index} className="border-b border-border-subtle">
-                  <td className="py-3">
-                    <p className="font-medium">{item.product_name}</p>
-                    <p className="text-xs text-text-tertiary">SKU: {item.product_sku}</p>
-                  </td>
-                  <td className="text-center py-3">{item.quantity}</td>
-                  <td className="text-right py-3">{formatCurrency(item.unit_price)}</td>
-                  <td className="text-right py-3 font-medium">
-                    {formatCurrency(item.subtotal)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <table className="mt-6 w-full border-collapse text-ui">
+        <thead>
+          <tr className="border-y border-border-strong text-caption uppercase tracking-[0.06em] text-text-secondary">
+            <th scope="col" className="py-2 text-left font-medium">Item</th>
+            <th scope="col" className="py-2 text-right font-medium">Qty</th>
+            <th scope="col" className="py-2 text-right font-medium">Price</th>
+            <th scope="col" className="py-2 text-right font-medium">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {receipt.items.map((item, index) => (
+            <tr key={index} className="border-b border-border-subtle align-top">
+              <td className="py-2.5 pr-3">
+                <span className="block text-text-primary">{item.product_name}</span>
+                {item.product_sku && (
+                  <span className="block font-mono text-caption text-text-secondary">
+                    {item.product_sku}
+                  </span>
+                )}
+              </td>
+              <td className="py-2.5 text-right tabular-nums text-text-primary">{item.quantity}</td>
+              <td className="py-2.5 text-right tabular-nums text-text-primary">
+                {formatCurrency(item.unit_price)}
+              </td>
+              <td className="py-2.5 text-right font-medium tabular-nums text-text-primary">
+                {formatCurrency(item.subtotal)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-          {/* Totals */}
-          <div className="space-y-2 mb-6 pb-6 border-b border-dashed">
-            <div className="flex justify-between text-sm">
-              <span className="text-text-secondary">Subtotal</span>
-              <span className="font-medium">{formatCurrency(receipt.subtotal)}</span>
+      {/* Kept together, so a page break never lands between the total and
+          what was handed over. */}
+      <div data-print-keep className="ml-auto mt-5 w-full max-w-[62mm] text-ui">
+        <dl className="space-y-1.5">
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Subtotal</dt>
+            <dd className="tabular-nums text-text-primary">{formatCurrency(receipt.subtotal)}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Tax</dt>
+            <dd className="tabular-nums text-text-primary">{formatCurrency(receipt.tax)}</dd>
+          </div>
+          {receipt.discount > 0 && (
+            <div className="flex justify-between text-sage-700">
+              <dt>Discount</dt>
+              <dd className="tabular-nums">-{formatCurrency(receipt.discount)}</dd>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-text-secondary">Tax (18%)</span>
-              <span className="font-medium">{formatCurrency(receipt.tax)}</span>
-            </div>
-            {/* Sage, the system's markdown colour, rather than a generic
-                green -- a discount is the same idea as a sale tag. */}
-            {receipt.discount > 0 && (
-              <div className="flex justify-between text-sm text-sage-700">
-                <span>Discount</span>
-                <span className="font-medium">-{formatCurrency(receipt.discount)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-lg font-bold pt-2 border-t">
-              <span>Total</span>
-              <span>{formatCurrency(receipt.total)}</span>
-            </div>
+          )}
+
+          <div className="flex justify-between border-t border-border-strong pt-2 text-h3 text-text-primary">
+            <dt>Total</dt>
+            <dd className="tabular-nums">{formatCurrency(receipt.total)}</dd>
           </div>
 
-          {/* Payment info */}
-          <div className="space-y-2 mb-6">
-            <div className="flex justify-between text-sm">
-              <span className="text-text-secondary">Payment Method</span>
-              <span className="font-medium capitalize">{receipt.payment_method.replace('_', ' ')}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-text-secondary">Amount Paid</span>
-              <span className="font-medium">{formatCurrency(receipt.amount_paid)}</span>
-            </div>
-            {receipt.change_amount > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Change</span>
-                <span className="font-medium">{formatCurrency(receipt.change_amount)}</span>
-              </div>
-            )}
+          <div className="flex justify-between pt-1 capitalize">
+            <dt className="text-text-secondary">Paid ({paymentLabel})</dt>
+            <dd className="tabular-nums text-text-primary">
+              {formatCurrency(receipt.amount_paid)}
+            </dd>
           </div>
-
-          {/* Footer */}
-          <div className="text-center text-sm text-text-secondary pt-4 border-t">
-            <p className="font-semibold mb-1">Thank you for your purchase!</p>
-            <p className="text-xs">For any queries, please contact us at support@vemco.pk</p>
-          </div>
-        </div>
-
-        {/* Action buttons (screen only) */}
-        <div className="p-6 border-t flex gap-3 print:hidden">
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="flex-1 bg-caramel-600 text-white py-2 px-4 rounded-lg hover:bg-caramel-700 transition-colors font-medium"
-          >
-            Print Receipt
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 bg-bark-200 text-bark-700 py-2 px-4 rounded-lg hover:bg-bark-300 transition-colors font-medium"
-          >
-            Close
-          </button>
-        </div>
+          {receipt.change_amount > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-text-secondary">Change</dt>
+              <dd className="tabular-nums text-text-primary">
+                {formatCurrency(receipt.change_amount)}
+              </dd>
+            </div>
+          )}
+        </dl>
       </div>
-    </div>
+
+      <footer className="mt-8 border-t border-border-subtle pt-5 text-center text-caption text-text-secondary">
+        <p className="text-ui text-text-primary">Thank you.</p>
+        <p className="mt-2">
+          Exchanges within 14 days with this receipt, unused and in original packaging.
+          Structural guarantee of five years on all solid wood frames.
+        </p>
+      </footer>
+    </PrintDocument>
   )
 }
 
+export default PrintReceipt

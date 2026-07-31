@@ -194,6 +194,11 @@ Notes that are easy to get wrong:
   we could not ask, and offers a retry.
 - **`ConfirmDialog`** rather than `window.confirm`, except where an Undo
   toast is better — anything reversible in one tap should offer Undo instead.
+- **`PrintDocument`** is how anything reaches a printer. It renders into a
+  container appended to `<body>`, and one print rule hides every other
+  top-level child. Never print by hiding the page around a thing: the
+  previous receipt did that with selectors anchored to a wrapper, and the
+  printed page came out as the POS header with no receipt on it at all.
 
 ## Gates
 
@@ -203,8 +208,8 @@ Notes that are easy to get wrong:
 | --- | --- |
 | `verify:contrast` | 36 colour pairings meet AA. Reads `tokens.ts` directly. |
 | `verify:tokens` | No hex, `rgb()`, `hsl()`, Tailwind default palette or bracket colours anywhere outside the token file. Nothing is excluded. |
-| `verify:a11y` | 132 checks over 22 routes, storefront and staff screens alike — the admin ones audited signed in, using a throwaway password the gate mints for the run: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
-| `test` | 168 tests. Design system (tokens, motion, `cn`), cart arithmetic and stock caps, pricing and validation, the checkout gate rendered in jsdom, server-derived order pricing against a real SQLite file, currency conversion, sessions and password hashing, and which routes middleware opens and shuts. |
+| `verify:a11y` | 138 checks over 23 routes, storefront and staff screens alike — the admin ones audited signed in, using a throwaway password the gate mints for the run: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
+| `test` | 185 tests. Design system (tokens, motion, `cn`), cart arithmetic and stock caps, pricing and validation, the checkout gate rendered in jsdom, server-derived order pricing against a real SQLite file, currency conversion, sessions and password hashing, which routes middleware opens and shuts, and phone-number normalisation. |
 
 `verify:a11y` needs a production build; `next dev` overwrites `.next`, so run
 `npm run build` after any dev session.

@@ -93,9 +93,33 @@ export const createTables = `
   );
 
   -- Billing receipts table
+  -- Counter customers.
+  --
+  -- The phone number is the identity, not the name. It is what a cashier asks
+  -- for, what a returning customer can repeat from memory, and what does not
+  -- change between "Bilal Ahmed" and "Bilal A." on two different visits.
+  CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL UNIQUE,
+    email TEXT,
+    address TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
+  CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
+
   CREATE TABLE IF NOT EXISTS billing_receipts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     receipt_number TEXT UNIQUE NOT NULL,
+    -- Nullable: a walk-in who does not want to leave a number still gets a
+    -- receipt. The name and phone are also copied onto the row, so a receipt
+    -- reprinted years later says who it was for even if the customer record
+    -- has since been edited or removed.
+    customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
     customer_name TEXT,
     customer_phone TEXT,
     subtotal DECIMAL(10, 2) NOT NULL,
@@ -190,6 +214,7 @@ export const createTables = `
   CREATE INDEX IF NOT EXISTS idx_revenue_transaction_type ON revenue_transactions(transaction_type);
   CREATE INDEX IF NOT EXISTS idx_revenue_transaction_date ON revenue_transactions(transaction_date);
   CREATE INDEX IF NOT EXISTS idx_revenue_reference ON revenue_transactions(transaction_type, reference_id);
+  CREATE INDEX IF NOT EXISTS idx_billing_customer ON billing_receipts(customer_id);
 `;
 
 export const createTriggers = `

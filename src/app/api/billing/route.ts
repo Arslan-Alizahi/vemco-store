@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, runTransaction } from '@/lib/db'
 import { apiResponse, apiError, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
+import { upsertCustomer } from '@/lib/customers'
 
 // POST /api/billing - Create billing receipt and update stock
 export async function POST(request: NextRequest) {
@@ -15,6 +16,20 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    /**
+     * Whoever this was for, remembered.
+     *
+     * Outside the transaction on purpose: a customer record is worth keeping
+     * even if the sale itself then fails on a stock check, and a failed sale
+     * should not roll back somebody's contact details. Both fields are
+     * optional -- a walk-in who does not want to leave a number still gets a
+     * receipt, they simply do not accumulate a history.
+     */
+    const customer =
+      body.customer_name && body.customer_phone
+        ? upsertCustomer({ name: body.customer_name, phone: body.customer_phone })
+        : null
 
     return runTransaction(db => {
       // Calculate totals
@@ -32,13 +47,17 @@ export async function POST(request: NextRequest) {
       const receiptNumber = generateReceiptNumber()
       const receiptResult = db.prepare(`
         INSERT INTO billing_receipts (
-          receipt_number, customer_name, customer_phone, subtotal,
+          receipt_number, customer_id, customer_name, customer_phone, subtotal,
           tax, discount, total, payment_method, amount_paid, change_amount, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         receiptNumber,
-        body.customer_name || null,
-        body.customer_phone || null,
+        customer?.id ?? null,
+        // Copied onto the receipt as well as linked. A receipt reprinted in
+        // two years should say who it was for even if the customer record has
+        // since been edited.
+        customer?.name ?? body.customer_name ?? null,
+        customer?.phone ?? body.customer_phone ?? null,
         subtotal,
         tax,
         discount,

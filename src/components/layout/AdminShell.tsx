@@ -2,14 +2,23 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowUpRight, BarChart3, LayoutDashboard, LogOut, Receipt } from 'lucide-react'
+import { ArrowUpRight, BarChart3, LayoutDashboard, LogOut, Receipt, Store, Users } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import Container from './Container'
 import Logo from './Logo'
 import AppFrame from './AppFrame'
 
+/**
+ * The sections, in the order somebody actually works through them.
+ *
+ * Point of sale was missing entirely: /billing existed, was linked from
+ * nowhere, and could only be reached by typing the URL. It is the screen a
+ * shop uses most, so it sits second.
+ */
 const SECTIONS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/billing', label: 'Point of sale', icon: Store },
+  { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/revenue', label: 'Revenue', icon: BarChart3 },
   { href: '/admin/revenue/transactions', label: 'Transactions', icon: Receipt },
 ]
@@ -27,8 +36,19 @@ const SECTIONS = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  const isActive = (href: string, exact?: boolean) =>
-    exact ? pathname === href : pathname.startsWith(href)
+  /**
+   * Exactly one section is current.
+   *
+   * A plain startsWith made both Revenue and Transactions active on
+   * /admin/revenue/transactions, so the bar highlighted two tabs and told
+   * assistive technology the page was two places at once. The longest
+   * matching href wins, which is the one the visitor is actually on.
+   */
+  const current = SECTIONS.filter(section =>
+    section.exact ? pathname === section.href : pathname.startsWith(section.href)
+  ).sort((a, b) => b.href.length - a.href.length)[0]
+
+  const isActive = (href: string) => current?.href === href
 
   const signOut = async () => {
     await fetch('/api/admin/login', { method: 'DELETE' })
@@ -52,7 +72,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
               <nav aria-label="Admin sections" className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto px-1">
                 {SECTIONS.map(section => {
-                  const active = isActive(section.href, section.exact)
+                  const active = isActive(section.href)
                   return (
                     /* The label is hidden under sm and the icon is
                        decorative, so on a phone every one of these links had

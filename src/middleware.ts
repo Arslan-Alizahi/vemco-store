@@ -22,7 +22,7 @@ const PROTECTED_PREFIXES = ['/admin', '/billing', '/api/admin']
  * Reads here expose customer records, so they are protected as tightly as
  * writes. The public storefront needs none of these.
  */
-const PROTECTED_READ_PREFIXES = ['/api/orders', '/api/billing']
+const PROTECTED_READ_PREFIXES = ['/api/orders', '/api/billing', '/api/customers']
 
 /**
  * Public writes, by necessity.

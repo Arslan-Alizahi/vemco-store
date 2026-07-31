@@ -164,62 +164,54 @@
   }
 }
 
-/* Receipt printing.
-   Scoped to the POS via [data-print="receipt-host"]. The previous selector
-   `body > div > div:not(.fixed)` was never scoped to /billing, so printing
-   any of the twelve legal or content pages produced a blank page with only
-   the footer -- on exactly the documents users save and archive. */
+/* Printing.
+
+   One rule decides what reaches the paper: everything at the top level of
+   <body> is hidden except the container PrintDocument appends there. That
+   container is a direct child of body, so no layout above it can affect the
+   selector.
+
+   What this replaces was a chain of descendant selectors anchored to
+   [data-print="receipt-host"] -- `> div:not(.fixed)`, `.fixed:not(.inset-0)`
+   and so on -- which held only while the page was shaped exactly as those
+   selectors assumed. It stopped being true when the till gained a shell, and
+   the printed page came out as the POS header and nothing else. */
 @media print {
   @page {
-    margin: 0;
-    size: auto;
+    margin: 12mm;
+    size: A4;
   }
 
   html,
   body {
-    background: white !important;
+    background: theme('colors.surface') !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  [data-print='receipt-host'] nav,
-  [data-print='receipt-host'] header {
+  body > *:not([data-print-root]) {
     display: none !important;
   }
 
-  [data-print='receipt-host'] > div:not(.fixed) {
-    display: none !important;
+  [data-print-root] {
+    display: block !important;
   }
 
-  [data-print='receipt-host'] .fixed:not(.inset-0) {
-    display: none !important;
-  }
-
-  [data-print='receipt-host'] .fixed.inset-0 {
-    position: static !important;
-    inset: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: white !important;
-  }
-
-  .print-receipt-content {
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    padding: 10mm 15mm !important;
-    page-break-before: avoid !important;
-    page-break-after: avoid !important;
-  }
-
-  .print-receipt-content *,
-  .print-receipt-content table,
-  .print-receipt-content tr {
-    page-break-inside: avoid !important;
+  /* Ink is expensive and shadows print as grey mud. */
+  [data-print-root] * {
     box-shadow: none !important;
     text-shadow: none !important;
   }
 
-  .print-receipt-content thead {
+  /* A row split across a page break is unreadable on a receipt. */
+  [data-print-root] tr,
+  [data-print-root] [data-print-keep] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* A long statement repeats its column headings on every sheet. */
+  [data-print-root] thead {
     display: table-header-group !important;
   }
 }

@@ -3,6 +3,7 @@ import { getDb, runQuery, runTransaction } from '@/lib/db'
 import { Order } from '@/types/order'
 import { apiResponse, apiError, generateOrderNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING } from '@/lib/shipping'
+import { normalisePhone } from '@/lib/customers'
 
 // GET /api/orders - Get all orders
 export async function GET(request: NextRequest) {
@@ -166,7 +167,9 @@ export async function POST(request: NextRequest) {
         orderNumber,
         body.customer_name || null,
         body.customer_email || null,
-        body.customer_phone || null,
+        // Stored in the same canonical form the counter uses, so one person
+        // ordering online and buying in store is one customer.
+        body.customer_phone ? normalisePhone(body.customer_phone) : null,
         body.shipping_address || null,
         body.billing_address || null,
         subtotal,

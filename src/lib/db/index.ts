@@ -4,6 +4,7 @@ import { dirname } from 'path'
 import { createTables, createTriggers } from './schema'
 import { createDemoSeedTable, isDatabaseEmpty, seedDemoData } from './seed'
 import { addStripeColumns } from './migrations/add-stripe-columns'
+import { addCustomers } from './migrations/add-customers'
 
 const DATABASE_PATH = process.env.DATABASE_PATH || './data/ecommerce.db'
 
@@ -76,6 +77,7 @@ export const getDb = (): Database.Database => {
       // all, which is why the payment path wrote to columns that did not
       // exist on any database created before today.
       addStripeColumns(db)
+      addCustomers(db)
     }
 
     // Demo catalogue. Only fires when the store has never been populated, so
