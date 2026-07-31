@@ -114,6 +114,7 @@ export default function CustomerDetailPage() {
         <Card className="shadow-e1">
           <p className="text-ui text-text-secondary">Total spent</p>
           <Money amount={customer.total_spent} className="mt-1 block text-h1 text-text-primary" />
+          <p className="text-caption text-text-tertiary">Inclusive of tax</p>
         </Card>
         <Card className="shadow-e1">
           <p className="text-ui text-text-secondary">Purchases</p>
@@ -182,6 +183,39 @@ export default function CustomerDetailPage() {
                   </li>
                 ))}
               </ul>
+
+              {/* Why the total is more than the items.
+                  Without this the card showed Rs 298,000 of furniture against
+                  a total of Rs 351,640 and said nothing about the difference,
+                  which reads as an arithmetic error rather than tax. */}
+              <dl className="space-y-1.5 border-t border-border-subtle bg-surface-subtle px-4 py-3 text-ui">
+                <div className="flex justify-between">
+                  <dt className="text-text-secondary">Subtotal</dt>
+                  <dd>
+                    <Money amount={purchase.subtotal} className="tabular-nums" />
+                  </dd>
+                </div>
+                {purchase.discount > 0 && (
+                  <div className="flex justify-between text-sage-700">
+                    <dt>Discount</dt>
+                    <dd className="tabular-nums">
+                      -<Money amount={purchase.discount} bare />
+                    </dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-text-secondary">Tax</dt>
+                  <dd>
+                    <Money amount={purchase.tax} className="tabular-nums" />
+                  </dd>
+                </div>
+                <div className="flex justify-between border-t border-border-subtle pt-1.5 font-medium">
+                  <dt className="text-text-primary">Total</dt>
+                  <dd>
+                    <Money amount={purchase.total} className="tabular-nums text-text-primary" />
+                  </dd>
+                </div>
+              </dl>
             </Card>
           ))}
         </div>

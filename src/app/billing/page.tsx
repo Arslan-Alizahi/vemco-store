@@ -16,7 +16,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
 import { PrintReceipt } from '@/components/ui/PrintReceipt'
 import { Search, Plus, Minus, Trash2, Receipt, Package, UserRound } from 'lucide-react'
-import { formatCurrency, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
+import { formatCurrency, generateReceiptNumber, calculateTax, calculateTotal, validateEmail } from '@/lib/utils'
 import { Product } from '@/types/product'
 import { BillingCartItem } from '@/types/billing'
 
@@ -31,7 +31,12 @@ export default function BillingPage() {
   const [amountPaid, setAmountPaid] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
-  const [knownCustomer, setKnownCustomer] = useState<{ id: number; name: string } | null>(null)
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [knownCustomer, setKnownCustomer] = useState<{
+    id: number
+    name: string
+    email: string | null
+  } | null>(null)
   const [currentReceipt, setCurrentReceipt] = useState<any>(null)
   const [showReceipt, setShowReceipt] = useState(false)
   const { addToast } = useToast()
@@ -117,6 +122,7 @@ export default function BillingPage() {
     setAmountPaid('')
     setCustomerName('')
     setCustomerPhone('')
+    setCustomerEmail('')
     setKnownCustomer(null)
   }
 
@@ -132,6 +138,11 @@ export default function BillingPage() {
       return
     }
 
+    if (emailError) {
+      addToast('Check the email address, or clear it', 'error')
+      return
+    }
+
     try {
       const res = await fetch('/api/billing', {
         method: 'POST',
@@ -144,6 +155,7 @@ export default function BillingPage() {
           discount: 0,
           customer_name: customerName.trim() || null,
           customer_phone: customerPhone.trim() || null,
+          customer_email: customerEmail.trim() || null,
         }),
       })
 
@@ -194,6 +206,7 @@ export default function BillingPage() {
           // Only fills a blank. Overwriting what the cashier just typed would
           // fight them over the spelling of somebody's name.
           setCustomerName(current => current.trim() || data.data.name)
+          setCustomerEmail(current => current.trim() || data.data.email || '')
         })
         .catch(() => {
           if (!cancelled) setKnownCustomer(null)
@@ -210,6 +223,14 @@ export default function BillingPage() {
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.sku.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  // Only complains once there is something worth complaining about. An
+  // optional field that shouts while it is half-typed is worse than one that
+  // says nothing.
+  const emailError =
+    customerEmail.trim() && !validateEmail(customerEmail.trim())
+      ? 'That does not look like an email address'
+      : undefined
 
   const changeAmount = (parseFloat(amountPaid) || total) - total
 
@@ -288,7 +309,27 @@ export default function BillingPage() {
                       'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border-subtle disabled:hover:bg-surface'
                     )}
                   >
-                    <Package className="mx-auto mb-1 h-7 w-7 text-text-tertiary" aria-hidden="true" />
+                    {/* The photograph, not a generic box.
+                        A cashier finding a sofa among twelve tiles recognises
+                        it far faster by sight than by reading a name that has
+                        been truncated to fit. The tile keeps its size; the
+                        icon only stands in when a product has no image. */}
+                    <span className="relative mb-2 block aspect-[4/3] overflow-hidden rounded-sm bg-surface-subtle">
+                      {product.primary_image || product.images?.[0]?.image_url ? (
+                        <Image
+                          src={product.primary_image || product.images![0].image_url}
+                          alt=""
+                          fill
+                          sizes="160px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Package
+                          className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-text-tertiary"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </span>
                     <span className="block truncate text-caption font-medium text-text-primary">
                       {product.name}
                     </span>
@@ -462,6 +503,21 @@ export default function BillingPage() {
                 onChange={e => setCustomerName(e.target.value)}
               />
             </div>
+
+            {/* Full width, and last. The phone is what identifies somebody at
+                a counter; an email is for sending a copy of the receipt or a
+                delivery note, so it is worth having and never worth holding
+                up a queue for. */}
+            <Input
+              className="mt-3"
+              label="Email"
+              type="email"
+              autoComplete="off"
+              placeholder="bilal@example.com"
+              value={customerEmail}
+              onChange={e => setCustomerEmail(e.target.value)}
+              error={emailError}
+            />
           </div>
 
           <Select

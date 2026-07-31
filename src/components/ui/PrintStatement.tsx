@@ -57,6 +57,9 @@ export default function PrintStatement({ customer, purchases, onClose }: PrintSt
           <dd className="text-right text-h3 tabular-nums text-text-primary">
             {formatCurrency(customer.total_spent)}
           </dd>
+          <dd className="col-span-2 text-right text-caption text-text-secondary">
+            Inclusive of tax
+          </dd>
         </dl>
       </section>
 
@@ -94,11 +97,37 @@ export default function PrintStatement({ customer, purchases, onClose }: PrintSt
                       </td>
                     </tr>
                   ))}
+                  {/* The arithmetic, shown. A statement that lists
+                      Rs 298,000 of furniture and then asks for Rs 351,640
+                      without naming the tax invites exactly the question it
+                      exists to answer. */}
                   <tr>
-                    <td colSpan={2} className="pt-1.5 text-right text-text-secondary">
+                    <td colSpan={2} className="border-t border-border-subtle pt-1.5 text-right text-text-secondary">
+                      Subtotal
+                    </td>
+                    <td className="border-t border-border-subtle pt-1.5 text-right tabular-nums text-text-primary">
+                      {formatCurrency(purchase.subtotal)}
+                    </td>
+                  </tr>
+                  {purchase.discount > 0 && (
+                    <tr className="text-sage-700">
+                      <td colSpan={2} className="text-right">Discount</td>
+                      <td className="text-right tabular-nums">
+                        -{formatCurrency(purchase.discount)}
+                      </td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td colSpan={2} className="text-right text-text-secondary">Tax</td>
+                    <td className="text-right tabular-nums text-text-primary">
+                      {formatCurrency(purchase.tax)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2} className="pt-0.5 text-right font-medium text-text-primary">
                       Paid
                     </td>
-                    <td className="pt-1.5 text-right font-medium tabular-nums text-text-primary">
+                    <td className="pt-0.5 text-right font-medium tabular-nums text-text-primary">
                       {formatCurrency(purchase.total)}
                     </td>
                   </tr>

@@ -28,7 +28,15 @@ export async function POST(request: NextRequest) {
      */
     const customer =
       body.customer_name && body.customer_phone
-        ? upsertCustomer({ name: body.customer_name, phone: body.customer_phone })
+        ? upsertCustomer({
+            name: body.customer_name,
+            phone: body.customer_phone,
+            // Kept on the customer, not copied onto the receipt. A receipt is
+            // printed and left on counters and in bags; a name and phone are
+            // there because they identify the sale, and an email address on
+            // paper is only a liability.
+            email: body.customer_email,
+          })
         : null
 
     return runTransaction(db => {
