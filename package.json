@@ -16,7 +16,8 @@
     "verify:tokens": "node scripts/verify-tokens.mjs",
     "verify:a11y": "node scripts/verify-a11y.mjs",
     "admin:password": "node scripts/generate-admin-password.mjs",
-    "find-unused": "node scripts/find-unused.mjs"
+    "find-unused": "node scripts/find-unused.mjs",
+    "admin:env": "node scripts/set-admin-env.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.3.3",

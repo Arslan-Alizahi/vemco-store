@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSessionToken, isAuthConfigured, readSessionToken } from './session'
 import { hashPassword, verifyPassword } from './password'
 
@@ -76,7 +76,7 @@ describe('session tokens', () => {
 
   it('reports itself unconfigured until both values are set', () => {
     expect(isAuthConfigured()).toBe(false)
-    process.env.ADMIN_PASSWORD_HASH = 'scrypt$x$y'
+    process.env.ADMIN_PASSWORD_HASH = 'scrypt:x:y'
     expect(isAuthConfigured()).toBe(true)
   })
 })
@@ -102,10 +102,36 @@ describe('passwords', () => {
     expect(await hashPassword('same')).not.toBe(await hashPassword('same'))
   })
 
-  it.each(['', 'nonsense', 'bcrypt$x$y', 'scrypt$only-two-parts'])(
+  it.each(['', 'nonsense', 'bcrypt:x:y', 'scrypt:only-two-parts'])(
     'rejects a malformed stored hash %j',
     async stored => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
       expect(await verifyPassword('anything', stored)).toBe(false)
     }
   )
+
+  /**
+   * The hash lives in .env.local, where Next expands `$name` as a variable
+   * reference. A `$`-separated hash arrived as "scrypt+gG4qnfitEA===" -- two
+   * of its three parts replaced with nothing -- and the only symptom was the
+   * correct password being rejected. Nothing in the app could have told you
+   * that; it took loading the env the way Next does and printing the result.
+   */
+  it('contains no character a .env file would eat', async () => {
+    const stored = await hashPassword('anything')
+    expect(stored).not.toContain('$')
+    expect(stored.split(':')).toHaveLength(3)
+  })
+
+  it('survives a round trip through a .env file', async () => {
+    const stored = await hashPassword('a-real-password')
+
+    // What dotenv does to a value: read the line, take everything after the
+    // first '=', expand any $name it finds.
+    const line = `ADMIN_PASSWORD_HASH=${stored}`
+    const value = line.slice(line.indexOf('=') + 1).replace(/\$[A-Za-z_][A-Za-z0-9_]*/g, '')
+
+    expect(value).toBe(stored)
+    expect(await verifyPassword('a-real-password', value)).toBe(true)
+  })
 })

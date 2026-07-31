@@ -56,10 +56,12 @@ The database seeds itself with a demo catalogue on first run — twenty products
 Admin access needs one command, because there is deliberately no default password:
 
 ```bash
-npm run admin:password
+node scripts/set-admin-env.mjs "your-password"
 ```
 
-It prints `AUTH_SECRET` and `ADMIN_PASSWORD_HASH` to paste into `.env.local`, and the password to sign in with. Until they are set, `/admin` and `/billing` are closed.
+That writes `AUTH_SECRET` and `ADMIN_PASSWORD_HASH` into `.env.local` and prints the password. (`npm run admin:password` prints the two lines instead, if you would rather paste them yourself.)
+
+Until they are set, `/admin` and `/billing` are closed — it fails shut, not open. Sign in at `/admin/login`; the session is an httpOnly signed cookie that lasts eight hours.
 
 ### Stripe setup
 

@@ -51,7 +51,7 @@ const buildCredentials = async () => {
     password,
     env: {
       AUTH_SECRET: randomBytes(32).toString('base64'),
-      ADMIN_PASSWORD_HASH: `scrypt$${salt.toString('base64')}$${derived.toString('base64')}`,
+      ADMIN_PASSWORD_HASH: `scrypt:${salt.toString('base64')}:${derived.toString('base64')}`,
     },
   }
 }

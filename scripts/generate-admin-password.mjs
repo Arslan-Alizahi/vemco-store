@@ -22,7 +22,7 @@ const password = supplied || randomBytes(12).toString('base64url')
 
 const salt = randomBytes(16)
 const derived = await scryptAsync(password, salt, 32, PARAMS)
-const hash = `scrypt$${salt.toString('base64')}$${derived.toString('base64')}`
+const hash = `scrypt:${salt.toString('base64')}:${derived.toString('base64')}`
 const secret = randomBytes(32).toString('base64')
 
 console.log('\nAdd these two lines to .env.local:\n')
