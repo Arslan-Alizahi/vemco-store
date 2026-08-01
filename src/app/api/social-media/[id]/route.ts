@@ -3,6 +3,16 @@ import { getDb } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
 import type { UpdateSocialMediaLinkInput } from '@/types/social-media'
 
+/**
+ * Never evaluated at build time.
+ *
+ * Next collects page data by importing every route and deciding whether the
+ * handler is static, which means running it. Any route that opens the
+ * database therefore ran during `next build` -- quietly creating and seeding
+ * a file, and failing outright on a build that has no database to open.
+ */
+export const dynamic = 'force-dynamic'
+
 // GET /api/social-media/[id] - Get single social media link
 export async function GET(
   request: NextRequest,

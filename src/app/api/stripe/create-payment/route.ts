@@ -5,6 +5,16 @@ import { CURRENCY } from '@/lib/currency'
 import { createCheckoutSession, isStripeConfigured } from '@/lib/stripe'
 
 /**
+ * Never evaluated at build time.
+ *
+ * Next collects page data by importing every route and deciding whether the
+ * handler is static, which means running it. Any route that opens the
+ * database therefore ran during `next build` -- quietly creating and seeding
+ * a file, and failing outright on a build that has no database to open.
+ */
+export const dynamic = 'force-dynamic'
+
+/**
  * Starts payment for an order that already exists.
  *
  * The order is the source of truth. Nothing about the amount comes from this

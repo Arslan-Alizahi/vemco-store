@@ -1,4 +1,5 @@
 import { runQuery } from '@/lib/db'
+import { isShowcase, staticCategories, staticProducts } from '@/lib/catalogue'
 import type { Category } from '@/types/category'
 
 export interface CategoryOverview extends Category {
@@ -19,6 +20,19 @@ export interface CategoryOverview extends Category {
  * is a poor advert for a furniture shop.
  */
 export const getCategoryOverview = (): CategoryOverview[] => {
+  if (isShowcase()) {
+    const products = staticProducts()
+    return staticCategories().map(category => {
+      const first = products.find(product => product.category_id === category.id)
+      return {
+        ...category,
+        product_count: products.filter(p => p.category_id === category.id).length,
+        cover_image: first?.primary_image ?? null,
+        cover_alt: first?.name ?? null,
+      } as CategoryOverview
+    })
+  }
+
   try {
     return runQuery<CategoryOverview>(`
       SELECT
@@ -61,6 +75,9 @@ export const getCategoryOverview = (): CategoryOverview[] => {
  * admin can create it, so the page still has to handle it.
  */
 export const getChildCategories = (): Record<number, Category[]> => {
+  // The seeded catalogue is flat, so there are none.
+  if (isShowcase()) return {}
+
   try {
     const rows = runQuery<Category>(`
       SELECT * FROM categories

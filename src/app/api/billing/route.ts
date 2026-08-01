@@ -3,6 +3,16 @@ import { getDb, runTransaction } from '@/lib/db'
 import { apiResponse, apiError, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { upsertCustomer } from '@/lib/customers'
 
+/**
+ * Never evaluated at build time.
+ *
+ * Next collects page data by importing every route and deciding whether the
+ * handler is static, which means running it. Any route that opens the
+ * database therefore ran during `next build` -- quietly creating and seeding
+ * a file, and failing outright on a build that has no database to open.
+ */
+export const dynamic = 'force-dynamic'
+
 // POST /api/billing - Create billing receipt and update stock
 export async function POST(request: NextRequest) {
   try {

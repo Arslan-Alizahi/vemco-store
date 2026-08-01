@@ -62,15 +62,28 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       header={
         <header className="sticky top-0 z-sticky border-b border-border-subtle bg-surface">
           <Container size="wide">
-            <div className="flex h-14 items-center justify-between gap-3 sm:gap-6">
-              <div className="flex items-center gap-6">
+            {/* min-w-0 all the way down. A flex item will not shrink below
+                its content unless told to, so without these the row is as
+                wide as the logo plus seven controls -- about 380px -- and the
+                whole page scrolls sideways on a 320px screen instead of the
+                nav scrolling inside itself. */}
+            <div className="flex h-14 min-w-0 items-center justify-between gap-3 sm:gap-6">
+              <div className="flex shrink-0 items-center gap-3 sm:gap-6">
                 <Logo size="sm" href="/admin" />
                 <span className="hidden rounded-xs bg-surface-subtle px-2 py-0.5 text-overline uppercase text-text-secondary sm:inline">
                   Admin
                 </span>
               </div>
 
-              <nav aria-label="Admin sections" className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto px-1">
+              {/* min-w-0 is what makes the overflow-x-auto actually contain
+                  anything. A flex item defaults to min-width:auto, so it
+                  refuses to shrink below its content and scrolls the page
+                  instead of itself -- which is what adding two more sections
+                  to this bar did at 320px. */}
+              <nav
+                aria-label="Admin sections"
+                className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto px-1"
+              >
                 {SECTIONS.map(section => {
                   const active = isActive(section.href)
                   return (
@@ -86,7 +99,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                       aria-label={section.label}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'flex items-center gap-2 rounded-sm px-3 py-2 text-ui font-medium',
+                        'flex shrink-0 items-center gap-2 rounded-sm px-3 py-2 text-ui font-medium',
                         'transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         active
                           ? 'bg-caramel-50 text-caramel-800'
@@ -102,7 +115,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 <Link
                   href="/"
                   aria-label="View store"
-                  className="ml-2 flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="ml-2 flex shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="hidden sm:inline">View store</span>
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
@@ -115,7 +128,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   type="button"
                   onClick={signOut}
                   aria-label="Sign out"
-                  className="flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden sm:inline">Sign out</span>

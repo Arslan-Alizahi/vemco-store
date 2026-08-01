@@ -100,7 +100,18 @@ export default function CustomersPage() {
         />
       ) : (
         <Card noPadding>
-          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Customers, scrolls sideways">
+          {/* relative, so an absolutely positioned descendant is contained.
+              Tailwind's sr-only is position:absolute, and with a static
+              scroll container its containing block became the viewport --
+              so the hidden "Open" label in the last header cell sat at the
+              table's full 595px width and scrolled the whole page sideways
+              at 320px. Nothing was visible; the page just moved. */}
+          <div
+            className="relative overflow-x-auto"
+            tabIndex={0}
+            role="region"
+            aria-label="Customers, scrolls sideways"
+          >
             <table className="w-full text-ui">
               <thead>
                 <tr className="border-b border-border-subtle text-caption uppercase tracking-[0.06em] text-text-secondary">

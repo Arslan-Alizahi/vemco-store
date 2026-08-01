@@ -24,10 +24,10 @@ export const createDemoSeedTable = `
 
 // Cards load the small crop; the detail page gets the large one as a second
 // image. Phase 5 replaces both with next/image and a proper srcset.
-const SMALL = (slug: string) => `/seed/products/${slug}-sm.webp`
-const LARGE = (slug: string) => `/seed/products/${slug}-lg.webp`
+export const SMALL = (slug: string) => `/seed/products/${slug}-sm.webp`
+export const LARGE = (slug: string) => `/seed/products/${slug}-lg.webp`
 
-const categories = [
+export const categories = [
   { slug: 'sofas-seating', name: 'Sofas & Seating', description: 'Sofas, armchairs and lounge seating for the room you actually live in.' },
   { slug: 'beds-bedroom', name: 'Beds & Bedroom', description: 'Beds, bedsides and wardrobes built for real Pakistani room sizes.' },
   { slug: 'dining', name: 'Dining', description: 'Tables and chairs that take daily use and a full family gathering.' },
@@ -35,7 +35,7 @@ const categories = [
   { slug: 'storage', name: 'Storage', description: 'Wardrobes, sideboards and media units with real carcass construction.' },
 ]
 
-interface SeedProduct {
+export interface SeedProduct {
   slug: string
   name: string
   category: string
@@ -50,7 +50,7 @@ interface SeedProduct {
 }
 
 /** Prices are PKR. Furniture-retail realistic for Lahore/Karachi. */
-const products: SeedProduct[] = [
+export const products: SeedProduct[] = [
   {
     slug: 'emerald-velvet-sofa',
     name: 'Emerald Velvet Three-Seater',
@@ -333,7 +333,7 @@ const products: SeedProduct[] = [
   },
 ]
 
-const navItems = [
+export const navItems = [
   { label: 'Home', href: '/', display_order: 0 },
   { label: 'Shop', href: '/products', display_order: 1 },
   { label: 'Categories', href: '/categories', display_order: 2 },
@@ -341,14 +341,14 @@ const navItems = [
   { label: 'Contact', href: '/contact', display_order: 4 },
 ]
 
-const footerNavItems = [
+export const footerNavItems = [
   { label: 'Delivery', href: '/shipping', display_order: 0 },
   { label: 'Returns', href: '/policies/returns', display_order: 1 },
   { label: 'Privacy', href: '/policies/privacy', display_order: 2 },
   { label: 'Terms', href: '/policies/terms', display_order: 3 },
 ]
 
-const socialLinks = [
+export const socialLinks = [
   { platform: 'Instagram', url: 'https://instagram.com/vemco.pk', icon: 'instagram', display_order: 0 },
   { platform: 'Facebook', url: 'https://facebook.com/vemco.pk', icon: 'facebook', display_order: 1 },
   { platform: 'YouTube', url: 'https://youtube.com/@vemco', icon: 'youtube', display_order: 2 },

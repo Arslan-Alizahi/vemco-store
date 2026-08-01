@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { NextRequest } from 'next/server'
 import { middleware } from './middleware'
 import { SESSION_COOKIE, createSessionToken } from '@/lib/auth/session'
@@ -35,7 +35,9 @@ describe('closed without a session', () => {
     ['/api/upload', 'POST'],
     ['/api/upload', 'DELETE'],
     ['/api/admin/demo-data', 'DELETE'],
-    ['/api/admin/migrate', 'POST'],
+    // The migrate endpoint is gone; the migration runs at boot. Kept as a
+    // stand-in for any future route under /api/admin.
+    ['/api/admin/anything', 'POST'],
   ])('%s %s answers 401', async (path, method) => {
     const response = await middleware(request(path, method))
     expect(response?.status).toBe(401)
@@ -145,4 +147,58 @@ describe('routes nobody has written yet', () => {
     const response = await middleware(request(path, method))
     expect(response?.status).toBe(401)
   })
+})
+
+/**
+ * A storefront-only deployment has no database, so the staff screens could
+ * not work even if they were reachable. They are refused outright rather
+ * than left to fail on a missing table -- a half-working admin panel on a
+ * public URL is worse than none.
+ */
+describe('showcase mode', () => {
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SHOWCASE = 'true'
+  })
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_SHOWCASE
+  })
+
+  it.each(['/admin', '/admin/customers', '/admin/revenue', '/billing'])(
+    '%s is not served at all',
+    async path => {
+      const response = await middleware(request(path))
+      // Rewritten to the not-found page rather than redirected to a login
+      // that leads nowhere.
+      expect(response?.status).toBe(200)
+      expect(response?.headers.get('x-middleware-rewrite')).toContain('/not-found')
+    }
+  )
+
+  it.each([
+    ['/api/orders', 'POST'],
+    ['/api/billing', 'POST'],
+    ['/api/customers', 'GET'],
+    ['/api/admin/demo-data', 'DELETE'],
+    ['/api/upload', 'POST'],
+  ])('%s %s answers 404', async (path, method) => {
+    const response = await middleware(request(path, method))
+    expect(response?.status).toBe(404)
+  })
+
+  it.each(['/', '/products', '/categories', '/cart', '/favorites', '/about'])(
+    '%s still works, because that is the whole point',
+    async path => {
+      const response = await middleware(request(path))
+      expect(response?.status).toBe(200)
+    }
+  )
+
+  it.each(['/api/products', '/api/categories', '/api/nav'])(
+    'reading %s still works, served from the static catalogue',
+    async path => {
+      const response = await middleware(request(path))
+      expect(response?.status).toBe(200)
+    }
+  )
 })

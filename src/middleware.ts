@@ -68,7 +68,33 @@ const needsSession = (request: NextRequest): boolean => {
   return false
 }
 
+/**
+ * Everything a storefront-only build has no business serving.
+ *
+ * A showcase deployment has no database, so the staff screens could not work
+ * even if they were reachable -- and a half-working admin panel on a public
+ * URL is worse than none. They are refused outright rather than left to fail
+ * on a missing table.
+ */
+const SHOWCASE_CLOSED = ['/admin', '/billing', '/api/admin', '/api/customers', '/api/orders', '/api/billing', '/api/upload']
+
 export async function middleware(request: NextRequest) {
+  if (process.env.NEXT_PUBLIC_SHOWCASE === 'true') {
+    const { pathname } = request.nextUrl
+
+    if (isUnder(pathname, SHOWCASE_CLOSED)) {
+      return pathname.startsWith('/api/')
+        ? NextResponse.json(
+            { success: false, message: 'Not available on this deployment' },
+            { status: 404 }
+          )
+        : NextResponse.rewrite(new URL('/not-found', request.url))
+    }
+
+    // Nothing else needs a session, because nothing else writes.
+    return NextResponse.next()
+  }
+
   if (!needsSession(request)) return NextResponse.next()
 
   const session = await readSessionToken(request.cookies.get(SESSION_COOKIE)?.value)

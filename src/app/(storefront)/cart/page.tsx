@@ -20,6 +20,12 @@ import { useCart } from '@/hooks/useCart'
 import { calculateTax, calculateTotal, validateEmail } from '@/lib/utils'
 import { shippingFor } from '@/lib/shipping'
 
+/**
+ * Read once at module scope. NEXT_PUBLIC_ variables are inlined at build
+ * time, so this is a constant in the bundle rather than a lookup per render.
+ */
+const isShowcase = process.env.NEXT_PUBLIC_SHOWCASE === 'true'
+
 interface Fields {
   name: string
   email: string
@@ -303,6 +309,33 @@ export default function CartPage() {
             )}
           </Card>
 
+          {/* A showcase build has nowhere to record an order, so it says so
+              rather than presenting a form that would fail on submit. Nobody
+              should type their address into something that cannot use it. */}
+          {isShowcase ? (
+            <Card>
+              <h2 className="mb-2 text-h3 text-text-primary">Ordering online is not open yet</h2>
+              <p className="text-body text-text-secondary">
+                This is a preview of the shop. Everything here is real — the pieces, the
+                prices, the dimensions — but checkout is not taking orders on this site
+                yet. Send us the list and we will put it together for you.
+              </p>
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Button asChild size="lg">
+                  <Link href="/contact">Talk to us</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/products">Keep browsing</Link>
+                </Button>
+              </div>
+
+              <p className="mt-5 text-caption text-text-tertiary">
+                Your basket stays on this device, so it will still be here when you
+                come back.
+              </p>
+            </Card>
+          ) : (
           <Card>
             <h2 className="mb-4 text-h3 text-text-primary">Delivery details</h2>
 
@@ -388,6 +421,7 @@ export default function CartPage() {
               .
             </p>
           </Card>
+          )}
         </div>
       </div>
     </Container>

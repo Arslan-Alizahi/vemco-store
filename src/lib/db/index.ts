@@ -8,9 +8,28 @@ import { addCustomers } from './migrations/add-customers'
 
 const DATABASE_PATH = process.env.DATABASE_PATH || './data/ecommerce.db'
 
+/**
+ * A storefront-only build has no database and must not try to make one.
+ *
+ * Without this the build still opened a file, created every table and ran the
+ * seeder -- pointless work whose only lasting effect would be to make
+ * better-sqlite3, a native module, load on a host that has no use for it.
+ * Anything that reaches here in showcase mode is a bug: the catalogue comes
+ * from src/lib/catalogue.ts and every write is refused by middleware.
+ */
+const refuseInShowcase = () => {
+  if (process.env.NEXT_PUBLIC_SHOWCASE !== 'true') return
+  throw new Error(
+    'No database in a showcase build. Read the catalogue from src/lib/catalogue.ts, ' +
+      'or run the full application on a host with a persistent disk.'
+  )
+}
+
 let db: Database.Database | null = null
 
 export const getDb = (): Database.Database => {
+  refuseInShowcase()
+
   if (!db) {
     // Ensure data directory exists
     const dir = dirname(DATABASE_PATH)
@@ -145,8 +164,15 @@ export const closeDb = () => {
   }
 }
 
-// Initialize database on module load
-if (typeof window === 'undefined') {
-  // Only initialize on server-side
-  getDb()
-}
+/**
+ * Deliberately no eager initialisation here.
+ *
+ * This module used to call getDb() at import time, so merely importing
+ * anything from it -- a helper, a type -- opened a file, created every table
+ * and ran the seeder. That happened during `next build` too, for routes the
+ * build only wanted to look at, which is why a build produced a database as
+ * a side effect and why a build with nowhere to write one failed outright.
+ *
+ * getDb() is already lazy: the first real caller opens the connection and
+ * everyone after gets the same one. The eager call bought nothing.
+ */

@@ -2,10 +2,77 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb, runQuery, runInsert } from '@/lib/db'
 import { Product, ProductFilter } from '@/types/product'
 import { apiResponse, apiError, generateSKU, slugify } from '@/lib/utils'
+import { isShowcase, staticProducts } from '@/lib/catalogue'
+
+/**
+ * Never evaluated at build time.
+ *
+ * Next collects page data by importing every route and deciding whether the
+ * handler is static, which means running it. Any route that opens the
+ * database therefore ran during `next build` -- quietly creating and seeding
+ * a file, and failing outright on a build that has no database to open.
+ */
+export const dynamic = 'force-dynamic'
 
 // GET /api/products - Get all products with filters
+/** The same filters the SQL applies, over the static catalogue. */
+const filterStatic = (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1))
+  const limit = Math.max(1, Number(searchParams.get('limit') ?? 12))
+  const search = searchParams.get('search')?.toLowerCase()
+  const category = searchParams.get('category_id')
+  const featured = searchParams.get('is_featured')
+  const sortBy = searchParams.get('sort_by') ?? 'created_at'
+  const ascending = searchParams.get('sort_order')?.toUpperCase() === 'ASC'
+
+  let products = staticProducts()
+
+  if (category) products = products.filter(item => String(item.category_id) === category)
+  if (featured === 'true') products = products.filter(item => item.is_featured)
+  if (search) {
+    products = products.filter(item =>
+      [item.name, item.description, item.sku].some(field =>
+        field?.toLowerCase().includes(search)
+      )
+    )
+  }
+
+  const by: Record<string, (a: any, b: any) => number> = {
+    name: (a, b) => a.name.localeCompare(b.name),
+    price: (a, b) => a.price - b.price,
+    stock: (a, b) => a.stock_quantity - b.stock_quantity,
+    created_at: (a, b) => a.id - b.id,
+  }
+  products.sort(by[sortBy] ?? by.created_at)
+  if (!ascending) products.reverse()
+
+  const total = products.length
+  return {
+    products: products.slice((page - 1) * limit, page * limit),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit < total,
+      hasPreviousPage: page > 1,
+    },
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    /**
+     * A storefront-only build serves the catalogue from the seed data.
+     *
+     * Filtering, sorting and paging happen here rather than in SQL, over
+     * twenty products in memory. Doing it here keeps every client identical
+     * between the two builds: the pages still call this route and still get
+     * the same shape back.
+     */
+    if (isShowcase()) return NextResponse.json(apiResponse(filterStatic(request)))
+
     const { searchParams } = new URL(request.url)
 
     // Parse filters

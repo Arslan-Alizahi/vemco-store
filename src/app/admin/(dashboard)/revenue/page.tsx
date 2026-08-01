@@ -362,7 +362,7 @@ export default function RevenuePage() {
             </CardHeader>
             <CardContent className="pt-0">
               <div
-                className="overflow-x-auto"
+                className="relative overflow-x-auto"
                 tabIndex={0}
                 role="region"
                 aria-label="Recent transactions, scrolls sideways"

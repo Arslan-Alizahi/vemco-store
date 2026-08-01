@@ -242,7 +242,7 @@ export default function TransactionsPage() {
           {/* Transactions Table */}
           <Card noPadding>
             <div
-              className="overflow-x-auto"
+              className="relative overflow-x-auto"
               tabIndex={0}
               role="region"
               aria-label="Transactions, scrolls sideways"

@@ -1,4 +1,5 @@
 import { runQuery } from '@/lib/db'
+import { isShowcase, staticNav } from '@/lib/catalogue'
 import type { NavItem } from '@/types/nav'
 
 /**
@@ -9,6 +10,9 @@ import type { NavItem } from '@/types/nav'
  * links are in the first HTML response.
  */
 export const getNavItems = (location: 'header' | 'footer'): NavItem[] => {
+  // A storefront-only build has no database to read this out of.
+  if (isShowcase()) return staticNav(location)
+
   try {
     return runQuery<NavItem>(
       `SELECT * FROM nav_items

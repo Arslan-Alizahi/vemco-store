@@ -145,6 +145,46 @@ npm start
 
 To deploy on serverless infrastructure, the data layer would need to move to Postgres or Turso.
 
+## Deploying
+
+Two shapes, one codebase.
+
+### The whole thing — a host with a disk
+
+Railway, Render, Fly.io or any VPS. No code changes: attach a persistent
+volume for `data/` and `public/uploads/` and SQLite works as intended — one
+process, one file, no network hop per query.
+
+**Not Vercel.** Its filesystem is read-only, and each serverless instance
+would get its own empty copy of the database anyway, so a sale rung up on one
+would be invisible to the next request. That is not a configuration problem;
+SQLite-on-disk and serverless are simply opposed.
+
+### The storefront alone — Vercel
+
+```
+NEXT_PUBLIC_SHOWCASE=true
+```
+
+Set that in the Vercel project and deploy. The catalogue comes from
+`src/lib/db/seed.ts` rather than a database — twenty products with their
+photographs, prices and dimensions, exactly what the full application shows —
+and nothing opens a database at all. See `.env.showcase.example`.
+
+What this build does: the shop, browsing, search, filtering, the cart and
+favourites (both in `localStorage`, so they survive a reload).
+
+What it does not: checkout says plainly that orders are not being taken
+online yet and points at the contact page, rather than presenting a form
+that would fail. The admin panel, the till and every write route are refused
+outright — a half-working admin panel on a public URL is worse than none.
+
+Anything added through the admin panel lives in the SQLite file and will not
+appear in a showcase build. In a build with no database, `seed.ts` **is** the
+catalogue.
+
+Locally: `npm run build:showcase` then `npm run start:showcase`.
+
 ## Known Issues
 
 **Fixed** — these were the blocking items and are now closed, each with a test that fails if it comes back:

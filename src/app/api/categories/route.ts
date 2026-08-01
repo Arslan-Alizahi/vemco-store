@@ -2,10 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb, runQuery, runInsert } from '@/lib/db'
 import { Category } from '@/types/category'
 import { apiResponse, apiError, slugify, buildCategoryTree } from '@/lib/utils'
+import { isShowcase, staticCategories } from '@/lib/catalogue'
+
+/**
+ * Never evaluated at build time.
+ *
+ * Next collects page data by importing every route and deciding whether the
+ * handler is static, which means running it. Any route that opens the
+ * database therefore ran during `next build` -- quietly creating and seeding
+ * a file, and failing outright on a build that has no database to open.
+ */
+export const dynamic = 'force-dynamic'
 
 // GET /api/categories - Get all categories
 export async function GET(request: NextRequest) {
   try {
+    if (isShowcase()) return NextResponse.json(apiResponse(staticCategories()))
+
     const { searchParams } = new URL(request.url)
     const tree = searchParams.get('tree') === 'true'
     const parent_id = searchParams.get('parent_id')

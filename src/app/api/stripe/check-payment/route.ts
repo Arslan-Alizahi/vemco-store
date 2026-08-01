@@ -5,6 +5,16 @@ import { getCheckoutSession, isStripeConfigured } from '@/lib/stripe'
 import { markOrderPaid } from '@/lib/orders'
 
 /**
+ * Never evaluated at build time.
+ *
+ * Next collects page data by importing every route and deciding whether the
+ * handler is static, which means running it. Any route that opens the
+ * database therefore ran during `next build` -- quietly creating and seeding
+ * a file, and failing outright on a build that has no database to open.
+ */
+export const dynamic = 'force-dynamic'
+
+/**
  * Order status for the success and cancel pages, reconciled against Stripe.
  *
  * The webhook is the authority, but it is not always there: it has to be
