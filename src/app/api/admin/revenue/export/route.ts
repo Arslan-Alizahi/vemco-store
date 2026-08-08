@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runQuery } from '@/lib/db'
+import { localDate } from '@/lib/shop-time'
 
 /**
  * Never evaluated at build time.
@@ -18,8 +19,6 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 
-    const db = getDb()
-
     // Build WHERE clause
     const conditions: string[] = []
     const params: any[] = []
@@ -30,16 +29,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (startDate && endDate) {
-      conditions.push('DATE(transaction_date) BETWEEN DATE(?) AND DATE(?)')
+      conditions.push(`${localDate('transaction_date')} BETWEEN CAST(? AS date) AND CAST(? AS date)`)
       params.push(startDate, endDate)
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 
     // Get all transactions
-    const transactions = db
-      .prepare(
-        `
+    const transactions = await runQuery<any>(
+      `
         SELECT
           transaction_type as "Transaction Type",
           reference_number as "Reference Number",
@@ -58,9 +56,9 @@ export async function GET(request: NextRequest) {
         FROM revenue_transactions
         ${whereClause}
         ORDER BY transaction_date DESC
-      `
-      )
-      .all(...params) as any[]
+      `,
+      params
+    )
 
     // Convert to CSV
     if (transactions.length === 0) {

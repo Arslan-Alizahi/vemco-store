@@ -9,12 +9,12 @@ import type { NavItem } from '@/types/nav'
  * empty and then filled in on every navigation. Reading it here means the
  * links are in the first HTML response.
  */
-export const getNavItems = (location: 'header' | 'footer'): NavItem[] => {
+export const getNavItems = async (location: 'header' | 'footer'): Promise<NavItem[]> => {
   // A storefront-only build has no database to read this out of.
   if (isShowcase()) return staticNav(location)
 
   try {
-    return runQuery<NavItem>(
+    return await runQuery<NavItem>(
       `SELECT * FROM nav_items
        WHERE location = ? AND is_active = 1 AND parent_id IS NULL
        ORDER BY display_order ASC`,
@@ -41,7 +41,7 @@ export const FALLBACK_HEADER_NAV: NavItem[] = [
   { id: -5, label: 'Contact', href: '/contact', display_order: 4, is_active: true, location: 'header' },
 ]
 
-export const getHeaderNav = (): NavItem[] => {
-  const items = getNavItems('header')
+export const getHeaderNav = async (): Promise<NavItem[]> => {
+  const items = await getNavItems('header')
   return items.length > 0 ? items : FALLBACK_HEADER_NAV
 }

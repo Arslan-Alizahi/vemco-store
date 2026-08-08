@@ -1,4 +1,4 @@
-import { getDb, runQuery } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
 
 export interface Customer {
   id: number
@@ -84,39 +84,40 @@ export const normalisePhone = (phone: string): string => {
  * better one -- somebody who gave "Bilal" first and "Bilal Ahmed" later meant
  * the same person and the fuller name is more use later.
  */
-export const upsertCustomer = (input: {
+export const upsertCustomer = async (input: {
   name: string
   phone: string
   email?: string | null
   address?: string | null
-}): Customer | null => {
+}): Promise<Customer | null> => {
   const phone = normalisePhone(input.phone)
   const name = input.name.trim()
 
   if (!phone || !name) return null
 
-  const db = getDb()
-
-  db.prepare(
+  // RETURNING, rather than inserting and then reading the row back. One round
+  // trip instead of two, and no window in which another till could change the
+  // row between the write and the read.
+  const customer = await runGet<Customer>(
     `INSERT INTO customers (name, phone, email, address)
      VALUES (?, ?, ?, ?)
      ON CONFLICT(phone) DO UPDATE SET
        name = excluded.name,
        email = COALESCE(excluded.email, customers.email),
        address = COALESCE(excluded.address, customers.address),
-       updated_at = CURRENT_TIMESTAMP`
-  ).run(name, phone, input.email?.trim() || null, input.address?.trim() || null)
+       updated_at = NOW()
+     RETURNING *`,
+    [name, phone, input.email?.trim() || null, input.address?.trim() || null]
+  )
 
-  return db.prepare('SELECT * FROM customers WHERE phone = ?').get(phone) as Customer
+  return customer ?? null
 }
 
-export const findCustomerByPhone = (phone: string): Customer | null => {
+export const findCustomerByPhone = async (phone: string): Promise<Customer | null> => {
   const digits = normalisePhone(phone)
   if (!digits) return null
 
-  return (
-    (getDb().prepare('SELECT * FROM customers WHERE phone = ?').get(digits) as Customer) ?? null
-  )
+  return (await runGet<Customer>('SELECT * FROM customers WHERE phone = ?', [digits])) ?? null
 }
 
 /**
@@ -143,92 +144,126 @@ const PURCHASES_UNION = `
   WHERE o.payment_status = 'paid'
 `
 
+/**
+ * The rolled-up figures, shared by the list and the single-customer view.
+ *
+ * `GROUP BY c.id` with `c.*` in the select list is legal because id is the
+ * primary key: Postgres knows every other column of that row is determined by
+ * it. Grouping by anything else here would need all of them listed.
+ */
+const SUMMARY_SELECT = `
+  SELECT
+    c.*,
+    COUNT(p.total) AS purchase_count,
+    COALESCE(SUM(p.total), 0) AS total_spent,
+    MAX(p.date) AS last_purchase_at
+  FROM customers c
+  LEFT JOIN (${PURCHASES_UNION}) p ON p.customer_id = c.id
+`
+
 /** Every customer with what they are worth. */
-export const listCustomers = (search?: string): CustomerSummary[] => {
+export const listCustomers = async (search?: string): Promise<CustomerSummary[]> => {
   const term = search?.trim()
   const digits = term ? normalisePhone(term) : ''
 
-  // Searching "0300" should find a phone number; searching "Bilal" should
-  // find a name. Both go through the same box, so both are tried.
-  const where = term ? 'WHERE c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?' : ''
+  /**
+   * ILIKE, not LIKE.
+   *
+   * SQLite's LIKE ignores case for ASCII; Postgres's does not. Left as LIKE,
+   * a cashier who typed "bilal" would be told there is no such customer while
+   * "Bilal Ahmed" sat in the table -- and would then create a duplicate.
+   */
+  const where = term ? 'WHERE c.name ILIKE ? OR c.email ILIKE ? OR c.phone LIKE ?' : ''
   const params = term ? [`%${term}%`, `%${term}%`, `%${digits || term}%`] : []
 
   return runQuery<CustomerSummary>(
-    `SELECT
-       c.*,
-       COUNT(p.total) AS purchase_count,
-       COALESCE(SUM(p.total), 0) AS total_spent,
-       MAX(p.date) AS last_purchase_at
-     FROM customers c
-     LEFT JOIN (${PURCHASES_UNION}) p ON p.customer_id = c.id
+    `${SUMMARY_SELECT}
      ${where}
      GROUP BY c.id
-     ORDER BY last_purchase_at IS NULL, last_purchase_at DESC, c.name ASC`,
+     ORDER BY last_purchase_at DESC NULLS LAST, c.name ASC`,
     params
   )
 }
 
-export const getCustomer = (id: number): CustomerSummary | null => {
-  const rows = runQuery<CustomerSummary>(
-    `SELECT
-       c.*,
-       COUNT(p.total) AS purchase_count,
-       COALESCE(SUM(p.total), 0) AS total_spent,
-       MAX(p.date) AS last_purchase_at
-     FROM customers c
-     LEFT JOIN (${PURCHASES_UNION}) p ON p.customer_id = c.id
-     WHERE c.id = ?
-     GROUP BY c.id`,
-    [id]
-  )
+export const getCustomer = async (id: number): Promise<CustomerSummary | null> =>
+  (await runGet<CustomerSummary>(`${SUMMARY_SELECT} WHERE c.id = ? GROUP BY c.id`, [id])) ?? null
 
-  return rows[0] ?? null
+/** Groups line items by the receipt or order they belong to. */
+const byParent = <T extends { parent_id: number }>(rows: T[]): Map<number, PurchaseLine[]> => {
+  const grouped = new Map<number, PurchaseLine[]>()
+  for (const { parent_id, ...line } of rows) {
+    grouped.set(parent_id, [...(grouped.get(parent_id) ?? []), line as unknown as PurchaseLine])
+  }
+  return grouped
 }
 
-/** Everything one customer has bought, newest first, from both channels. */
-export const getCustomerPurchases = (id: number): Purchase[] => {
-  const db = getDb()
+/**
+ * Everything one customer has bought, newest first, from both channels.
+ *
+ * Five queries, whatever the length of the history.
+ *
+ * Under SQLite the line items were fetched one prepared statement at a time
+ * inside a `.map()`, which cost nothing when the database was a file in the
+ * same process. Against a database in Mumbai, a customer with forty purchases
+ * would have paid forty round trips -- several seconds of a page that used to
+ * be instant. The items are collected in one query per channel and matched up
+ * here instead.
+ */
+export const getCustomerPurchases = async (id: number): Promise<Purchase[]> => {
+  const customer = await runGet<{ phone: string }>('SELECT phone FROM customers WHERE id = ?', [id])
 
-  const receipts = runQuery<{
-    id: number
-    receipt_number: string
-    created_at: string
-    subtotal: number
-    tax: number
-    discount: number
-    total: number
-    payment_method: string
-  }>('SELECT * FROM billing_receipts WHERE customer_id = ? ORDER BY created_at DESC', [id])
+  const [receipts, receiptLines] = await Promise.all([
+    runQuery<{
+      id: number
+      receipt_number: string
+      created_at: string
+      subtotal: number
+      tax: number
+      discount: number
+      total: number
+      payment_method: string
+    }>('SELECT * FROM billing_receipts WHERE customer_id = ? ORDER BY created_at DESC', [id]),
 
-  const customer = db.prepare('SELECT phone FROM customers WHERE id = ?').get(id) as
-    | { phone: string }
-    | undefined
+    runQuery<PurchaseLine & { parent_id: number }>(
+      `SELECT receipt_id AS parent_id, product_name, product_sku, quantity, unit_price, subtotal
+       FROM billing_items
+       WHERE receipt_id IN (SELECT id FROM billing_receipts WHERE customer_id = ?)`,
+      [id]
+    ),
+  ])
 
-  const orders = customer
-    ? runQuery<{
-        id: number
-        order_number: string
-        created_at: string
-        subtotal: number
-        tax: number
-        discount: number
-        total: number
-        status: string
-        payment_method: string
-      }>(
-        `SELECT * FROM orders
-         WHERE customer_phone = ? AND payment_status = 'paid'
-         ORDER BY created_at DESC`,
-        [customer.phone]
-      )
-    : []
+  const [orders, orderLines] = customer
+    ? await Promise.all([
+        runQuery<{
+          id: number
+          order_number: string
+          created_at: string
+          subtotal: number
+          tax: number
+          discount: number
+          total: number
+          status: string
+          payment_method: string
+        }>(
+          `SELECT * FROM orders
+           WHERE customer_phone = ? AND payment_status = 'paid'
+           ORDER BY created_at DESC`,
+          [customer.phone]
+        ),
 
-  const receiptItems = db.prepare(
-    'SELECT product_name, product_sku, quantity, unit_price, subtotal FROM billing_items WHERE receipt_id = ?'
-  )
-  const orderItems = db.prepare(
-    'SELECT product_name, product_sku, quantity, unit_price, subtotal FROM order_items WHERE order_id = ?'
-  )
+        runQuery<PurchaseLine & { parent_id: number }>(
+          `SELECT order_id AS parent_id, product_name, product_sku, quantity, unit_price, subtotal
+           FROM order_items
+           WHERE order_id IN (
+             SELECT id FROM orders WHERE customer_phone = ? AND payment_status = 'paid'
+           )`,
+          [customer.phone]
+        ),
+      ])
+    : [[], []]
+
+  const receiptItems = byParent(receiptLines)
+  const orderItems = byParent(orderLines)
 
   const purchases: Purchase[] = [
     ...receipts.map(receipt => ({
@@ -241,7 +276,7 @@ export const getCustomerPurchases = (id: number): Purchase[] => {
       total: receipt.total,
       payment_method: receipt.payment_method,
       status: null,
-      items: receiptItems.all(receipt.id) as PurchaseLine[],
+      items: receiptItems.get(receipt.id) ?? [],
     })),
     ...orders.map(order => ({
       source: 'online' as const,
@@ -253,7 +288,7 @@ export const getCustomerPurchases = (id: number): Purchase[] => {
       total: order.total,
       payment_method: order.payment_method,
       status: order.status,
-      items: orderItems.all(order.id) as PurchaseLine[],
+      items: orderItems.get(order.id) ?? [],
     })),
   ]
 

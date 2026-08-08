@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb, runQuery, runTransaction } from '@/lib/db'
+import { runGet, runQuery, runTransaction, runUpdate } from '@/lib/db'
 import { Order } from '@/types/order'
 import { apiResponse, apiError, generateOrderNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING } from '@/lib/shipping'
@@ -43,16 +43,27 @@ export async function GET(request: NextRequest) {
       params.push(parseInt(searchParams.get('limit')!))
     }
 
-    const orders = runQuery<Order>(sql, params)
+    const orders = await runQuery<Order>(sql, params)
 
-    // Get order items for each order
-    const ordersWithItems = orders.map(order => {
-      const items = runQuery<any>(
-        'SELECT * FROM order_items WHERE order_id = ?',
-        [order.id]
-      )
-      return { ...order, items }
-    })
+    // All the items for the page in one query rather than one per order --
+    // the admin's order list would otherwise open a connection per row.
+    const ids = orders.map(order => order.id)
+    const allItems = ids.length
+      ? await runQuery<{ order_id: number }>(
+          `SELECT * FROM order_items WHERE order_id IN (${ids.map(() => '?').join(', ')})`,
+          ids
+        )
+      : []
+
+    const byOrder = new Map<number, any[]>()
+    for (const item of allItems) {
+      byOrder.set(item.order_id, [...(byOrder.get(item.order_id) ?? []), item])
+    }
+
+    const ordersWithItems = orders.map(order => ({
+      ...order,
+      items: byOrder.get(order.id) ?? [],
+    }))
 
     return NextResponse.json(apiResponse(ordersWithItems))
   } catch (error) {
@@ -104,7 +115,6 @@ const parseItems = (raw: unknown): RequestedItem[] => {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const db = getDb()
 
     const requested = parseItems(body.items)
 
@@ -115,19 +125,47 @@ export async function POST(request: NextRequest) {
       merged.set(item.product_id, (merged.get(item.product_id) ?? 0) + item.quantity)
     }
 
-    return runTransaction(db => {
-      const findProduct = db.prepare(
-        'SELECT id, name, sku, price, stock_quantity, is_active FROM products WHERE id = ?'
-      )
-      const findImage = db.prepare(
-        `SELECT image_url FROM product_images
-         WHERE product_id = ? ORDER BY is_primary DESC, display_order ASC LIMIT 1`
-      )
+    return await runTransaction(async tx => {
+      const productIds = Array.from(merged.keys())
+      const placeholders = productIds.map(() => '?').join(', ')
+
+      /**
+       * Every product and its cover photograph, in two queries rather than
+       * two per line. A five-item basket used to make ten sequential trips
+       * to the database while holding a transaction open -- and a transaction
+       * held open across ten network round trips is a lock held for ten
+       * network round trips.
+       */
+      const [found, images] = await Promise.all([
+        runQuery<{
+          id: number
+          name: string
+          sku: string
+          price: number
+          stock_quantity: number
+          is_active: number
+        }>(
+          `SELECT id, name, sku, price, stock_quantity, is_active
+           FROM products WHERE id IN (${placeholders})`,
+          productIds,
+          tx
+        ),
+
+        runQuery<{ product_id: number; image_url: string }>(
+          `SELECT DISTINCT ON (product_id) product_id, image_url
+           FROM product_images
+           WHERE product_id IN (${placeholders})
+           ORDER BY product_id, is_primary DESC, display_order ASC`,
+          productIds,
+          tx
+        ),
+      ])
+
+      const products = new Map(found.map(product => [product.id, product]))
+      const coverImage = new Map(images.map(image => [image.product_id, image.image_url]))
 
       const lines = Array.from(merged.entries()).map(([productId, quantity]) => {
-        const product = findProduct.get(productId) as
-          | { id: number; name: string; sku: string; price: number; stock_quantity: number; is_active: number }
-          | undefined
+        const product = products.get(productId)
 
         if (!product || !product.is_active) {
           throw Object.assign(new Error('One of those pieces is no longer available'), {
@@ -143,13 +181,11 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        const image = findImage.get(productId) as { image_url: string } | undefined
-
         return {
           product_id: product.id,
           product_name: product.name,
           product_sku: product.sku,
-          product_image: image?.image_url ?? null,
+          product_image: coverImage.get(productId) ?? null,
           quantity,
           // From the catalogue, never from the caller.
           unit_price: product.price,
@@ -167,62 +203,70 @@ export async function POST(request: NextRequest) {
 
       // Create order
       const orderNumber = generateOrderNumber()
-      const orderResult = db.prepare(`
+      const order = (await runGet(
+        `
         INSERT INTO orders (
           order_number, customer_name, customer_email, customer_phone,
           shipping_address, billing_address, subtotal, tax, shipping_cost,
           discount, total, status, payment_method, payment_status, notes
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        orderNumber,
-        body.customer_name || null,
-        body.customer_email || null,
-        // Stored in the same canonical form the counter uses, so one person
-        // ordering online and buying in store is one customer.
-        body.customer_phone ? normalisePhone(body.customer_phone) : null,
-        body.shipping_address || null,
-        body.billing_address || null,
-        subtotal,
-        tax,
-        shipping,
-        discount,
-        total,
-        'pending',
-        body.payment_method || 'stripe', // Default to stripe for online orders
-        'pending', // Start with pending, will be updated after successful payment
-        body.notes || null
-      )
+        RETURNING *
+      `,
+        [
+          orderNumber,
+          body.customer_name || null,
+          body.customer_email || null,
+          // Stored in the same canonical form the counter uses, so one person
+          // ordering online and buying in store is one customer.
+          body.customer_phone ? normalisePhone(body.customer_phone) : null,
+          body.shipping_address || null,
+          body.billing_address || null,
+          subtotal,
+          tax,
+          shipping,
+          discount,
+          total,
+          'pending',
+          body.payment_method || 'stripe', // Default to stripe for online orders
+          'pending', // Start with pending, will be updated after successful payment
+          body.notes || null,
+        ],
+        tx
+      )) as Record<string, unknown>
 
-      const orderId = orderResult.lastInsertRowid
+      const orderId = order.id as number
 
-      const insertItem = db.prepare(`
+      for (const line of lines) {
+        await runGet(
+          `
         INSERT INTO order_items (
           order_id, product_id, product_name, product_sku, product_image,
           quantity, unit_price, subtotal
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `)
-
-      // The WHERE guard is the real check. Between reading the stock above and
-      // writing it here another order can land, and the conditional update is
-      // what makes the pair atomic rather than merely sequential.
-      const updateStock = db.prepare(
-        'UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?'
-      )
-
-      for (const line of lines) {
-        insertItem.run(
-          orderId,
-          line.product_id,
-          line.product_name,
-          line.product_sku,
-          line.product_image,
-          line.quantity,
-          line.unit_price,
-          line.subtotal
+      `,
+          [
+            orderId,
+            line.product_id,
+            line.product_name,
+            line.product_sku,
+            line.product_image,
+            line.quantity,
+            line.unit_price,
+            line.subtotal,
+          ],
+          tx
         )
 
-        const stockResult = updateStock.run(line.quantity, line.product_id, line.quantity)
-        if (stockResult.changes === 0) {
+        // The WHERE guard is the real check. Between reading the stock above
+        // and writing it here another order can land, and the conditional
+        // update is what makes the pair atomic rather than merely sequential.
+        const changed = await runUpdate(
+          'UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?',
+          [line.quantity, line.product_id, line.quantity],
+          tx
+        )
+
+        if (changed === 0) {
           throw Object.assign(
             new Error(`${line.product_name} sold out while you were checking out`),
             { status: 409 }
@@ -230,9 +274,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Fetch created order
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as Record<string, unknown>
-      const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId)
+      const items = await runQuery('SELECT * FROM order_items WHERE order_id = ?', [orderId], tx)
 
       return NextResponse.json(
         apiResponse({ ...order, items }),

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
 import { getCheckoutSession, isStripeConfigured } from '@/lib/stripe'
 import { markOrderPaid } from '@/lib/orders'
@@ -36,8 +36,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(apiError('An order id is required'), { status: 400 })
     }
 
-    const db = getDb()
-    let order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
+    let order = (await runGet('SELECT * FROM orders WHERE id = ?', [orderId])) as any
 
     if (!order) {
       return NextResponse.json(apiError('We could not find that order'), { status: 404 })
@@ -47,13 +46,13 @@ export async function GET(request: NextRequest) {
       try {
         const session = await getCheckoutSession(order.stripe_session_id)
         if (session.payment_status === 'paid') {
-          markOrderPaid(orderId, {
+          await markOrderPaid(orderId, {
             amountFromStripe: session.amount_total,
             sessionId: session.id,
             paymentIntentId:
               typeof session.payment_intent === 'string' ? session.payment_intent : null,
           })
-          order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
+          order = (await runGet('SELECT * FROM orders WHERE id = ?', [orderId])) as any
         }
       } catch (error) {
         // Reconciliation is a convenience. If Stripe is unreachable the page

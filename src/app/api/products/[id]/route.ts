@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb, runQuery } from '@/lib/db'
+import { runDelete, runGet, runQuery, runTransaction, runUpdate } from '@/lib/db'
 import { apiResponse, apiError, slugify } from '@/lib/utils'
 
 /**
@@ -18,13 +18,13 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
     const identifier = params.id
 
     // Check if identifier is numeric (ID) or string (slug)
     const isNumeric = /^\d+$/.test(identifier)
 
-    const sql = `
+    const product = await runGet<{ id: number; category_id: number | null }>(
+      `
       SELECT
         p.*,
         c.name as category_name,
@@ -32,11 +32,9 @@ export async function GET(
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE ${isNumeric ? 'p.id' : 'p.slug'} = ?
-    `
-
-    const product = db.prepare(sql).get(isNumeric ? parseInt(identifier) : identifier) as
-      | { id: number; category_id: number | null }
-      | undefined
+    `,
+      [isNumeric ? parseInt(identifier) : identifier]
+    )
 
     if (!product) {
       return NextResponse.json(
@@ -45,22 +43,23 @@ export async function GET(
       )
     }
 
-    // Get product images
-    const images = runQuery<any>(
-      'SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order',
-      [product.id]
-    )
+    const [images, relatedProducts] = await Promise.all([
+      runQuery<any>(
+        'SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order',
+        [product.id]
+      ),
 
-    // Get related products (same category, different product)
-    const relatedProducts = runQuery<any>(
-      `SELECT p.*,
-        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image
-       FROM products p
-       WHERE p.category_id = ? AND p.id != ? AND p.is_active = 1
-       ORDER BY RANDOM()
-       LIMIT 4`,
-      [product.category_id, product.id]
-    )
+      // Related products: same category, different product
+      runQuery<any>(
+        `SELECT p.*,
+          (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image
+         FROM products p
+         WHERE p.category_id = ? AND p.id != ? AND p.is_active = 1
+         ORDER BY RANDOM()
+         LIMIT 4`,
+        [product.category_id, product.id]
+      ),
+    ])
 
     return NextResponse.json(
       apiResponse({
@@ -85,17 +84,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const db = getDb()
     const productId = parseInt(params.id)
-
-    // Check if product exists
-    const existing = db.prepare('SELECT id FROM products WHERE id = ?').get(productId)
-    if (!existing) {
-      return NextResponse.json(
-        apiError('Product not found'),
-        { status: 404 }
-      )
-    }
 
     // Build update query
     const updates: string[] = []
@@ -170,42 +159,73 @@ export async function PUT(
       values.push(body.is_active ? 1 : 0)
     }
 
-    if (updates.length > 0) {
-      const sql = `UPDATE products SET ${updates.join(', ')} WHERE id = ?`
-      values.push(productId)
-      db.prepare(sql).run(values)
-    }
+    /**
+     * The fields and the photographs move together.
+     *
+     * Replacing the images is a delete followed by inserts, and outside a
+     * transaction a failure between the two leaves a product with no images
+     * at all -- the listing renders it as an empty grey box, and the
+     * originals are gone.
+     */
+    const found = await runTransaction(async tx => {
+      let exists = true
 
-    // Update images if provided
-    if (body.images && Array.isArray(body.images)) {
-      // Delete existing images
-      db.prepare('DELETE FROM product_images WHERE product_id = ?').run(productId)
+      if (updates.length > 0) {
+        exists =
+          (await runUpdate(
+            `UPDATE products SET ${updates.join(', ')} WHERE id = ?`,
+            [...values, productId],
+            tx
+          )) > 0
+      } else {
+        exists = Boolean(await runGet('SELECT id FROM products WHERE id = ?', [productId], tx))
+      }
 
-      // Insert new images
-      const insertImage = db.prepare(`
+      if (!exists) return false
+
+      // Update images if provided
+      if (body.images && Array.isArray(body.images)) {
+        await runDelete('DELETE FROM product_images WHERE product_id = ?', [productId], tx)
+
+        for (const [index, image] of body.images.entries()) {
+          await runGet(
+            `
         INSERT INTO product_images (
           product_id, image_url, alt_text, display_order, is_primary
         ) VALUES (?, ?, ?, ?, ?)
-      `)
+      `,
+            [
+              productId,
+              image.image_url,
+              image.alt_text || body.name || 'Product image',
+              image.display_order || index,
+              index === 0 ? 1 : 0,
+            ],
+            tx
+          )
+        }
+      }
 
-      body.images.forEach((image: any, index: number) => {
-        insertImage.run(
-          productId,
-          image.image_url,
-          image.alt_text || body.name || 'Product image',
-          image.display_order || index,
-          index === 0 ? 1 : 0
-        )
-      })
+      return true
+    })
+
+    if (!found) {
+      return NextResponse.json(
+        apiError('Product not found'),
+        { status: 404 }
+      )
     }
 
     // Fetch updated product
-    const product = db.prepare(`
+    const product = await runGet(
+      `
       SELECT p.*, c.name as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.id = ?
-    `).get(productId)
+    `,
+      [productId]
+    )
 
     return NextResponse.json(apiResponse(product))
   } catch (error) {
@@ -223,20 +243,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
     const productId = parseInt(params.id)
 
-    // Check if product exists
-    const existing = db.prepare('SELECT id FROM products WHERE id = ?').get(productId)
-    if (!existing) {
+    // Images cascade with the product, so this is the only statement needed.
+    const removed = await runDelete('DELETE FROM products WHERE id = ?', [productId])
+
+    if (removed === 0) {
       return NextResponse.json(
         apiError('Product not found'),
         { status: 404 }
       )
     }
-
-    // Delete product (images will be cascade deleted)
-    db.prepare('DELETE FROM products WHERE id = ?').run(productId)
 
     return NextResponse.json(apiResponse({ message: 'Product deleted successfully' }))
   } catch (error) {

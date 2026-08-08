@@ -1,21 +1,44 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { config } from 'dotenv'
 
 /**
- * A real SQLite file, not a mock.
+ * A real Postgres, not a mock.
  *
  * The bug these tests exist for was that the route trusted a number from the
  * request instead of reading one from the catalogue. A mocked database would
  * have been written to match whatever the route did and would have proved
  * nothing.
+ *
+ * They used to run against a temporary SQLite file. There is no such thing
+ * now, so they build a scratch schema in the same Postgres the application
+ * uses, apply the real DDL to it, and drop it at the end. Same server, same
+ * driver, same triggers, same NUMERIC handling -- and `DELETE FROM orders`
+ * inside it cannot touch the shop's actual orders, which is the part that
+ * matters when the test database and the live one are the same instance.
  */
-const dir = mkdtempSync(join(tmpdir(), 'vemco-orders-'))
-process.env.DATABASE_PATH = join(dir, 'test.db')
+config({ path: '.env.local' })
+config({ path: '.env' })
+
+const SCHEMA = `vemco_test_${process.pid}`
+process.env.DATABASE_SCHEMA = SCHEMA
+
+/**
+ * Session mode for the tests, transaction mode for the application.
+ *
+ * search_path is a session setting, and the transaction pooler hands out a
+ * different backend per transaction -- so a schema chosen at connect time is
+ * not reliably the schema the next statement runs in. Port 5432 keeps one
+ * backend for the life of the connection, which is what these tests need and
+ * what a serverless deployment must not ask for.
+ */
+if (process.env.DATABASE_URL?.includes(':6543')) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(':6543', ':5432')
+}
 
 const { POST } = await import('./route')
-const { getDb } = await import('@/lib/db')
+const { closeDb, getDb, runGet, runQuery, runUpdate } = await import('@/lib/db')
 
 const SOFA_PRICE = 185_000
 
@@ -30,15 +53,17 @@ const post = async (body: unknown) => {
 }
 
 /** A known product, so the expected total is not guesswork. */
-const seedProduct = (overrides: { price?: number; stock?: number; active?: number } = {}) => {
-  const db = getDb()
-  db.prepare('DELETE FROM order_items').run()
-  db.prepare('DELETE FROM orders').run()
-  db.prepare('DELETE FROM products WHERE id = 9001').run()
-  db.prepare(
+const seedProduct = async (
+  overrides: { price?: number; stock?: number; active?: number } = {}
+) => {
+  await runUpdate('DELETE FROM order_items')
+  await runUpdate('DELETE FROM orders')
+  await runUpdate('DELETE FROM products WHERE id = 9001')
+  await runUpdate(
     `INSERT INTO products (id, name, slug, sku, price, stock_quantity, category_id, is_active)
-     VALUES (9001, 'Test Sofa', 'test-sofa', 'TST-001', ?, ?, 1, ?)`
-  ).run(overrides.price ?? SOFA_PRICE, overrides.stock ?? 5, overrides.active ?? 1)
+     VALUES (9001, 'Test Sofa', 'test-sofa', 'TST-001', ?, ?, NULL, ?)`,
+    [overrides.price ?? SOFA_PRICE, overrides.stock ?? 5, overrides.active ?? 1]
+  )
 }
 
 const customer = {
@@ -48,19 +73,27 @@ const customer = {
   shipping_address: 'Showroom 14, Lahore',
 }
 
-beforeEach(() => {
-  vi.spyOn(console, 'error').mockImplementation(() => {})
-  seedProduct()
+beforeAll(async () => {
+  const db = getDb()
+  // CREATE SCHEMA needs no search_path; everything after it lands inside the
+  // new schema because search_path already points there.
+  await db.unsafe(`CREATE SCHEMA IF NOT EXISTS ${SCHEMA}`)
+  await db.unsafe(readFileSync(join(process.cwd(), 'src/lib/db/schema.sql'), 'utf8'))
+}, 60_000)
+
+beforeEach(async () => {
+  // Set DEBUG_ORDERS=1 to see what a 500 actually was.
+  if (!process.env.DEBUG_ORDERS) vi.spyOn(console, 'error').mockImplementation(() => {})
+  await seedProduct()
 })
 
-afterAll(() => {
+afterAll(async () => {
   try {
-    getDb().close()
-  } catch {
-    // Already closed.
+    await getDb().unsafe(`DROP SCHEMA IF EXISTS ${SCHEMA} CASCADE`)
+  } finally {
+    await closeDb()
   }
-  rmSync(dir, { recursive: true, force: true })
-})
+}, 60_000)
 
 describe('the price comes from the catalogue', () => {
   it('ignores a unit_price sent by the customer', async () => {
@@ -99,7 +132,7 @@ describe('the price comes from the catalogue', () => {
     const above = await post({ ...customer, items: [{ product_id: 9001, quantity: 1 }] })
     expect(above.body.data.shipping_cost).toBe(0)
 
-    seedProduct({ price: 5_000 })
+    await seedProduct({ price: 5_000 })
     const below = await post({ ...customer, items: [{ product_id: 9001, quantity: 1 }] })
     expect(below.body.data.shipping_cost).toBe(2_500)
   })
@@ -113,7 +146,7 @@ describe('the price comes from the catalogue', () => {
 
 describe('stock', () => {
   it('refuses an order larger than the stock on hand', async () => {
-    seedProduct({ stock: 2 })
+    await seedProduct({ stock: 2 })
     const { status, body } = await post({ ...customer, items: [{ product_id: 9001, quantity: 3 }] })
 
     expect(status).toBe(409)
@@ -121,17 +154,17 @@ describe('stock', () => {
   })
 
   it('reduces the stock by what was ordered', async () => {
-    seedProduct({ stock: 5 })
+    await seedProduct({ stock: 5 })
     await post({ ...customer, items: [{ product_id: 9001, quantity: 2 }] })
 
-    const product = getDb()
-      .prepare('SELECT stock_quantity FROM products WHERE id = 9001')
-      .get() as { stock_quantity: number }
-    expect(product.stock_quantity).toBe(3)
+    const product = await runGet<{ stock_quantity: number }>(
+      'SELECT stock_quantity FROM products WHERE id = 9001'
+    )
+    expect(product?.stock_quantity).toBe(3)
   })
 
   it('adds up two lines of the same product before checking stock', async () => {
-    seedProduct({ stock: 3 })
+    await seedProduct({ stock: 3 })
     const { status } = await post({
       ...customer,
       items: [
@@ -145,13 +178,13 @@ describe('stock', () => {
   })
 
   it('leaves the stock alone when the order is refused', async () => {
-    seedProduct({ stock: 2 })
+    await seedProduct({ stock: 2 })
     await post({ ...customer, items: [{ product_id: 9001, quantity: 3 }] })
 
-    const product = getDb()
-      .prepare('SELECT stock_quantity FROM products WHERE id = 9001')
-      .get() as { stock_quantity: number }
-    expect(product.stock_quantity).toBe(2)
+    const product = await runGet<{ stock_quantity: number }>(
+      'SELECT stock_quantity FROM products WHERE id = 9001'
+    )
+    expect(product?.stock_quantity).toBe(2)
   })
 })
 
@@ -167,7 +200,7 @@ describe('what it refuses', () => {
   })
 
   it('refuses a product that has been withdrawn', async () => {
-    seedProduct({ active: 0 })
+    await seedProduct({ active: 0 })
     const { status } = await post({ ...customer, items: [{ product_id: 9001, quantity: 1 }] })
     expect(status).toBe(400)
   })
@@ -179,8 +212,8 @@ describe('what it refuses', () => {
 
   it('creates no order when it refuses one', async () => {
     await post({ ...customer, items: [{ product_id: 424242, quantity: 1 }] })
-    const count = getDb().prepare('SELECT COUNT(*) AS c FROM orders').get() as { c: number }
-    expect(count.c).toBe(0)
+    const rows = await runQuery<{ c: number }>('SELECT COUNT(*) AS c FROM orders')
+    expect(rows[0].c).toBe(0)
   })
 })
 

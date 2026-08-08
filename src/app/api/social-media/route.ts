@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
 import type { CreateSocialMediaLinkInput } from '@/types/social-media'
 
@@ -16,7 +16,6 @@ export const dynamic = 'force-dynamic'
 // GET /api/social-media - Get all social media links
 export async function GET(request: NextRequest) {
   try {
-    const db = getDb()
     const { searchParams } = new URL(request.url)
     const activeOnly = searchParams.get('active_only') === 'true'
 
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     query += ' ORDER BY display_order ASC'
 
-    const links = db.prepare(query).all()
+    const links = await runQuery(query)
 
     return NextResponse.json(
       apiResponse({
@@ -65,26 +64,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const db = getDb()
-
-    const result = db
-      .prepare(
-        `
+    const newLink = await runGet(
+      `
       INSERT INTO social_media_links (platform, url, icon, display_order, is_active)
       VALUES (?, ?, ?, ?, ?)
-    `
-      )
-      .run(
-        body.platform,
-        body.url,
-        body.icon,
-        body.display_order ?? 0,
-        body.is_active ?? 1
-      )
-
-    const newLink = db
-      .prepare('SELECT * FROM social_media_links WHERE id = ?')
-      .get(result.lastInsertRowid)
+      RETURNING *
+    `,
+      [body.platform, body.url, body.icon, body.display_order ?? 0, body.is_active ?? 1]
+    )
 
     return NextResponse.json(apiResponse(newLink, true, 'Social media link created successfully'), {
       status: 201,

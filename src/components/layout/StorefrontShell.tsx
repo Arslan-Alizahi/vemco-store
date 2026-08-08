@@ -13,8 +13,8 @@ import ScrollToTop from './ScrollToTop'
  * twelve Footer imports -- six pages had neither, including the product detail
  * page, where Add to Cart had no visible consequence and no route to checkout.
  */
-export default function StorefrontShell({ children }: { children: React.ReactNode }) {
-  const links = getHeaderNav()
+export default async function StorefrontShell({ children }: { children: React.ReactNode }) {
+  const links = await getHeaderNav()
 
   return (
     <AppFrame header={<Navbar links={links} />} footer={<Footer />}>

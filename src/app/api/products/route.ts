@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb, runQuery, runInsert } from '@/lib/db'
+import { runGet, runQuery, runTransaction } from '@/lib/db'
 import { Product, ProductFilter } from '@/types/product'
 import { apiResponse, apiError, generateSKU, slugify } from '@/lib/utils'
 import { isShowcase, staticProducts } from '@/lib/catalogue'
@@ -129,7 +129,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (filters.search) {
-      sql += ' AND (p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)'
+      // ILIKE: Postgres's LIKE is case-sensitive where SQLite's was not, so a
+      // shopper searching "sofa" would have been told there are none.
+      sql += ' AND (p.name ILIKE ? OR p.description ILIKE ? OR p.sku ILIKE ?)'
       const searchTerm = `%${filters.search}%`
       params.push(searchTerm, searchTerm, searchTerm)
     }
@@ -155,8 +157,6 @@ export async function GET(request: NextRequest) {
     const offset = (filters.page! - 1) * filters.limit!
     sql += ' LIMIT ? OFFSET ?'
     params.push(filters.limit, offset)
-
-    const products = runQuery<Product>(sql, params)
 
     // Get total count
     let countSql = `
@@ -192,25 +192,47 @@ export async function GET(request: NextRequest) {
     }
 
     if (filters.search) {
-      countSql += ' AND (p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)'
+      countSql += ' AND (p.name ILIKE ? OR p.description ILIKE ? OR p.sku ILIKE ?)'
       const searchTerm = `%${filters.search}%`
       countParams.push(searchTerm, searchTerm, searchTerm)
     }
 
-    const countResult = runQuery<{ total: number }>(countSql, countParams)
+    // The page and its count answer independent questions, so they are asked
+    // at the same time rather than one after the other.
+    const [products, countResult] = await Promise.all([
+      runQuery<Product>(sql, params),
+      runQuery<{ total: number }>(countSql, countParams),
+    ])
+
     const total = countResult[0]?.total || 0
 
-    // Get images for each product
-    const productsWithImages = products.map(product => {
-      const images = runQuery<any>(
-        'SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order',
-        [product.id]
-      )
-      return {
-        ...product,
-        images
-      }
-    })
+    /**
+     * Images for the whole page in one query.
+     *
+     * This was a `runQuery` inside a `.map()` -- twelve products meant twelve
+     * more trips to the database. Free when the database was a file in this
+     * process; roughly half a second of latency when it is in Mumbai, on the
+     * one endpoint every product listing calls.
+     */
+    const ids = products.map(product => product.id)
+    const images = ids.length
+      ? await runQuery<{ product_id: number }>(
+          `SELECT * FROM product_images
+           WHERE product_id IN (${ids.map(() => '?').join(', ')})
+           ORDER BY display_order`,
+          ids
+        )
+      : []
+
+    const byProduct = new Map<number, any[]>()
+    for (const image of images) {
+      byProduct.set(image.product_id, [...(byProduct.get(image.product_id) ?? []), image])
+    }
+
+    const productsWithImages = products.map(product => ({
+      ...product,
+      images: byProduct.get(product.id) ?? [],
+    }))
 
     return NextResponse.json(
       apiResponse({
@@ -236,7 +258,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const db = getDb()
 
     // Validate required fields
     if (!body.name || !body.price || !body.category_id) {
@@ -250,72 +271,90 @@ export async function POST(request: NextRequest) {
     const slug = body.slug || slugify(body.name)
     const sku = body.sku || generateSKU(body.name)
 
-    // Check if slug or SKU already exists
-    const existing = db.prepare(
-      'SELECT id FROM products WHERE slug = ? OR sku = ?'
-    ).get(slug, sku)
+    /**
+     * The product and its images arrive together or not at all.
+     *
+     * Previously the images were inserted after the product in separate
+     * statements, so a failure partway through left a product in the
+     * catalogue with some of its photographs and no way to tell.
+     *
+     * The uniqueness of the slug and the SKU is settled by their indexes
+     * rather than by a SELECT beforehand -- two administrators saving at once
+     * would both have found the name free, and the loser got a 500 instead of
+     * a message they could act on.
+     */
+    const productId = await runTransaction(async tx => {
+      const created = await runGet<{ id: number }>(
+        `
+      INSERT INTO products (
+        name, slug, description, long_description, sku, category_id,
+        price, compare_at_price, cost_price, stock_quantity,
+        low_stock_threshold, is_featured, is_active
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    `,
+        [
+          body.name,
+          slug,
+          body.description || null,
+          body.long_description || null,
+          sku,
+          body.category_id,
+          body.price,
+          body.compare_at_price || null,
+          body.cost_price || null,
+          body.stock_quantity || 0,
+          body.low_stock_threshold || 5,
+          body.is_featured ? 1 : 0,
+          body.is_active !== false ? 1 : 0,
+        ],
+        tx
+      )
 
-    if (existing) {
+      if (!created) return null
+
+      // Add images if provided
+      if (body.images && Array.isArray(body.images)) {
+        for (const [index, image] of body.images.entries()) {
+          await runGet(
+            `
+        INSERT INTO product_images (
+          product_id, image_url, alt_text, display_order, is_primary
+        ) VALUES (?, ?, ?, ?, ?)
+      `,
+            [
+              created.id,
+              image.image_url,
+              image.alt_text || body.name,
+              image.display_order || index,
+              index === 0 ? 1 : 0,
+            ],
+            tx
+          )
+        }
+      }
+
+      return created.id
+    })
+
+    if (productId === null) {
       return NextResponse.json(
         apiError('Product with this slug or SKU already exists'),
         { status: 400 }
       )
     }
 
-    // Insert product
-    const sql = `
-      INSERT INTO products (
-        name, slug, description, long_description, sku, category_id,
-        price, compare_at_price, cost_price, stock_quantity,
-        low_stock_threshold, is_featured, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-
-    const stmt = db.prepare(sql)
-    const result = stmt.run(
-      body.name,
-      slug,
-      body.description || null,
-      body.long_description || null,
-      sku,
-      body.category_id,
-      body.price,
-      body.compare_at_price || null,
-      body.cost_price || null,
-      body.stock_quantity || 0,
-      body.low_stock_threshold || 5,
-      body.is_featured ? 1 : 0,
-      body.is_active !== false ? 1 : 0
-    )
-
-    const productId = result.lastInsertRowid
-
-    // Add images if provided
-    if (body.images && Array.isArray(body.images)) {
-      const insertImage = db.prepare(`
-        INSERT INTO product_images (
-          product_id, image_url, alt_text, display_order, is_primary
-        ) VALUES (?, ?, ?, ?, ?)
-      `)
-
-      body.images.forEach((image: any, index: number) => {
-        insertImage.run(
-          productId,
-          image.image_url,
-          image.alt_text || body.name,
-          image.display_order || index,
-          index === 0 ? 1 : 0
-        )
-      })
-    }
-
     // Fetch the created product
-    const product = db.prepare(`
+    const product = await runGet(
+      `
       SELECT p.*, c.name as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.id = ?
-    `).get(productId)
+    `,
+      [productId]
+    )
 
     return NextResponse.json(
       apiResponse(product),

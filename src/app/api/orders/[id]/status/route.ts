@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
 
 /**
@@ -45,31 +45,25 @@ export async function PUT(
       )
     }
 
-    const db = getDb()
+    // The update both changes the row and reports whether there was one.
+    const updateSql = paymentMethod
+      ? 'UPDATE orders SET payment_status = ?, payment_method = ?, updated_at = NOW() WHERE id = ? RETURNING *'
+      : 'UPDATE orders SET payment_status = ?, updated_at = NOW() WHERE id = ? RETURNING *'
 
-    // Check if order exists
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
+    const params_array = paymentMethod
+      ? [paymentStatus, paymentMethod, Number(orderId)]
+      : [paymentStatus, Number(orderId)]
 
-    if (!order) {
+    const updatedOrder = (await runGet(updateSql, params_array)) as
+      | Record<string, unknown>
+      | undefined
+
+    if (!updatedOrder) {
       return NextResponse.json(
         apiError('Order not found'),
         { status: 404 }
       )
     }
-
-    // Update order payment status
-    const updateSql = paymentMethod
-      ? 'UPDATE orders SET payment_status = ?, payment_method = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-      : 'UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-
-    const params_array = paymentMethod
-      ? [paymentStatus, paymentMethod, orderId]
-      : [paymentStatus, orderId]
-
-    db.prepare(updateSql).run(...params_array)
-
-    // Fetch updated order
-    const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as Record<string, unknown>
 
     return NextResponse.json(
       apiResponse({
@@ -101,10 +95,8 @@ export async function GET(
       )
     }
 
-    const db = getDb()
-
     // Fetch order
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
+    const order = (await runGet('SELECT * FROM orders WHERE id = ?', [Number(orderId)])) as any
 
     if (!order) {
       return NextResponse.json(

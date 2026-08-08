@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb, runTransaction } from '@/lib/db'
+import { runGet, runQuery, runTransaction, runUpdate } from '@/lib/db'
 import { apiResponse, apiError, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { upsertCustomer } from '@/lib/customers'
 
@@ -17,7 +17,6 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const db = getDb()
 
     // Validate required fields
     if (!body.items || body.items.length === 0) {
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
      */
     const customer =
       body.customer_name && body.customer_phone
-        ? upsertCustomer({
+        ? await upsertCustomer({
             name: body.customer_name,
             phone: body.customer_phone,
             // Kept on the customer, not copied onto the receipt. A receipt is
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
           })
         : null
 
-    return runTransaction(db => {
+    return await runTransaction(async tx => {
       // Calculate totals
       let subtotal = 0
       for (const item of body.items) {
@@ -63,65 +62,74 @@ export async function POST(request: NextRequest) {
 
       // Create receipt
       const receiptNumber = generateReceiptNumber()
-      const receiptResult = db.prepare(`
+      const receipt = (await runGet(
+        `
         INSERT INTO billing_receipts (
           receipt_number, customer_id, customer_name, customer_phone, subtotal,
           tax, discount, total, payment_method, amount_paid, change_amount, notes
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        receiptNumber,
-        customer?.id ?? null,
-        // Copied onto the receipt as well as linked. A receipt reprinted in
-        // two years should say who it was for even if the customer record has
-        // since been edited.
-        customer?.name ?? body.customer_name ?? null,
-        customer?.phone ?? body.customer_phone ?? null,
-        subtotal,
-        tax,
-        discount,
-        total,
-        body.payment_method || 'cash',
-        body.amount_paid || total,
-        changeAmount,
-        body.notes || null
-      )
+        RETURNING *
+      `,
+        [
+          receiptNumber,
+          customer?.id ?? null,
+          // Copied onto the receipt as well as linked. A receipt reprinted in
+          // two years should say who it was for even if the customer record
+          // has since been edited.
+          customer?.name ?? body.customer_name ?? null,
+          customer?.phone ?? body.customer_phone ?? null,
+          subtotal,
+          tax,
+          discount,
+          total,
+          body.payment_method || 'cash',
+          body.amount_paid || total,
+          changeAmount,
+          body.notes || null,
+        ],
+        tx
+      )) as Record<string, unknown>
 
-      const receiptId = receiptResult.lastInsertRowid
+      const receiptId = receipt.id as number
 
-      // Add billing items and update stock
-      const insertItem = db.prepare(`
+      for (const item of body.items) {
+        // Insert billing item
+        await runGet(
+          `
         INSERT INTO billing_items (
           receipt_id, product_id, product_name, product_sku,
           quantity, unit_price, subtotal
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `)
-
-      const updateStock = db.prepare(
-        'UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?'
-      )
-
-      for (const item of body.items) {
-        // Insert billing item
-        insertItem.run(
-          receiptId,
-          item.product_id,
-          item.product_name,
-          item.product_sku || null,
-          item.quantity,
-          item.unit_price,
-          item.unit_price * item.quantity
+      `,
+          [
+            receiptId,
+            item.product_id,
+            item.product_name,
+            item.product_sku || null,
+            item.quantity,
+            item.unit_price,
+            item.unit_price * item.quantity,
+          ],
+          tx
         )
 
         // Update stock
-        const stockResult = updateStock.run(item.quantity, item.product_id, item.quantity)
-        if (stockResult.changes === 0) {
+        const changed = await runUpdate(
+          'UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?',
+          [item.quantity, item.product_id, item.quantity],
+          tx
+        )
+
+        if (changed === 0) {
           throw new Error(`Insufficient stock for product ${item.product_name}`)
         }
       }
 
-      // Fetch created receipt
-      const receipt = db.prepare('SELECT * FROM billing_receipts WHERE id = ?').get(receiptId) as Record<string, unknown>
-      const items = db.prepare('SELECT * FROM billing_items WHERE receipt_id = ?').all(receiptId)
+      const items = await runQuery(
+        'SELECT * FROM billing_items WHERE receipt_id = ?',
+        [receiptId],
+        tx
+      )
 
       return NextResponse.json(
         apiResponse({ ...receipt, items }),
@@ -140,7 +148,6 @@ export async function POST(request: NextRequest) {
 // GET /api/billing - Get all receipts
 export async function GET(request: NextRequest) {
   try {
-    const db = getDb()
     const { searchParams } = new URL(request.url)
 
     let sql = 'SELECT * FROM billing_receipts WHERE 1=1'
@@ -153,7 +160,7 @@ export async function GET(request: NextRequest) {
 
     sql += ' ORDER BY created_at DESC LIMIT 100'
 
-    const receipts = db.prepare(sql).all(...params)
+    const receipts = await runQuery(sql, params)
 
     return NextResponse.json(apiResponse(receipts))
   } catch (error) {

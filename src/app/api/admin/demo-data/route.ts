@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet } from '@/lib/db'
 import { clearDemoData, hasDemoData, seedDemoData } from '@/lib/db/seed'
 import { apiError, apiResponse } from '@/lib/utils'
 
@@ -8,13 +8,13 @@ export const dynamic = 'force-dynamic'
 /** GET /api/admin/demo-data - is the demo catalogue currently loaded? */
 export async function GET() {
   try {
-    const db = getDb()
-    const { count } = db.prepare('SELECT COUNT(*) as count FROM products').get() as {
-      count: number
-    }
+    const [row, present] = await Promise.all([
+      runGet<{ count: number }>('SELECT COUNT(*) as count FROM products'),
+      hasDemoData(),
+    ])
 
     return NextResponse.json(
-      apiResponse({ present: hasDemoData(db), productCount: count })
+      apiResponse({ present, productCount: row?.count ?? 0 })
     )
   } catch (error) {
     console.error('Error reading demo data status:', error)
@@ -25,8 +25,7 @@ export async function GET() {
 /** POST /api/admin/demo-data - load the demo catalogue. */
 export async function POST() {
   try {
-    const db = getDb()
-    const { seeded, products } = seedDemoData(db)
+    const { seeded, products } = await seedDemoData()
 
     return NextResponse.json(
       apiResponse(
@@ -51,8 +50,7 @@ export async function POST() {
  */
 export async function DELETE() {
   try {
-    const db = getDb()
-    const removed = clearDemoData(db)
+    const removed = await clearDemoData()
     const total = Object.values(removed).reduce((sum, n) => sum + n, 0)
 
     return NextResponse.json(

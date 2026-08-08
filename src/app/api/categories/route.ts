@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb, runQuery, runInsert } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
 import { Category } from '@/types/category'
 import { apiResponse, apiError, slugify, buildCategoryTree } from '@/lib/utils'
 import { isShowcase, staticCategories } from '@/lib/catalogue'
@@ -36,8 +36,18 @@ export async function GET(request: NextRequest) {
     const params: any[] = []
 
     if (parent_id !== null) {
-      sql += ' AND c.parent_id = ?'
-      params.push(parent_id === 'null' ? null : parseInt(parent_id))
+      /**
+       * `?parent_id=null` means top-level, and `= NULL` is never true of
+       * anything -- so that branch used to return an empty list rather than
+       * the root categories it was asked for. Same in SQLite; it just went
+       * unnoticed because the admin rarely passes it.
+       */
+      if (parent_id === 'null') {
+        sql += ' AND c.parent_id IS NULL'
+      } else {
+        sql += ' AND c.parent_id = ?'
+        params.push(parseInt(parent_id))
+      }
     }
 
     if (is_active !== null) {
@@ -47,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     sql += ' ORDER BY c.display_order, c.name'
 
-    const categories = runQuery<Category>(sql, params)
+    const categories = await runQuery<Category>(sql, params)
 
     if (tree) {
       const categoryTree = buildCategoryTree(categories)
@@ -68,7 +78,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const db = getDb()
 
     // Validate required fields
     if (!body.name) {
@@ -81,46 +90,52 @@ export async function POST(request: NextRequest) {
     // Generate slug if not provided
     const slug = body.slug || slugify(body.name)
 
-    // Check if slug already exists
-    const existing = db.prepare(
-      'SELECT id FROM categories WHERE slug = ?'
-    ).get(slug)
+    /**
+     * The unique index decides, not a prior SELECT.
+     *
+     * Checking first and inserting second leaves a window where two requests
+     * both find the slug free and both try to take it -- and the loser used
+     * to surface as a 500 rather than the clear message this returns.
+     * ON CONFLICT DO NOTHING makes the database the arbiter: no row back
+     * means the slug was taken.
+     */
+    const created = await runGet<{ id: number }>(
+      `
+      INSERT INTO categories (
+        name, slug, description, parent_id, image_url,
+        display_order, is_active
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (slug) DO NOTHING
+      RETURNING id
+    `,
+      [
+        body.name,
+        slug,
+        body.description || null,
+        body.parent_id || null,
+        body.image_url || null,
+        body.display_order || 0,
+        body.is_active !== false ? 1 : 0,
+      ]
+    )
 
-    if (existing) {
+    if (!created) {
       return NextResponse.json(
         apiError('Category with this slug already exists'),
         { status: 400 }
       )
     }
 
-    // Insert category
-    const sql = `
-      INSERT INTO categories (
-        name, slug, description, parent_id, image_url,
-        display_order, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `
-
-    const stmt = db.prepare(sql)
-    const result = stmt.run(
-      body.name,
-      slug,
-      body.description || null,
-      body.parent_id || null,
-      body.image_url || null,
-      body.display_order || 0,
-      body.is_active !== false ? 1 : 0
-    )
-
-    const categoryId = result.lastInsertRowid
-
-    // Fetch the created category
-    const category = db.prepare(`
+    // Read back with the parent name joined on, which the insert cannot give.
+    const category = await runGet(
+      `
       SELECT c.*, p.name as parent_name
       FROM categories c
       LEFT JOIN categories p ON c.parent_id = p.id
       WHERE c.id = ?
-    `).get(categoryId)
+    `,
+      [created.id]
+    )
 
     return NextResponse.json(
       apiResponse(category),

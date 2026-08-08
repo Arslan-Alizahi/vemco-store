@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-tailwind-sqlite-ecommerce-billing",
+  "name": "vemco-storefront-admin-pos",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "seed:images": "node scripts/prepare-seed-images.mjs",
+    "db:check": "node scripts/db-check.mjs",
+    "db:seed": "tsx scripts/db-seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:contrast": "tsx scripts/verify-contrast.mjs",
@@ -24,13 +26,13 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.3.3",
-    "better-sqlite3": "^11.5.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.462.0",
     "next": "14.2.18",
+    "postgres": "^3.4.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "stripe": "^19.3.1",
@@ -42,7 +44,6 @@
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

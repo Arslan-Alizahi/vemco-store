@@ -19,7 +19,7 @@ export interface CategoryOverview extends Category {
  * inside it -- otherwise every card renders as a bare box with an icon, which
  * is a poor advert for a furniture shop.
  */
-export const getCategoryOverview = (): CategoryOverview[] => {
+export const getCategoryOverview = async (): Promise<CategoryOverview[]> => {
   if (isShowcase()) {
     const products = staticProducts()
     return staticCategories().map(category => {
@@ -34,7 +34,7 @@ export const getCategoryOverview = (): CategoryOverview[] => {
   }
 
   try {
-    return runQuery<CategoryOverview>(`
+    return await runQuery<CategoryOverview>(`
       SELECT
         c.*,
         (
@@ -74,12 +74,12 @@ export const getCategoryOverview = (): CategoryOverview[] => {
  * card. The seeded catalogue is flat, but the schema allows nesting and the
  * admin can create it, so the page still has to handle it.
  */
-export const getChildCategories = (): Record<number, Category[]> => {
+export const getChildCategories = async (): Promise<Record<number, Category[]>> => {
   // The seeded catalogue is flat, so there are none.
   if (isShowcase()) return {}
 
   try {
-    const rows = runQuery<Category>(`
+    const rows = await runQuery<Category>(`
       SELECT * FROM categories
       WHERE is_active = 1 AND parent_id IS NOT NULL
       ORDER BY display_order ASC, name ASC

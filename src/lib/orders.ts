@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { runGet, runUpdate } from '@/lib/db'
 import { fromStripeAmount } from '@/lib/currency'
 
 /**
@@ -15,7 +15,7 @@ import { fromStripeAmount } from '@/lib/currency'
  * WHERE clause is what makes that harmless: a repeat matches no rows, so the
  * revenue trigger fires exactly once.
  */
-export const markOrderPaid = (
+export const markOrderPaid = async (
   orderId: string | number,
   options: {
     /** Minor units, as Stripe reports them. Checked against the order total. */
@@ -23,12 +23,18 @@ export const markOrderPaid = (
     sessionId?: string | null
     paymentIntentId?: string | null
   } = {}
-): { updated: boolean; reason?: string } => {
-  const db = getDb()
+): Promise<{ updated: boolean; reason?: string }> => {
+  /**
+   * Coerced, because the id arrives from Stripe metadata as a string and
+   * Postgres will not compare text to an integer column the way SQLite would.
+   */
+  const id = Number(orderId)
+  if (!Number.isInteger(id)) return { updated: false, reason: 'no such order' }
 
-  const order = db.prepare('SELECT id, total, payment_status FROM orders WHERE id = ?').get(orderId) as
-    | { id: number; total: number; payment_status: string }
-    | undefined
+  const order = await runGet<{ id: number; total: number; payment_status: string }>(
+    'SELECT id, total, payment_status FROM orders WHERE id = ?',
+    [id]
+  )
 
   if (!order) return { updated: false, reason: 'no such order' }
   if (order.payment_status === 'paid') return { updated: false, reason: 'already paid' }
@@ -49,30 +55,31 @@ export const markOrderPaid = (
     }
   }
 
-  const result = db
-    .prepare(
-      `UPDATE orders
-       SET payment_status = 'paid',
-           status = CASE WHEN status = 'pending' THEN 'processing' ELSE status END,
-           payment_method = 'stripe',
-           stripe_session_id = COALESCE(?, stripe_session_id),
-           stripe_payment_intent_id = COALESCE(?, stripe_payment_intent_id),
-           paid_at = CURRENT_TIMESTAMP,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND payment_status != 'paid'`
-    )
-    .run(options.sessionId ?? null, options.paymentIntentId ?? null, orderId)
+  const changed = await runUpdate(
+    `UPDATE orders
+     SET payment_status = 'paid',
+         status = CASE WHEN status = 'pending' THEN 'processing' ELSE status END,
+         payment_method = 'stripe',
+         stripe_session_id = COALESCE(?, stripe_session_id),
+         stripe_payment_intent_id = COALESCE(?, stripe_payment_intent_id),
+         paid_at = NOW(),
+         updated_at = NOW()
+     WHERE id = ? AND payment_status != 'paid'`,
+    [options.sessionId ?? null, options.paymentIntentId ?? null, id]
+  )
 
-  return { updated: result.changes > 0 }
+  return { updated: changed > 0 }
 }
 
 /** Only a payment still waiting can fail; a late failure must not undo a success. */
-export const markOrderFailed = (orderId: string | number): void => {
-  getDb()
-    .prepare(
-      `UPDATE orders
-       SET payment_status = 'failed', updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND payment_status = 'pending'`
-    )
-    .run(orderId)
+export const markOrderFailed = async (orderId: string | number): Promise<void> => {
+  const id = Number(orderId)
+  if (!Number.isInteger(id)) return
+
+  await runUpdate(
+    `UPDATE orders
+     SET payment_status = 'failed', updated_at = NOW()
+     WHERE id = ? AND payment_status = 'pending'`,
+    [id]
+  )
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runDelete, runGet, runTransaction, runUpdate } from '@/lib/db'
 import { apiResponse, apiError, slugify } from '@/lib/utils'
 
 /**
@@ -12,29 +12,29 @@ import { apiResponse, apiError, slugify } from '@/lib/utils'
  */
 export const dynamic = 'force-dynamic'
 
+const WITH_PARENT = `
+  SELECT c.*, p.name as parent_name
+  FROM categories c
+  LEFT JOIN categories p ON c.parent_id = p.id
+`
+
+const notFound = () => NextResponse.json(apiError('Category not found'), { status: 404 })
+
 // GET /api/categories/[id] - Get single category
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
     const identifier = params.id
     const isNumeric = /^\d+$/.test(identifier)
 
-    const category = db.prepare(`
-      SELECT c.*, p.name as parent_name
-      FROM categories c
-      LEFT JOIN categories p ON c.parent_id = p.id
-      WHERE ${isNumeric ? 'c.id' : 'c.slug'} = ?
-    `).get(isNumeric ? parseInt(identifier) : identifier)
+    const category = await runGet(
+      `${WITH_PARENT} WHERE ${isNumeric ? 'c.id' : 'c.slug'} = ?`,
+      [isNumeric ? parseInt(identifier) : identifier]
+    )
 
-    if (!category) {
-      return NextResponse.json(
-        apiError('Category not found'),
-        { status: 404 }
-      )
-    }
+    if (!category) return notFound()
 
     return NextResponse.json(apiResponse(category))
   } catch (error) {
@@ -53,16 +53,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const db = getDb()
     const categoryId = parseInt(params.id)
-
-    const existing = db.prepare('SELECT id FROM categories WHERE id = ?').get(categoryId)
-    if (!existing) {
-      return NextResponse.json(
-        apiError('Category not found'),
-        { status: 404 }
-      )
-    }
 
     const updates: string[] = []
     const values: any[] = []
@@ -107,17 +98,15 @@ export async function PUT(
     }
 
     if (updates.length > 0) {
-      const sql = `UPDATE categories SET ${updates.join(', ')} WHERE id = ?`
-      values.push(categoryId)
-      db.prepare(sql).run(values)
+      const changed = await runUpdate(
+        `UPDATE categories SET ${updates.join(', ')} WHERE id = ?`,
+        [...values, categoryId]
+      )
+      if (changed === 0) return notFound()
     }
 
-    const category = db.prepare(`
-      SELECT c.*, p.name as parent_name
-      FROM categories c
-      LEFT JOIN categories p ON c.parent_id = p.id
-      WHERE c.id = ?
-    `).get(categoryId)
+    const category = await runGet(`${WITH_PARENT} WHERE c.id = ?`, [categoryId])
+    if (!category) return notFound()
 
     return NextResponse.json(apiResponse(category))
   } catch (error) {
@@ -135,25 +124,24 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
     const categoryId = parseInt(params.id)
 
-    const existing = db.prepare('SELECT id FROM categories WHERE id = ?').get(categoryId)
-    if (!existing) {
-      return NextResponse.json(
-        apiError('Category not found'),
-        { status: 404 }
-      )
-    }
+    /**
+     * All three writes or none.
+     *
+     * Detaching the products, detaching the child categories and removing the
+     * row were three separate statements. Against a local file they could not
+     * realistically be interrupted between; against a network they can, and
+     * the half-done state is products pointing at a category that no longer
+     * exists.
+     */
+    const removed = await runTransaction(async tx => {
+      await runUpdate('UPDATE products SET category_id = NULL WHERE category_id = ?', [categoryId], tx)
+      await runUpdate('UPDATE categories SET parent_id = NULL WHERE parent_id = ?', [categoryId], tx)
+      return runDelete('DELETE FROM categories WHERE id = ?', [categoryId], tx)
+    })
 
-    // Update products to remove category
-    db.prepare('UPDATE products SET category_id = NULL WHERE category_id = ?').run(categoryId)
-
-    // Update child categories to remove parent
-    db.prepare('UPDATE categories SET parent_id = NULL WHERE parent_id = ?').run(categoryId)
-
-    // Delete category
-    db.prepare('DELETE FROM categories WHERE id = ?').run(categoryId)
+    if (removed === 0) return notFound()
 
     return NextResponse.json(apiResponse({ message: 'Category deleted successfully' }))
   } catch (error) {

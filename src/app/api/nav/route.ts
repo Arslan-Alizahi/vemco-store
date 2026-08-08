@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
 
 /**
  * Never evaluated at build time.
@@ -14,7 +14,6 @@ export const dynamic = 'force-dynamic'
 // GET /api/nav - Get all navigation items
 export async function GET(request: NextRequest) {
   try {
-    const db = getDb()
     const { searchParams } = new URL(request.url)
     const location = searchParams.get('location') || 'header'
     const activeOnly = searchParams.get('active_only') === 'true'
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     sql += ' ORDER BY display_order ASC, id ASC'
 
-    const items = db.prepare(sql).all(...params)
+    const items = await runQuery(sql, params)
 
     return NextResponse.json({
       success: true,
@@ -50,7 +49,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const db = getDb()
 
     // Validate required fields
     if (!body.label || !body.href) {
@@ -60,30 +58,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const sql = `
+    // RETURNING *, so the new row comes back from the insert rather than
+    // needing a second query for the id that was just generated.
+    const newItem = await runGet(
+      `
       INSERT INTO nav_items (
         label, href, parent_id, type, target, icon,
         display_order, is_active, location, meta
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-
-    const stmt = db.prepare(sql)
-    const result = stmt.run(
-      body.label,
-      body.href,
-      body.parent_id || null,
-      body.type || 'link',
-      body.target || '_self',
-      body.icon || null,
-      body.display_order || 0,
-      body.is_active !== false ? 1 : 0,
-      body.location || 'header',
-      body.meta ? JSON.stringify(body.meta) : null
+      RETURNING *
+    `,
+      [
+        body.label,
+        body.href,
+        body.parent_id || null,
+        body.type || 'link',
+        body.target || '_self',
+        body.icon || null,
+        body.display_order || 0,
+        body.is_active !== false ? 1 : 0,
+        body.location || 'header',
+        body.meta ? JSON.stringify(body.meta) : null,
+      ]
     )
-
-    const newItem = db
-      .prepare('SELECT * FROM nav_items WHERE id = ?')
-      .get(result.lastInsertRowid)
 
     return NextResponse.json({
       success: true,

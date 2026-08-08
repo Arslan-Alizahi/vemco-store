@@ -1,0 +1,32 @@
+# Netlify, rather than Vercel.
+#
+# Vercel's own documentation says the Hobby plan is "strictly intended for
+# non-commercial, personal use", and a furniture shop taking real orders is
+# not that -- it would need the Pro plan. Netlify's free tier permits
+# commercial use, and the Next.js runtime is installed automatically for
+# Next sites, so nothing here has to name it.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Every environment variable this needs is set in the Netlify UI, not here:
+# DATABASE_URL and SUPABASE_SERVICE_ROLE_KEY are secrets, and a file in the
+# repository is the one place a secret must never be.
+#
+#   DATABASE_URL                 Supabase transaction pooler (port 6543)
+#   NEXT_PUBLIC_SUPABASE_URL     project URL, public
+#   SUPABASE_SERVICE_ROLE_KEY    storage uploads, server-only
+#   AUTH_SECRET                  signs the admin session cookie
+#   ADMIN_PASSWORD_HASH          scrypt hash, never the password
+#   SHOP_TIMEZONE                Asia/Karachi
+#   NEXT_PUBLIC_SITE_URL         the deployed URL, for Stripe redirects
+#   NEXT_PUBLIC_TAX_RATE         0.18
+#   NEXT_PUBLIC_CURRENCY         PKR
+#   NEXT_PUBLIC_CURRENCY_LOCALE  en-PK
+#   STRIPE_SECRET_KEY            if online payment is switched on
+#   STRIPE_WEBHOOK_SECRET        likewise
+#   MAINTENANCE_MODE             "true" closes the shop with a 503

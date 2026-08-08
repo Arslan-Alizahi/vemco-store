@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
+import { localDate } from '@/lib/shop-time'
 
 /**
  * Never evaluated at build time.
@@ -22,7 +23,6 @@ export async function GET(request: NextRequest) {
     const paymentMethod = searchParams.get('paymentMethod')
     const search = searchParams.get('search') // Search by customer name or reference number
 
-    const db = getDb()
     const offset = (page - 1) * limit
 
     // Build WHERE clause
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (startDate && endDate) {
-      conditions.push('DATE(transaction_date) BETWEEN DATE(?) AND DATE(?)')
+      conditions.push(`${localDate('transaction_date')} BETWEEN CAST(? AS date) AND CAST(? AS date)`)
       params.push(startDate, endDate)
     }
 
@@ -45,27 +45,28 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      conditions.push('(customer_name LIKE ? OR reference_number LIKE ?)')
+      // ILIKE, so searching a customer's name finds them whatever case the
+      // cashier used when the sale was rung up.
+      conditions.push('(customer_name ILIKE ? OR reference_number ILIKE ?)')
       const searchTerm = `%${search}%`
       params.push(searchTerm, searchTerm)
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 
-    // Get total count
-    const countResult = db
-      .prepare(
+    // The count and the page answer independent questions, so they go out
+    // together rather than one waiting on the other.
+    const [countResult, transactions] = await Promise.all([
+      runGet<{ total: number }>(
         `
         SELECT COUNT(*) as total
         FROM revenue_transactions
         ${whereClause}
-      `
-      )
-      .get(...params) as { total: number }
+      `,
+        params
+      ),
 
-    // Get transactions
-    const transactions = db
-      .prepare(
+      runQuery<any>(
         `
         SELECT
           id,
@@ -89,11 +90,12 @@ export async function GET(request: NextRequest) {
         ${whereClause}
         ORDER BY transaction_date DESC
         LIMIT ? OFFSET ?
-      `
-      )
-      .all(...params, limit, offset) as any[]
+      `,
+        [...params, limit, offset]
+      ),
+    ])
 
-    const totalPages = Math.ceil(countResult.total / limit)
+    const totalPages = Math.ceil((countResult?.total ?? 0) / limit)
 
     return NextResponse.json({
       success: true,
@@ -102,7 +104,7 @@ export async function GET(request: NextRequest) {
         pagination: {
           page,
           limit,
-          total: countResult.total,
+          total: countResult?.total ?? 0,
           totalPages,
           hasMore: page < totalPages,
         },

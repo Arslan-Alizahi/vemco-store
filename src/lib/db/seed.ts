@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import { runDelete, runGet, runInsert, runTransaction, type Sql } from './index'
 
 /**
  * VEMCO demo catalogue -- furniture, priced in PKR for the Pakistani market.
@@ -11,16 +11,6 @@ import type Database from 'better-sqlite3'
  * into 4:5 crops at two widths in AVIF, WebP and JPEG. They are stock images,
  * not VEMCO's own product shots -- see public/seed/products/CREDITS.md.
  */
-
-export const createDemoSeedTable = `
-  CREATE TABLE IF NOT EXISTS demo_seed (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    table_name TEXT NOT NULL,
-    row_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE INDEX IF NOT EXISTS idx_demo_seed_table ON demo_seed(table_name);
-`
 
 // Cards load the small crop; the detail page gets the large one as a second
 // image. Phase 5 replaces both with next/image and a proper srcset.
@@ -354,124 +344,152 @@ export const socialLinks = [
   { platform: 'YouTube', url: 'https://youtube.com/@vemco', icon: 'youtube', display_order: 2 },
 ]
 
-export const isDatabaseEmpty = (db: Database.Database): boolean => {
-  const { count } = db.prepare('SELECT COUNT(*) as count FROM products').get() as { count: number }
-  return count === 0
+export const isDatabaseEmpty = async (db?: Sql): Promise<boolean> => {
+  const row = await runGet<{ count: number }>('SELECT COUNT(*) as count FROM products', [], db)
+  return (row?.count ?? 0) === 0
 }
 
-export const hasDemoData = (db: Database.Database): boolean => {
-  const { count } = db.prepare('SELECT COUNT(*) as count FROM demo_seed').get() as { count: number }
-  return count > 0
+export const hasDemoData = async (db?: Sql): Promise<boolean> => {
+  const row = await runGet<{ count: number }>('SELECT COUNT(*) as count FROM demo_seed', [], db)
+  return (row?.count ?? 0) > 0
 }
+
+const INSERT_CATEGORY = `
+  INSERT INTO categories (name, slug, description, display_order, is_active)
+  VALUES (?, ?, ?, ?, 1)
+`
+const INSERT_PRODUCT = `
+  INSERT INTO products (
+    name, slug, description, long_description, sku, category_id,
+    price, compare_at_price, cost_price, stock_quantity,
+    low_stock_threshold, is_featured, is_active
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3, ?, 1)
+`
+const INSERT_IMAGE = `
+  INSERT INTO product_images (product_id, image_url, alt_text, display_order, is_primary)
+  VALUES (?, ?, ?, ?, ?)
+`
+const INSERT_NAV = `
+  INSERT INTO nav_items (label, href, display_order, is_active, location)
+  VALUES (?, ?, ?, 1, ?)
+`
+const INSERT_SOCIAL = `
+  INSERT INTO social_media_links (platform, url, icon, display_order, is_active)
+  VALUES (?, ?, ?, ?, 1)
+`
+const TRACK = 'INSERT INTO demo_seed (table_name, row_id) VALUES (?, ?)'
 
 /** Idempotent: does nothing if demo data is already present. */
-export const seedDemoData = (db: Database.Database): { seeded: boolean; products: number } => {
-  db.exec(createDemoSeedTable)
+export const seedDemoData = async (): Promise<{ seeded: boolean; products: number }> =>
+  runTransaction(async tx => {
+    /**
+     * Checked inside the transaction, not before it.
+     *
+     * Two administrators pressing the button at the same moment used to be
+     * impossible to arrange against one local file. Against a shared database
+     * it is a Tuesday, and the loser of that race would insert a second copy
+     * of the whole catalogue -- twenty products with duplicate SKUs.
+     */
+    if (await hasDemoData(tx)) return { seeded: false, products: 0 }
 
-  if (hasDemoData(db)) {
-    return { seeded: false, products: 0 }
-  }
+    const track = (table: string, id: number) => runInsert(TRACK, [table, id], tx)
 
-  const track = db.prepare('INSERT INTO demo_seed (table_name, row_id) VALUES (?, ?)')
-
-  const insertCategory = db.prepare(`
-    INSERT INTO categories (name, slug, description, display_order, is_active)
-    VALUES (?, ?, ?, ?, 1)
-  `)
-  const insertProduct = db.prepare(`
-    INSERT INTO products (
-      name, slug, description, long_description, sku, category_id,
-      price, compare_at_price, cost_price, stock_quantity,
-      low_stock_threshold, is_featured, is_active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3, ?, 1)
-  `)
-  const insertImage = db.prepare(`
-    INSERT INTO product_images (product_id, image_url, alt_text, display_order, is_primary)
-    VALUES (?, ?, ?, ?, ?)
-  `)
-  const insertNav = db.prepare(`
-    INSERT INTO nav_items (label, href, display_order, is_active, location)
-    VALUES (?, ?, ?, 1, ?)
-  `)
-  const insertSocial = db.prepare(`
-    INSERT INTO social_media_links (platform, url, icon, display_order, is_active)
-    VALUES (?, ?, ?, ?, 1)
-  `)
-
-  const run = db.transaction(() => {
     const categoryIds: Record<string, number> = {}
-    categories.forEach((category, index) => {
-      const id = insertCategory.run(category.name, category.slug, category.description, index)
-        .lastInsertRowid as number
+    for (const [index, category] of categories.entries()) {
+      const id = await runInsert(
+        INSERT_CATEGORY,
+        [category.name, category.slug, category.description, index],
+        tx
+      )
       categoryIds[category.slug] = id
-      track.run('categories', id)
-    })
+      await track('categories', id)
+    }
 
     for (const product of products) {
-      const productId = insertProduct.run(
-        product.name,
-        product.slug,
-        product.description,
-        product.long_description,
-        product.sku,
-        categoryIds[product.category],
-        product.price,
-        product.compare_at_price,
-        product.cost_price,
-        product.stock_quantity,
-        product.is_featured
-      ).lastInsertRowid as number
-      track.run('products', productId)
+      const productId = await runInsert(
+        INSERT_PRODUCT,
+        [
+          product.name,
+          product.slug,
+          product.description,
+          product.long_description,
+          product.sku,
+          categoryIds[product.category],
+          product.price,
+          product.compare_at_price,
+          product.cost_price,
+          product.stock_quantity,
+          product.is_featured,
+        ],
+        tx
+      )
+      await track('products', productId)
 
       // Images cascade-delete with the product, so they need no ledger entry.
-      insertImage.run(productId, SMALL(product.slug), product.name, 0, 1)
-      insertImage.run(productId, LARGE(product.slug), `${product.name} — detail`, 1, 0)
+      await runInsert(INSERT_IMAGE, [productId, SMALL(product.slug), product.name, 0, 1], tx)
+      await runInsert(
+        INSERT_IMAGE,
+        [productId, LARGE(product.slug), `${product.name} — detail`, 1, 0],
+        tx
+      )
     }
 
-    for (const item of navItems) {
-      track.run('nav_items', insertNav.run(item.label, item.href, item.display_order, 'header').lastInsertRowid as number)
+    for (const [location, items] of [
+      ['header', navItems],
+      ['footer', footerNavItems],
+    ] as const) {
+      for (const item of items) {
+        const id = await runInsert(
+          INSERT_NAV,
+          [item.label, item.href, item.display_order, location],
+          tx
+        )
+        await track('nav_items', id)
+      }
     }
-    for (const item of footerNavItems) {
-      track.run('nav_items', insertNav.run(item.label, item.href, item.display_order, 'footer').lastInsertRowid as number)
-    }
+
     for (const link of socialLinks) {
-      track.run('social_media_links', insertSocial.run(link.platform, link.url, link.icon, link.display_order).lastInsertRowid as number)
+      const id = await runInsert(
+        INSERT_SOCIAL,
+        [link.platform, link.url, link.icon, link.display_order],
+        tx
+      )
+      await track('social_media_links', id)
     }
-  })
 
-  run()
-  return { seeded: true, products: products.length }
-}
+    return { seeded: true, products: products.length }
+  })
 
 /**
  * Removes exactly the rows the seeder created, in foreign-key-safe order.
  * Anything an operator added is left alone -- it was never in the ledger.
  */
-export const clearDemoData = (db: Database.Database): Record<string, number> => {
-  db.exec(createDemoSeedTable)
-
+export const clearDemoData = async (): Promise<Record<string, number>> => {
   const removed: Record<string, number> = {}
-  const order = ['products', 'categories', 'nav_items', 'social_media_links']
 
-  const run = db.transaction(() => {
+  /**
+   * Fixed list, never interpolated from a caller. It reads as though the
+   * table name is being pasted into SQL because it is -- which is safe only
+   * because these four strings are written here and nowhere else.
+   */
+  const order = ['products', 'categories', 'nav_items', 'social_media_links'] as const
+
+  await runTransaction(async tx => {
     for (const table of order) {
-      const rows = db
-        .prepare('SELECT row_id FROM demo_seed WHERE table_name = ?')
-        .all(table) as { row_id: number }[]
-
-      const del = db.prepare(`DELETE FROM ${table} WHERE id = ?`)
-      let count = 0
-      for (const { row_id } of rows) {
-        count += del.run(row_id).changes
-      }
-      removed[table] = count
+      // One statement per table rather than one per row. The ledger read and
+      // the delete used to be separate because SQLite was a function call
+      // away; over a network, twenty round trips are twenty round trips.
+      removed[table] = await runDelete(
+        `DELETE FROM ${table} WHERE id IN (SELECT row_id FROM demo_seed WHERE table_name = ?)`,
+        [table],
+        tx
+      )
     }
 
-    db.prepare('DELETE FROM demo_seed').run()
+    await runDelete('DELETE FROM demo_seed', [], tx)
   })
 
-  run()
   return removed
 }
 
-export const seedDatabase = (db: Database.Database) => seedDemoData(db)
+export const seedDatabase = () => seedDemoData()

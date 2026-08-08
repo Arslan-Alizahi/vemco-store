@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
-import { getDb } from '@/lib/db'
+import { runUpdate } from '@/lib/db'
 import { constructWebhookEvent } from '@/lib/stripe'
 import { markOrderFailed, markOrderPaid } from '@/lib/orders'
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         const orderId = session.metadata?.order_id
         if (!orderId || session.payment_status !== 'paid') break
 
-        markOrderPaid(orderId, {
+        await markOrderPaid(orderId, {
           amountFromStripe: session.amount_total,
           sessionId: session.id,
           paymentIntentId:
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         const intent = event.data.object as Stripe.PaymentIntent
         const orderId = intent.metadata?.order_id
         if (orderId) {
-          markOrderPaid(orderId, {
+          await markOrderPaid(orderId, {
             amountFromStripe: intent.amount_received,
             paymentIntentId: intent.id,
           })
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.payment_failed': {
         const intent = event.data.object as Stripe.PaymentIntent
         const orderId = intent.metadata?.order_id
-        if (orderId) markOrderFailed(orderId)
+        if (orderId) await markOrderFailed(orderId)
         break
       }
 
@@ -80,15 +80,14 @@ export async function POST(request: NextRequest) {
         // Clear the stale URL so /order/cancel opens a fresh checkout rather
         // than sending the customer to a session Stripe has already closed.
         if (orderId) {
-          getDb()
-            .prepare(
-              `UPDATE orders
-               SET stripe_payment_link_url = NULL,
-                   stripe_session_expires_at = NULL,
-                   updated_at = CURRENT_TIMESTAMP
-               WHERE id = ? AND payment_status != 'paid'`
-            )
-            .run(orderId)
+          await runUpdate(
+            `UPDATE orders
+             SET stripe_payment_link_url = NULL,
+                 stripe_session_expires_at = NULL,
+                 updated_at = NOW()
+             WHERE id = ? AND payment_status != 'paid'`,
+            [Number(orderId)]
+          )
         }
         break
       }

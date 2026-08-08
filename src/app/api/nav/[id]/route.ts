@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runDelete, runGet } from '@/lib/db'
 
 /**
  * Never evaluated at build time.
@@ -11,23 +11,18 @@ import { getDb } from '@/lib/db'
  */
 export const dynamic = 'force-dynamic'
 
+const notFound = () =>
+  NextResponse.json({ success: false, error: 'Navigation item not found' }, { status: 404 })
+
 // GET /api/nav/[id] - Get single navigation item
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
-    const item = db
-      .prepare('SELECT * FROM nav_items WHERE id = ?')
-      .get(params.id)
+    const item = await runGet('SELECT * FROM nav_items WHERE id = ?', [Number(params.id)])
 
-    if (!item) {
-      return NextResponse.json(
-        { success: false, error: 'Navigation item not found' },
-        { status: 404 }
-      )
-    }
+    if (!item) return notFound()
 
     return NextResponse.json({
       success: true,
@@ -49,21 +44,17 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const db = getDb()
 
-    // Check if item exists
-    const existing = db
-      .prepare('SELECT id FROM nav_items WHERE id = ?')
-      .get(params.id)
-
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, error: 'Navigation item not found' },
-        { status: 404 }
-      )
-    }
-
-    const sql = `
+    /**
+     * One statement, not three.
+     *
+     * This used to check the row existed, update it, then read it back. Over
+     * a network that is three round trips where RETURNING gives the same
+     * answer in one -- and it closes the gap where another administrator
+     * could delete the item between the check and the write.
+     */
+    const updated = await runGet(
+      `
       UPDATE nav_items SET
         label = ?,
         href = ?,
@@ -76,26 +67,24 @@ export async function PUT(
         location = ?,
         meta = ?
       WHERE id = ?
-    `
-
-    const stmt = db.prepare(sql)
-    stmt.run(
-      body.label,
-      body.href,
-      body.parent_id || null,
-      body.type || 'link',
-      body.target || '_self',
-      body.icon || null,
-      body.display_order || 0,
-      body.is_active ? 1 : 0,
-      body.location || 'header',
-      body.meta ? JSON.stringify(body.meta) : null,
-      params.id
+      RETURNING *
+    `,
+      [
+        body.label,
+        body.href,
+        body.parent_id || null,
+        body.type || 'link',
+        body.target || '_self',
+        body.icon || null,
+        body.display_order || 0,
+        body.is_active ? 1 : 0,
+        body.location || 'header',
+        body.meta ? JSON.stringify(body.meta) : null,
+        Number(params.id),
+      ]
     )
 
-    const updated = db
-      .prepare('SELECT * FROM nav_items WHERE id = ?')
-      .get(params.id)
+    if (!updated) return notFound()
 
     return NextResponse.json({
       success: true,
@@ -117,21 +106,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
+    const removed = await runDelete('DELETE FROM nav_items WHERE id = ?', [Number(params.id)])
 
-    // Check if item exists
-    const existing = db
-      .prepare('SELECT id FROM nav_items WHERE id = ?')
-      .get(params.id)
-
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, error: 'Navigation item not found' },
-        { status: 404 }
-      )
-    }
-
-    db.prepare('DELETE FROM nav_items WHERE id = ?').run(params.id)
+    if (removed === 0) return notFound()
 
     return NextResponse.json({
       success: true,
@@ -145,4 +122,3 @@ export async function DELETE(
     )
   }
 }
-

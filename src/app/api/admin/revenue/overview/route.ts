@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
+import { NOW_LOCAL, localDate, localTrunc } from '@/lib/shop-time'
 
 /**
  * Never evaluated at build time.
@@ -13,12 +14,31 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const db = getDb()
+    const DATE_OF_ROW = localDate('transaction_date')
+    const MONTH_OF_ROW = localTrunc('month', 'transaction_date')
+    const YEAR_OF_ROW = localTrunc('year', 'transaction_date')
 
-    // Get total revenue (all time)
-    const totalRevenue = db
-      .prepare(
-        `
+    /**
+     * Nine independent aggregates over one table.
+     *
+     * They were nine sequential statements, which cost nothing against a
+     * local file and nine round trips to Mumbai here -- on the page the shop
+     * opens first every morning. None of them depends on another, so they all
+     * go at once.
+     */
+    const [
+      totalRevenue,
+      revenueBySource,
+      todayRevenue,
+      monthRevenue,
+      yearRevenue,
+      yesterdayRevenue,
+      lastMonthRevenue,
+      paymentMethods,
+      recentTransactions,
+    ] = await Promise.all([
+      // Total revenue (all time)
+      runGet<any>(`
         SELECT
           COALESCE(SUM(total), 0) as total,
           COALESCE(SUM(subtotal), 0) as subtotal,
@@ -26,86 +46,87 @@ export async function GET() {
           COALESCE(SUM(discount), 0) as discount,
           COUNT(*) as transaction_count
         FROM revenue_transactions
-      `
-      )
-      .get() as any
+      `),
 
-    // Get revenue by source
-    const revenueBySource = db
-      .prepare(
-        `
+      // Revenue by source
+      runQuery<any>(`
         SELECT
           transaction_type,
           COALESCE(SUM(total), 0) as total,
           COUNT(*) as transaction_count
         FROM revenue_transactions
         GROUP BY transaction_type
-      `
-      )
-      .all() as any[]
+      `),
 
-    // Get today's revenue
-    const todayRevenue = db
-      .prepare(
-        `
+      // Today, in the shop's own day rather than UTC's
+      runGet<any>(`
         SELECT
           COALESCE(SUM(total), 0) as total,
           COUNT(*) as transaction_count
         FROM revenue_transactions
-        WHERE DATE(transaction_date) = DATE('now')
-      `
-      )
-      .get() as any
+        WHERE ${DATE_OF_ROW} = ${NOW_LOCAL}::date
+      `),
 
-    // Get this month's revenue
-    const monthRevenue = db
-      .prepare(
-        `
+      // This month
+      runGet<any>(`
         SELECT
           COALESCE(SUM(total), 0) as total,
           COUNT(*) as transaction_count
         FROM revenue_transactions
-        WHERE strftime('%Y-%m', transaction_date) = strftime('%Y-%m', 'now')
-      `
-      )
-      .get() as any
+        WHERE ${MONTH_OF_ROW} = date_trunc('month', ${NOW_LOCAL})
+      `),
 
-    // Get this year's revenue
-    const yearRevenue = db
-      .prepare(
-        `
+      // This year
+      runGet<any>(`
         SELECT
           COALESCE(SUM(total), 0) as total,
           COUNT(*) as transaction_count
         FROM revenue_transactions
-        WHERE strftime('%Y', transaction_date) = strftime('%Y', 'now')
-      `
-      )
-      .get() as any
+        WHERE ${YEAR_OF_ROW} = date_trunc('year', ${NOW_LOCAL})
+      `),
 
-    // Get yesterday's revenue for comparison
-    const yesterdayRevenue = db
-      .prepare(
-        `
+      // Yesterday, for comparison
+      runGet<any>(`
         SELECT
           COALESCE(SUM(total), 0) as total
         FROM revenue_transactions
-        WHERE DATE(transaction_date) = DATE('now', '-1 day')
-      `
-      )
-      .get() as any
+        WHERE ${DATE_OF_ROW} = ${NOW_LOCAL}::date - INTERVAL '1 day'
+      `),
 
-    // Get last month's revenue for comparison
-    const lastMonthRevenue = db
-      .prepare(
-        `
+      // Last month, for comparison
+      runGet<any>(`
         SELECT
           COALESCE(SUM(total), 0) as total
         FROM revenue_transactions
-        WHERE strftime('%Y-%m', transaction_date) = strftime('%Y-%m', 'now', '-1 month')
-      `
-      )
-      .get() as any
+        WHERE ${MONTH_OF_ROW} = date_trunc('month', ${NOW_LOCAL} - INTERVAL '1 month')
+      `),
+
+      // Payment method breakdown
+      runQuery<any>(`
+        SELECT
+          payment_method,
+          COALESCE(SUM(total), 0) as total,
+          COUNT(*) as count
+        FROM revenue_transactions
+        GROUP BY payment_method
+        ORDER BY total DESC
+      `),
+
+      // Recent transactions (last 10)
+      runQuery<any>(`
+        SELECT
+          id,
+          transaction_type,
+          reference_number,
+          customer_name,
+          total,
+          payment_method,
+          transaction_date
+        FROM revenue_transactions
+        ORDER BY transaction_date DESC
+        LIMIT 10
+      `),
+    ])
 
     // Calculate growth percentages
     const todayGrowth = yesterdayRevenue.total > 0
@@ -120,40 +141,6 @@ export async function GET() {
     const avgTransactionValue = totalRevenue.transaction_count > 0
       ? totalRevenue.total / totalRevenue.transaction_count
       : 0
-
-    // Get payment method breakdown
-    const paymentMethods = db
-      .prepare(
-        `
-        SELECT
-          payment_method,
-          COALESCE(SUM(total), 0) as total,
-          COUNT(*) as count
-        FROM revenue_transactions
-        GROUP BY payment_method
-        ORDER BY total DESC
-      `
-      )
-      .all() as any[]
-
-    // Get recent transactions (last 10)
-    const recentTransactions = db
-      .prepare(
-        `
-        SELECT
-          id,
-          transaction_type,
-          reference_number,
-          customer_name,
-          total,
-          payment_method,
-          transaction_date
-        FROM revenue_transactions
-        ORDER BY transaction_date DESC
-        LIMIT 10
-      `
-      )
-      .all() as any[]
 
     return NextResponse.json({
       success: true,

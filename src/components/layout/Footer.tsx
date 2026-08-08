@@ -58,10 +58,10 @@ const SECTIONS = [
  * child of `<footer>` it only existed on the twelve pages that rendered a
  * footer, and none of the long-scrolling ones that need it.
  */
-export default function Footer() {
+export default async function Footer() {
   let socialLinks: SocialMediaLink[] = []
   try {
-    socialLinks = runQuery<SocialMediaLink>(
+    socialLinks = await runQuery<SocialMediaLink>(
       `SELECT * FROM social_media_links WHERE is_active = 1 ORDER BY display_order ASC`
     )
   } catch (error) {

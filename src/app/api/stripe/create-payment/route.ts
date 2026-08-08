@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet, runQuery, runUpdate } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
 import { CURRENCY } from '@/lib/currency'
 import { createCheckoutSession, isStripeConfigured } from '@/lib/stripe'
@@ -38,9 +38,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const db = getDb()
-
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any
+    const order = (await runGet('SELECT * FROM orders WHERE id = ?', [orderId])) as any
     if (!order) {
       return NextResponse.json(apiError('We could not find that order'), { status: 404 })
     }
@@ -72,9 +70,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const items = db
-      .prepare('SELECT product_name, product_sku, quantity, unit_price FROM order_items WHERE order_id = ?')
-      .all(orderId) as Array<{
+    const items = (await runQuery(
+      'SELECT product_name, product_sku, quantity, unit_price FROM order_items WHERE order_id = ?',
+      [orderId]
+    )) as Array<{
       product_name: string
       product_sku: string | null
       quantity: number
@@ -103,14 +102,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(apiError('Stripe did not return a checkout URL'), { status: 502 })
     }
 
-    db.prepare(
+    await runUpdate(
       `UPDATE orders
        SET stripe_session_id = ?,
            stripe_payment_link_url = ?,
            stripe_session_expires_at = ?,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`
-    ).run(session.id, session.url, session.expires_at ?? null, orderId)
+           updated_at = NOW()
+       WHERE id = ?`,
+      [session.id, session.url, session.expires_at ?? null, orderId]
+    )
 
     return NextResponse.json(
       apiResponse({

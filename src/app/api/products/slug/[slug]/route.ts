@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
 import { isShowcase, staticProductBySlug } from '@/lib/catalogue'
 
 /**
@@ -26,12 +26,9 @@ export async function GET(
         : NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    const db = getDb()
-
     // Get product with category name
-    const product = db
-      .prepare(
-        `
+    const product = await runGet<{ id: number; category_id: number | null }>(
+      `
         SELECT
           p.*,
           c.name as category_name,
@@ -43,9 +40,9 @@ export async function GET(
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN categories pc ON c.parent_id = pc.id
         WHERE p.slug = ? AND p.is_active = 1
-      `
-      )
-      .get(slug) as { id: number; category_id: number | null } | undefined
+      `,
+      [slug]
+    )
 
     if (!product) {
       return NextResponse.json(
@@ -54,35 +51,35 @@ export async function GET(
       )
     }
 
-    // Get product images
-    const images = db
-      .prepare(
+    // Both depend on the product and on nothing else, so they go together
+    // rather than one after the other -- two round trips' latency, not four.
+    const [images, relatedProducts] = await Promise.all([
+      runQuery(
         `
-        SELECT * FROM product_images 
-        WHERE product_id = ? 
+        SELECT * FROM product_images
+        WHERE product_id = ?
         ORDER BY display_order ASC, is_primary DESC
-      `
-      )
-      .all(product.id)
+      `,
+        [product.id]
+      ),
 
-    // Get related products (same category, excluding current product)
-    const relatedProducts = db
-      .prepare(
+      runQuery(
         `
-        SELECT 
+        SELECT
           p.*,
           c.name as category_name,
           (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
-        WHERE p.category_id = ? 
-        AND p.id != ? 
+        WHERE p.category_id = ?
+        AND p.id != ?
         AND p.is_active = 1
         ORDER BY p.is_featured DESC, p.created_at DESC
         LIMIT 4
-      `
-      )
-      .all(product.category_id, product.id)
+      `,
+        [product.category_id, product.id]
+      ),
+    ])
 
     return NextResponse.json({
       ...product,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runGet, runQuery } from '@/lib/db'
+import { NOW_LOCAL, SHOP_TIMEZONE, localDate } from '@/lib/shop-time'
 
 /**
  * Never evaluated at build time.
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate')
     const type = searchParams.get('type') // 'store' or 'billing' or 'all'
 
-    const db = getDb()
+    const DAY_OF_ROW = localDate('transaction_date')
 
     /**
      * Values are bound; only fixed fragments are ever concatenated.
@@ -33,16 +34,24 @@ export async function GET(request: NextRequest) {
     let dateFilter: string
 
     if (startDate && endDate) {
-      dateFilter = 'WHERE DATE(transaction_date) BETWEEN DATE(?) AND DATE(?)'
+      dateFilter = `WHERE ${DAY_OF_ROW} BETWEEN CAST(? AS date) AND CAST(? AS date)`
       filterParams.push(startDate, endDate)
     } else {
+      /**
+       * Positive intervals, subtracted in SQL.
+       *
+       * Postgres will not take a placeholder directly after INTERVAL -- the
+       * keyword expects a literal -- so the window arrives as text and is
+       * cast. Which also means the leading minus has to move out of the
+       * value and into the expression.
+       */
       const WINDOWS: Record<string, string> = {
-        day: '-30 days',
-        week: '-12 weeks',
-        month: '-12 months',
-        year: '-5 years',
+        day: '30 days',
+        week: '12 weeks',
+        month: '12 months',
+        year: '5 years',
       }
-      dateFilter = "WHERE DATE(transaction_date) >= DATE('now', ?)"
+      dateFilter = `WHERE ${DAY_OF_ROW} >= ${NOW_LOCAL}::date - CAST(? AS interval)`
       filterParams.push(WINDOWS[period] ?? WINDOWS.month)
     }
 
@@ -51,30 +60,31 @@ export async function GET(request: NextRequest) {
       filterParams.push(type)
     }
 
-    // Get revenue over time based on period
-    let groupByFormat = ''
-    switch (period) {
-      case 'day':
-        groupByFormat = '%Y-%m-%d'
-        break
-      case 'week':
-        groupByFormat = '%Y-W%W'
-        break
-      case 'month':
-        groupByFormat = '%Y-%m'
-        break
-      case 'year':
-        groupByFormat = '%Y'
-        break
-      default:
-        groupByFormat = '%Y-%m'
+    /**
+     * How the rows are bucketed on the chart.
+     *
+     * to_char patterns, not strftime ones. The week format is ISO -- IYYY
+     * with IW -- because %W counted a partial first week as week zero and
+     * paired it with the calendar year, so the first days of January were
+     * filed under a week that the following December also claimed.
+     */
+    const FORMATS: Record<string, string> = {
+      day: 'YYYY-MM-DD',
+      week: 'IYYY-"W"IW',
+      month: 'YYYY-MM',
+      year: 'YYYY',
     }
+    const groupByFormat = FORMATS[period] ?? FORMATS.month
+    const BUCKET = `to_char(transaction_date AT TIME ZONE '${SHOP_TIMEZONE}', '${groupByFormat}')`
 
-    const revenueOverTime = db
-      .prepare(
-        `
+    // Five aggregates over the same filtered set, none depending on another.
+    const [revenueOverTime, revenueBySource, topDays, paymentMethodTrends, avgDaily] =
+      await Promise.all([
+        // Revenue over time
+        runQuery<any>(
+          `
         SELECT
-          strftime('${groupByFormat}', transaction_date) as period,
+          ${BUCKET} as period,
           COALESCE(SUM(total), 0) as revenue,
           COALESCE(SUM(subtotal), 0) as subtotal,
           COALESCE(SUM(tax), 0) as tax,
@@ -84,16 +94,15 @@ export async function GET(request: NextRequest) {
         ${dateFilter}
         GROUP BY period
         ORDER BY period ASC
-      `
-      )
-      .all(...filterParams) as any[]
+      `,
+          filterParams
+        ),
 
-    // Get revenue by source over time
-    const revenueBySource = db
-      .prepare(
-        `
+        // Revenue by source over time
+        runQuery<any>(
+          `
         SELECT
-          strftime('${groupByFormat}', transaction_date) as period,
+          ${BUCKET} as period,
           transaction_type,
           COALESCE(SUM(total), 0) as revenue,
           COUNT(*) as transactions
@@ -101,16 +110,15 @@ export async function GET(request: NextRequest) {
         ${dateFilter}
         GROUP BY period, transaction_type
         ORDER BY period ASC, transaction_type
-      `
-      )
-      .all(...filterParams) as any[]
+      `,
+          filterParams
+        ),
 
-    // Get top performing days
-    const topDays = db
-      .prepare(
-        `
+        // Top performing days
+        runQuery<any>(
+          `
         SELECT
-          DATE(transaction_date) as date,
+          ${DAY_OF_ROW} as date,
           COALESCE(SUM(total), 0) as revenue,
           COUNT(*) as transactions
         FROM revenue_transactions
@@ -118,14 +126,13 @@ export async function GET(request: NextRequest) {
         GROUP BY date
         ORDER BY revenue DESC
         LIMIT 10
-      `
-      )
-      .all(...filterParams) as any[]
+      `,
+          filterParams
+        ),
 
-    // Get revenue by payment method over period
-    const paymentMethodTrends = db
-      .prepare(
-        `
+        // Revenue by payment method over the period
+        runQuery<any>(
+          `
         SELECT
           payment_method,
           COALESCE(SUM(total), 0) as revenue,
@@ -134,29 +141,29 @@ export async function GET(request: NextRequest) {
         ${dateFilter}
         GROUP BY payment_method
         ORDER BY revenue DESC
-      `
-      )
-      .all(...filterParams) as any[]
+      `,
+          filterParams
+        ),
 
-    // Get daily averages
-    const avgDaily = db
-      .prepare(
-        `
+        // Daily averages. The subquery needs a name in Postgres.
+        runGet<any>(
+          `
         SELECT
           AVG(daily_revenue) as avg_revenue,
           AVG(daily_transactions) as avg_transactions
         FROM (
           SELECT
-            DATE(transaction_date) as date,
+            ${DAY_OF_ROW} as date,
             SUM(total) as daily_revenue,
             COUNT(*) as daily_transactions
           FROM revenue_transactions
           ${dateFilter}
           GROUP BY date
-        )
-      `
-      )
-      .get(...filterParams) as any
+        ) AS daily
+      `,
+          filterParams
+        ),
+      ])
 
     return NextResponse.json({
       success: true,

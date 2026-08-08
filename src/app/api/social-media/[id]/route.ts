@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { runDelete, runGet } from '@/lib/db'
 import { apiResponse, apiError } from '@/lib/utils'
 import type { UpdateSocialMediaLinkInput } from '@/types/social-media'
 
@@ -13,22 +13,18 @@ import type { UpdateSocialMediaLinkInput } from '@/types/social-media'
  */
 export const dynamic = 'force-dynamic'
 
+const notFound = () =>
+  NextResponse.json(apiError('Social media link not found'), { status: 404 })
+
 // GET /api/social-media/[id] - Get single social media link
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
-    const link = db
-      .prepare('SELECT * FROM social_media_links WHERE id = ?')
-      .get(params.id)
+    const link = await runGet('SELECT * FROM social_media_links WHERE id = ?', [Number(params.id)])
 
-    if (!link) {
-      return NextResponse.json(apiError('Social media link not found'), {
-        status: 404,
-      })
-    }
+    if (!link) return notFound()
 
     return NextResponse.json(apiResponse(link))
   } catch (error) {
@@ -46,18 +42,6 @@ export async function PUT(
 ) {
   try {
     const body: UpdateSocialMediaLinkInput = await request.json()
-    const db = getDb()
-
-    // Check if link exists
-    const existing = db
-      .prepare('SELECT * FROM social_media_links WHERE id = ?')
-      .get(params.id)
-
-    if (!existing) {
-      return NextResponse.json(apiError('Social media link not found'), {
-        status: 404,
-      })
-    }
 
     // Build update query
     const updates: string[] = []
@@ -88,15 +72,16 @@ export async function PUT(
       return NextResponse.json(apiError('No fields to update'), { status: 400 })
     }
 
-    values.push(params.id)
+    values.push(Number(params.id))
 
-    db.prepare(
-      `UPDATE social_media_links SET ${updates.join(', ')} WHERE id = ?`
-    ).run(...values)
+    // RETURNING is both the update and the existence check: no rows back
+    // means there was no such link, without a separate query to find out.
+    const updatedLink = await runGet(
+      `UPDATE social_media_links SET ${updates.join(', ')} WHERE id = ? RETURNING *`,
+      values
+    )
 
-    const updatedLink = db
-      .prepare('SELECT * FROM social_media_links WHERE id = ?')
-      .get(params.id)
+    if (!updatedLink) return notFound()
 
     return NextResponse.json(apiResponse(updatedLink, true, 'Social media link updated successfully'))
   } catch (error) {
@@ -113,20 +98,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb()
+    const removed = await runDelete('DELETE FROM social_media_links WHERE id = ?', [
+      Number(params.id),
+    ])
 
-    // Check if link exists
-    const existing = db
-      .prepare('SELECT * FROM social_media_links WHERE id = ?')
-      .get(params.id)
-
-    if (!existing) {
-      return NextResponse.json(apiError('Social media link not found'), {
-        status: 404,
-      })
-    }
-
-    db.prepare('DELETE FROM social_media_links WHERE id = ?').run(params.id)
+    if (removed === 0) return notFound()
 
     return NextResponse.json(apiResponse(null, true, 'Social media link deleted successfully'))
   } catch (error) {
