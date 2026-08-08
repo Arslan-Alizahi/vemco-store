@@ -153,8 +153,17 @@ export const calculatePagination = (
 }
 
 // API response helpers
+/**
+ * A promise here is always a forgotten `await`.
+ *
+ * `JSON.stringify` turns one into `{}`, so the route answers 200 with an
+ * empty body and nothing anywhere says why. That is exactly what
+ * `/api/customers` did after the database went async: the till saved the
+ * customer, the receipt linked to them, and the customer list came back
+ * empty. Rejecting the type makes it a compile error instead of a quiet one.
+ */
 export const apiResponse = <T>(
-  data: T,
+  data: T extends Promise<unknown> ? never : T,
   success: boolean = true,
   message?: string
 ) => {

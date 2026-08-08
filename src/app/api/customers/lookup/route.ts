@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(apiError('A phone number is required'), { status: 400 })
     }
 
-    return NextResponse.json(apiResponse(findCustomerByPhone(phone)))
+    return NextResponse.json(apiResponse(await findCustomerByPhone(phone)))
   } catch (error) {
     console.error('Error looking up customer:', error)
     return NextResponse.json(apiError('We could not look that number up'), { status: 500 })

@@ -20,7 +20,7 @@
     "admin:password": "node scripts/generate-admin-password.mjs",
     "find-unused": "node scripts/find-unused.mjs",
     "admin:env": "node scripts/set-admin-env.mjs",
-    "reset:counter": "node scripts/reset-counter-demo.mjs",
+    "reset:counter": "tsx scripts/reset-counter-demo.mts",
     "build:showcase": "node scripts/with-showcase.mjs build",
     "start:showcase": "node scripts/with-showcase.mjs start"
   },

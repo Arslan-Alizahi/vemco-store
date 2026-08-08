@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
  * Password hashing, Node runtime only.
  *
  * scrypt from the standard library rather than bcrypt or argon2: those are
- * native modules, and this project already carries one (better-sqlite3) whose
+ * native modules, and this project used to carry one (better-sqlite3) whose
  * rebuilds are the most common thing to go wrong on a fresh clone. scrypt is
  * a proper memory-hard KDF and it is already here.
  *

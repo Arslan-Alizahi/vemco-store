@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const search = request.nextUrl.searchParams.get('search') ?? undefined
-    return NextResponse.json(apiResponse(listCustomers(search)))
+    return NextResponse.json(apiResponse(await listCustomers(search)))
   } catch (error) {
     console.error('Error listing customers:', error)
     return NextResponse.json(apiError('We could not load the customers'), { status: 500 })
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const customer = upsertCustomer({
+    const customer = await upsertCustomer({
       name: String(body?.name ?? ''),
       phone: String(body?.phone ?? ''),
       email: body?.email ?? null,
