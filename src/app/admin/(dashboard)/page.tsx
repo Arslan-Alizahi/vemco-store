@@ -504,7 +504,19 @@ export default function AdminPage() {
   // Calculate stats
   const totalProducts = products.length
   const totalOrders = orders.length
-  const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+  /**
+   * Money that actually arrived, not money that was asked for.
+   *
+   * This summed every order regardless of payment status. An order is created
+   * before the customer is sent to pay, so an abandoned checkout -- or a card
+   * that was declined -- counted in full. Two unpaid test orders were enough
+   * to show Rs 464,920 of "Store Revenue" against takings of nothing, and a
+   * shop reading that figure would be reconciling against a number no bank
+   * statement will ever match.
+   */
+  const isPaid = (order: any) => order.payment_status === 'paid' || order.payment_status === 'completed'
+  const paidOrders = orders.filter(isPaid)
+  const totalRevenue = paidOrders.reduce((sum, order) => sum + (order.total || 0), 0)
   const lowStockProducts = products.filter(p => p.stock_quantity <= 5).length
 
   const tabs = [
@@ -612,7 +624,13 @@ export default function AdminPage() {
                   <p className="text-h1 text-text-primary">
                     {formatCurrency(totalRevenue)}
                   </p>
-                  <p className="text-sm text-text-tertiary">From online orders</p>
+                  {/* Says which orders it counted, so the figure can be
+                      reconciled rather than guessed at. */}
+                  <p className="text-sm text-text-tertiary">
+                    From {paidOrders.length} paid {paidOrders.length === 1 ? 'order' : 'orders'}
+                    {orders.length > paidOrders.length &&
+                      ` · ${orders.length - paidOrders.length} awaiting payment`}
+                  </p>
                 </CardContent>
               </Card>
 

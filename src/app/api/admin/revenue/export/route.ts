@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runQuery } from '@/lib/db'
-import { localDate } from '@/lib/shop-time'
+import { SHOP_TIMEZONE, localDate } from '@/lib/shop-time'
 
 /**
  * Never evaluated at build time.
@@ -51,7 +51,10 @@ export async function GET(request: NextRequest) {
           total as "Total",
           payment_method as "Payment Method",
           payment_status as "Payment Status",
-          datetime(transaction_date) as "Transaction Date",
+          -- SQLite's datetime() does not exist in Postgres, which made every
+          -- export answer 500. Formatted in the shop timezone, because this
+          -- is the column an accountant reads.
+          to_char(transaction_date AT TIME ZONE '${SHOP_TIMEZONE}', 'YYYY-MM-DD HH24:MI') as "Transaction Date",
           notes as "Notes"
         FROM revenue_transactions
         ${whereClause}

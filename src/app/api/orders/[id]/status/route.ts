@@ -45,10 +45,21 @@ export async function PUT(
       )
     }
 
+    /**
+     * Stamp `paid_at` when the status becomes paid, and only the first time.
+     *
+     * Stripe's path (`markOrderPaid`) sets it; the admin's "Mark as paid"
+     * button did not, so an order settled in cash at the counter was recorded
+     * as paid with no record of when. COALESCE keeps the original moment if
+     * the status is set again later.
+     */
+    const settled = paymentStatus === 'paid' || paymentStatus === 'completed'
+    const paidAt = settled ? ', paid_at = COALESCE(paid_at, NOW())' : ''
+
     // The update both changes the row and reports whether there was one.
     const updateSql = paymentMethod
-      ? 'UPDATE orders SET payment_status = ?, payment_method = ?, updated_at = NOW() WHERE id = ? RETURNING *'
-      : 'UPDATE orders SET payment_status = ?, updated_at = NOW() WHERE id = ? RETURNING *'
+      ? `UPDATE orders SET payment_status = ?, payment_method = ?, updated_at = NOW()${paidAt} WHERE id = ? RETURNING *`
+      : `UPDATE orders SET payment_status = ?, updated_at = NOW()${paidAt} WHERE id = ? RETURNING *`
 
     const params_array = paymentMethod
       ? [paymentStatus, paymentMethod, Number(orderId)]

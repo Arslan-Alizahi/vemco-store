@@ -167,7 +167,11 @@ export default function Navbar({ links }: NavbarProps) {
 
             <Link
               href="/cart"
-              aria-label={itemCount > 0 ? `Cart, ${itemCount} items` : 'Cart, empty'}
+              // "Cart, 1 items" is what a screen reader read out with one
+              // thing in the basket.
+              aria-label={
+                itemCount > 0 ? `Cart, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}` : 'Cart, empty'
+              }
               className={iconLink}
             >
               <ShoppingCart className="h-5 w-5" aria-hidden="true" />

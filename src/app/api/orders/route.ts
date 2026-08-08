@@ -3,7 +3,7 @@ import { runGet, runQuery, runTransaction, runUpdate } from '@/lib/db'
 import { Order } from '@/types/order'
 import { apiResponse, apiError, generateOrderNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING } from '@/lib/shipping'
-import { normalisePhone } from '@/lib/customers'
+import { normalisePhone, upsertCustomer } from '@/lib/customers'
 
 /**
  * Never evaluated at build time.
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       merged.set(item.product_id, (merged.get(item.product_id) ?? 0) + item.quantity)
     }
 
-    return await runTransaction(async tx => {
+    const response = await runTransaction(async tx => {
       const productIds = Array.from(merged.keys())
       const placeholders = productIds.map(() => '?').join(', ')
 
@@ -278,9 +278,38 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         apiResponse({ ...order, items }),
-        { status: 201 }
+        { status: 201 },
       )
     })
+
+    /**
+     * Remember whoever ordered, the same way the till does.
+     *
+     * The customers page says it lists "everyone who has left a phone number
+     * at the counter or ordered online", and only the first half was true:
+     * checkout wrote the phone onto the order and nowhere else, so a customer
+     * who only ever bought online did not exist as a customer at all. Their
+     * history was invisible even though the purchases view already joins
+     * orders to customers by phone -- there was simply never a row to join to.
+     *
+     * After the transaction, and never allowed to fail the order: the sale is
+     * the thing that matters, and a contact record that could not be written
+     * is not worth losing it over.
+     */
+    if (body.customer_name && body.customer_phone) {
+      try {
+        await upsertCustomer({
+          name: String(body.customer_name),
+          phone: String(body.customer_phone),
+          email: body.customer_email ?? null,
+          address: body.shipping_address ?? null,
+        })
+      } catch (error) {
+        console.error('Order placed, but the customer record could not be saved:', error)
+      }
+    }
+
+    return response
   } catch (error: any) {
     // A rejected order is usually the customer's to fix -- out of stock, a
     // piece withdrawn, a bad quantity -- and answering 500 to all of it told

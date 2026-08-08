@@ -2,12 +2,38 @@ import { CartItem } from '@/types/order'
 
 const CART_STORAGE_KEY = 'shopping_cart'
 
+/**
+ * A cart in localStorage outlives the code that wrote it.
+ *
+ * It survives deployments, so a returning customer can arrive months later
+ * carrying rows in whatever shape the app used at the time. A missing
+ * `stock_quantity` was enough to break it silently: `Math.min(2, undefined)`
+ * is NaN, the quantity became NaN, the totals became NaN, and the basket
+ * simply stopped showing anything -- no error, nothing in the console.
+ *
+ * So rows are checked on the way out rather than trusted. Anything without
+ * the fields the arithmetic needs is dropped, which loses one line rather
+ * than the whole basket.
+ */
+const isUsable = (item: unknown): item is CartItem => {
+  const row = item as Partial<CartItem>
+  return (
+    Boolean(row) &&
+    typeof row.product_id === 'number' &&
+    Number.isFinite(row.quantity) &&
+    (row.quantity ?? 0) > 0 &&
+    Number.isFinite(row.unit_price) &&
+    Number.isFinite(row.stock_quantity)
+  )
+}
+
 export const getCart = (): CartItem[] => {
   if (typeof window === 'undefined') return []
 
   try {
     const cartData = localStorage.getItem(CART_STORAGE_KEY)
-    return cartData ? JSON.parse(cartData) : []
+    const parsed = cartData ? JSON.parse(cartData) : []
+    return Array.isArray(parsed) ? parsed.filter(isUsable) : []
   } catch (error) {
     console.error('Error loading cart:', error)
     return []

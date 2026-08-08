@@ -133,6 +133,35 @@ describe('reading a corrupted cart', () => {
     localStorage.setItem('shopping_cart', '{not json')
     expect(getCart()).toEqual([])
   })
+
+  /**
+   * A cart outlives the code that wrote it: it sits in localStorage across
+   * deployments, so a returning customer can arrive months later carrying
+   * rows in an older shape. One missing field used to take the whole basket
+   * down without a word -- `Math.min(2, undefined)` is NaN, so the quantity
+   * became NaN, the totals became NaN, and the cart rendered as empty.
+   */
+  it('drops a row that is missing the fields the arithmetic needs', () => {
+    saveCart([item(), { ...item({ product_id: 2 }), stock_quantity: undefined } as never])
+    expect(getCart()).toHaveLength(1)
+    expect(getCart()[0].product_id).toBe(1)
+  })
+
+  it('keeps the rest of the basket when one row is unusable', () => {
+    saveCart([
+      { ...item({ product_id: 9 }), quantity: undefined } as never,
+      item({ product_id: 3, quantity: 2 }),
+    ])
+
+    const cart = getCart()
+    expect(cart).toHaveLength(1)
+    expect(getCartTotal().itemCount).toBe(2)
+  })
+
+  it('survives storage holding something that is not a list', () => {
+    localStorage.setItem('shopping_cart', '{"product_id":1}')
+    expect(getCart()).toEqual([])
+  })
 })
 
 describe('cross-tab sync', () => {

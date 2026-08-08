@@ -44,7 +44,8 @@ export default function CartPage() {
   // isLoading was previously discarded, so on every single load the page
   // rendered "Your cart is empty" for a frame before localStorage was read --
   // including for people who had a full cart.
-  const { cart, isLoading, updateQuantity, removeFromCart, addToCart, subtotal } = useCart()
+  const { cart, isLoading, updateQuantity, removeFromCart, addToCart, subtotal, itemCount } =
+    useCart()
   const { addToast } = useToast()
 
   const [values, setValues] = useState<Fields>(EMPTY)
@@ -201,7 +202,14 @@ export default function CartPage() {
     <Container className="py-section-md">
       <PageHeader
         title="Your cart"
-        lead={`${cart.length} ${cart.length === 1 ? 'piece' : 'pieces'} ready for checkout.`}
+        /**
+         * Pieces, not lines. `cart.length` counts rows, so two of the same
+         * sofa read as "1 piece" while the header beside it said "Cart, 2
+         * items" -- the same basket described two ways on one screen. The
+         * header is the one that is right: a customer buying two chairs has
+         * two chairs coming.
+         */
+        lead={`${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'} ready for checkout.`}
       />
 
       <div className="grid gap-8 lg:grid-cols-3">

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { Check, ChevronRight, Heart, Minus, Plus, Share2, ShoppingCart, Truck } from 'lucide-react'
+import { Check, ChevronRight, Heart, Minus, PackageX, Plus, Share2, ShoppingCart, Truck } from 'lucide-react'
 import Container from '@/components/layout/Container'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -13,6 +13,7 @@ import Money from '@/components/ui/Money'
 import IconButton from '@/components/ui/IconButton'
 import Spinner from '@/components/ui/Spinner'
 import ErrorState from '@/components/ui/ErrorState'
+import EmptyState from '@/components/ui/EmptyState'
 import ProductCard from '@/components/storefront/ProductCard'
 import { Tilt } from '@/components/ui/motion/Tilt'
 import { useCart } from '@/hooks/useCart'
@@ -29,7 +30,7 @@ export default function ProductDetailPage() {
   const { addToast } = useToast()
 
   const [product, setProduct] = useState<any>(null)
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'missing'>('loading')
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
 
@@ -38,8 +39,17 @@ export default function ProductDetailPage() {
 
     fetch(`/api/products/slug/${params.slug}`)
       .then(async response => {
+        /**
+         * Say so, rather than redirecting to the full catalogue.
+         *
+         * A dead link -- an old bookmark, a shared URL, a piece that has been
+         * withdrawn -- used to land the visitor on "All furniture" with no
+         * explanation, which reads as the site losing their click. It is also
+         * a soft 404: search engines see a redirect to a healthy page and
+         * keep the dead URL indexed.
+         */
         if (response.status === 404) {
-          router.replace('/products')
+          setStatus('missing')
           return null
         }
         if (!response.ok) throw new Error('Request failed')
@@ -57,6 +67,25 @@ export default function ProductDetailPage() {
     return (
       <Container className="flex min-h-[60vh] items-center justify-center">
         <Spinner size="lg" />
+      </Container>
+    )
+  }
+
+  // Gone is not the same as broken, and offering Retry on a piece that does
+  // not exist just invites the visitor to fail twice.
+  if (status === 'missing') {
+    return (
+      <Container size="prose" className="py-section-md">
+        <EmptyState
+          icon={PackageX}
+          title="We could not find that piece"
+          description="It may have sold out and been withdrawn, or the link may have a typo in it. Everything we stock is on the shop page."
+          action={
+            <Button asChild size="lg">
+              <Link href="/products">Browse everything</Link>
+            </Button>
+          }
+        />
       </Container>
     )
   }

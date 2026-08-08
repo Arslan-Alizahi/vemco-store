@@ -1,10 +1,30 @@
 import Stripe from 'stripe'
 import { stripeCurrency, toStripeAmount } from './currency'
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+/**
+ * A key has to look like a key, not merely be present.
+ *
+ * `.env.example` ships `STRIPE_SECRET_KEY=your_api_key_here`, and anyone who
+ * copies it without editing gets a value that is not empty. That was enough
+ * to count as configured: the route skipped its "payments are not set up"
+ * branch, called Stripe with nonsense, and answered 500. The customer had by
+ * then already had an order created and stock reserved, and saw only a
+ * failure with no reason attached.
+ *
+ * Stripe secret keys begin `sk_`; restricted keys begin `rk_`. Anything else
+ * is a placeholder, a publishable key pasted into the wrong variable, or a
+ * typo -- all of which should read as "not configured" rather than as a
+ * broken payment provider.
+ */
+const rawKey = process.env.STRIPE_SECRET_KEY?.trim()
+const stripeSecretKey = rawKey && /^(sk|rk)_/.test(rawKey) ? rawKey : undefined
 
 if (!stripeSecretKey) {
-  console.warn('⚠️  STRIPE_SECRET_KEY is not set in environment variables')
+  console.warn(
+    rawKey
+      ? '⚠️  STRIPE_SECRET_KEY does not look like a Stripe secret key (expected sk_… or rk_…). Online payment is switched off.'
+      : '⚠️  STRIPE_SECRET_KEY is not set. Online payment is switched off.'
+  )
 }
 
 export const stripe = stripeSecretKey
