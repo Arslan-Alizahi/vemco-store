@@ -78,7 +78,80 @@ const needsSession = (request: NextRequest): boolean => {
  */
 const SHOWCASE_CLOSED = ['/admin', '/billing', '/api/admin', '/api/customers', '/api/orders', '/api/billing', '/api/upload']
 
+/**
+ * The maintenance page, and what it needs in order to look like itself.
+ *
+ * The manifest is here because the browser fetches it unprompted, and a 503
+ * on it fills the console with failures that look like the page is broken
+ * when it is working exactly as intended.
+ */
+const MAINTENANCE_ALLOWED = [
+  '/maintenance',
+  '/_next',
+  '/favicon.ico',
+  '/icon.svg',
+  '/manifest.webmanifest',
+  '/seed',
+]
+
+/**
+ * Cookie set by visiting `?bypass=<MAINTENANCE_BYPASS>`.
+ *
+ * Being locked out of your own shop while checking whether it is ready to
+ * reopen is the obvious way this feature goes wrong, so there is a way in.
+ * Only usable if MAINTENANCE_BYPASS is set, and it is compared whole rather
+ * than as a prefix.
+ */
+const BYPASS_COOKIE = 'vemco_bypass'
+
+const maintenanceResponse = (request: NextRequest) => {
+  const secret = process.env.MAINTENANCE_BYPASS
+  const { pathname, searchParams } = request.nextUrl
+
+  // Anything the page itself needs must still be served, or it renders naked.
+  if (isUnder(pathname, MAINTENANCE_ALLOWED)) return NextResponse.next()
+
+  if (secret) {
+    if (searchParams.get('bypass') === secret) {
+      // Remember it, so the rest of the browsing session works too.
+      const response = NextResponse.redirect(new URL(pathname, request.url))
+      response.cookies.set(BYPASS_COOKIE, secret, {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 8,
+      })
+      return response
+    }
+
+    if (request.cookies.get(BYPASS_COOKIE)?.value === secret) return NextResponse.next()
+  }
+
+  /**
+   * 503, not 200.
+   *
+   * A maintenance page served as 200 tells a crawler that this is now the
+   * content at every URL, which is how a shop comes back online to find its
+   * product pages replaced in the index by the words "back soon". 503 with
+   * Retry-After says temporarily unavailable, come back -- and search engines
+   * keep the real pages.
+   */
+  return NextResponse.rewrite(new URL('/maintenance', request.url), {
+    status: 503,
+    headers: {
+      'Retry-After': '3600',
+      'Cache-Control': 'no-store',
+    },
+  })
+}
+
 export async function middleware(request: NextRequest) {
+  // First, because when the shop is closed nothing else about the request
+  // matters -- including whether the visitor is signed in.
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    return maintenanceResponse(request)
+  }
+
   if (process.env.NEXT_PUBLIC_SHOWCASE === 'true') {
     const { pathname } = request.nextUrl
 

@@ -202,3 +202,88 @@ describe('showcase mode', () => {
     }
   )
 })
+
+/**
+ * Taking the shop offline without deleting the deployment.
+ *
+ * The status matters as much as the page. Served as 200 a maintenance screen
+ * tells a crawler this is now the content at every URL, which is how a shop
+ * reopens to find its product pages replaced in the index by the words "back
+ * soon". 503 with Retry-After says temporarily unavailable.
+ */
+describe('maintenance mode', () => {
+  beforeEach(() => {
+    process.env.MAINTENANCE_MODE = 'true'
+  })
+
+  afterEach(() => {
+    delete process.env.MAINTENANCE_MODE
+    delete process.env.MAINTENANCE_BYPASS
+  })
+
+  it.each(['/', '/products', '/categories', '/cart', '/admin', '/billing', '/api/products'])(
+    '%s answers 503, not 200',
+    async path => {
+      const response = await middleware(request(path))
+      expect(response?.status).toBe(503)
+      expect(response?.headers.get('retry-after')).toBe('3600')
+    }
+  )
+
+  it('is never cached, so turning it off takes effect immediately', async () => {
+    const response = await middleware(request('/'))
+    expect(response?.headers.get('cache-control')).toBe('no-store')
+  })
+
+  it('still serves what the page itself needs', async () => {
+    for (const path of ['/maintenance', '/_next/static/css/x.css', '/manifest.webmanifest']) {
+      const response = await middleware(request(path))
+      expect(response?.status, path).toBe(200)
+    }
+  })
+
+  it('closes the shop even to a signed-in administrator', async () => {
+    const response = await middleware(request('/admin', 'GET', await signedIn()))
+    expect(response?.status).toBe(503)
+  })
+
+  describe('the bypass', () => {
+    it('does nothing unless a secret is configured', async () => {
+      const response = await middleware(request('/?bypass=anything'))
+      expect(response?.status).toBe(503)
+    })
+
+    it('refuses the wrong secret', async () => {
+      process.env.MAINTENANCE_BYPASS = 'let-me-in'
+      const response = await middleware(request('/?bypass=nope'))
+      expect(response?.status).toBe(503)
+    })
+
+    it('sets a cookie for the right secret and lets that session through', async () => {
+      process.env.MAINTENANCE_BYPASS = 'let-me-in'
+
+      const granted = await middleware(request('/?bypass=let-me-in'))
+      expect(granted?.status).toBe(307)
+      expect(granted?.cookies.get('vemco_bypass')?.value).toBe('let-me-in')
+
+      const withCookie = new NextRequest(new URL('http://localhost/'), {
+        headers: { cookie: 'vemco_bypass=let-me-in' },
+      })
+      expect((await middleware(withCookie))?.status).toBe(200)
+    })
+
+    it('refuses a cookie holding the wrong value', async () => {
+      process.env.MAINTENANCE_BYPASS = 'let-me-in'
+      const withCookie = new NextRequest(new URL('http://localhost/'), {
+        headers: { cookie: 'vemco_bypass=guessed' },
+      })
+      expect((await middleware(withCookie))?.status).toBe(503)
+    })
+  })
+
+  it('leaves the site alone when it is off', async () => {
+    delete process.env.MAINTENANCE_MODE
+    expect((await middleware(request('/')))?.status).toBe(200)
+    expect((await middleware(request('/products')))?.status).toBe(200)
+  })
+})

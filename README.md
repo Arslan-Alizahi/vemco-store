@@ -185,6 +185,33 @@ catalogue.
 
 Locally: `npm run build:showcase` then `npm run start:showcase`.
 
+### Taking the site offline for a while
+
+Do not delete the deployment. Set:
+
+```
+MAINTENANCE_MODE=true
+```
+
+and redeploy. Every URL then answers **503 Service Unavailable** with a "back
+soon" page, and the link is unchanged. Remove the variable, redeploy, and the
+shop returns exactly as it was.
+
+The status is the part that matters. A maintenance screen served as 200 tells
+a crawler that this is now the content at every URL, which is how a shop
+reopens to find its product pages replaced in the search index by the words
+"back soon". 503 with `Retry-After` says temporarily unavailable, and the real
+pages are kept.
+
+Set `MAINTENANCE_BYPASS` to some long random string and visiting
+`/?bypass=<that string>` lets your own browser through for eight hours — so
+you can check the shop before reopening it. Everyone else still sees the
+notice, signed-in administrators included.
+
+On Vercel, changing an environment variable takes effect on the next
+deployment; the **Redeploy** button on the latest one is enough, no push
+needed.
+
 ## Known Issues
 
 **Fixed** — these were the blocking items and are now closed, each with a test that fails if it comes back:
