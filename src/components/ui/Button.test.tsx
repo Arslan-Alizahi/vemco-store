@@ -76,7 +76,9 @@ describe('Button', () => {
     )
 
     const className = screen.getByRole('button').className
-    expect(className).toContain('text-white')
+    // The colour itself is a design decision and may change; what must not
+    // change is that a colour survives at all next to a role-named size.
+    expect(className).toContain('text-bark-50')
     expect(className).toContain('text-body')
   })
 })

@@ -8,8 +8,8 @@ import { cn } from '@/lib/cn'
  * near-identical lines that drift apart the first time one of them is edited.
  *
  * Deliberately quiet. It sits below the shop's own copyright in the smallest
- * text on the page: a maker's mark, not a second brand competing with VEMCO
- * on VEMCO's own storefront.
+ * text on the page: a maker's mark, not a second brand competing with Vimo Furniture House
+ * on Vimo Furniture House's own storefront.
  */
 
 export const BUILDER_NAME = 'CodeChoicez'
@@ -27,7 +27,7 @@ export function PoweredBy({
   tone?: 'default' | 'inverted'
 }) {
   return (
-    <p className={cn('text-caption', tone === 'inverted' ? 'text-bark-400' : 'text-text-tertiary', className)}>
+    <p className={cn('text-caption', tone === 'inverted' ? 'text-bark-300' : 'text-text-tertiary', className)}>
       Powered by{' '}
       <a
         href={BUILDER_URL}
@@ -37,7 +37,7 @@ export function PoweredBy({
           'underline underline-offset-4 transition-colors duration-fast',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           tone === 'inverted'
-            ? 'hover:text-bark-200 focus-visible:ring-offset-bark-900'
+            ? 'hover:text-bark-50 focus-visible:ring-offset-surface-inverse'
             : 'hover:text-text-primary focus-visible:ring-offset-canvas'
         )}
       >

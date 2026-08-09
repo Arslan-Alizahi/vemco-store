@@ -7,7 +7,7 @@
  * Thresholds: 4.5:1 for text (WCAG 1.4.3), 3:1 for UI component boundaries
  * and focus indicators (WCAG 1.4.11).
  */
-import { bark, caramel, sage, success, warning, danger } from '../src/design/tokens.ts'
+import { bark, caramel, sage, success, warning, danger, semantic } from '../src/design/tokens.ts'
 
 const channels = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
 
@@ -24,8 +24,17 @@ const ratio = (a, b) => {
   return (hi + 0.05) / (lo + 0.05)
 }
 
-const CANVAS = bark[50]
-const SURFACE = '#FFFFFF'
+/**
+ * Read from the semantic layer, never restated.
+ *
+ * These were literals -- `bark[50]` and `'#FFFFFF'` -- copied from what the
+ * tokens happened to be the day the gate was written. When the page ground
+ * and the panels swapped roles, the gate went on measuring the old pair and
+ * reported 36/36 for a palette the app no longer rendered. A gate that
+ * hardcodes the thing it is checking is decoration.
+ */
+const CANVAS = semantic.canvas
+const SURFACE = semantic.surface
 const W = '#FFFFFF'
 
 const PAIRINGS = [
@@ -65,6 +74,16 @@ const PAIRINGS = [
   ['ghost hover bark-700 on bark-100', bark[700], bark[100], 4.5],
   ['selected    bark-900 on caramel-50', bark[900], caramel[50], 4.5],
   ['on-brand    caramel-50 on caramel-700', caramel[50], caramel[700], 4.5],
+
+  // The espresso action and the dark footer. Both carry cream rather than
+  // white, because white on a warm dark reads blue -- so both have to be
+  // measured rather than assumed safe for being "dark plus light".
+  ['action      bark-50 on action', bark[50], semantic.action, 4.5],
+  ['action hvr  bark-50 on action-hover', bark[50], semantic['action-hover'], 4.5],
+  ['inverse     bark-50 on surface-inverse', bark[50], semantic['surface-inverse'], 4.5],
+  ['inverse dim bark-300 on surface-inverse', bark[300], semantic['surface-inverse'], 4.5],
+  ['inverse rng caramel-300 vs surface-inverse', caramel[300], semantic['surface-inverse'], 3.0],
+  ['inverse brd bark-400 vs surface-inverse', bark[400], semantic['surface-inverse'], 3.0],
 ]
 
 let failed = 0

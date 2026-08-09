@@ -119,7 +119,7 @@ const MAINTENANCE_ALLOWED = [
  * Only usable if MAINTENANCE_BYPASS is set, and it is compared whole rather
  * than as a prefix.
  */
-const BYPASS_COOKIE = 'vemco_bypass'
+const BYPASS_COOKIE = 'vimo_bypass'
 
 const maintenanceResponse = (request: NextRequest) => {
   const secret = process.env.MAINTENANCE_BYPASS

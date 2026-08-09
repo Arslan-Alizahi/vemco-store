@@ -70,7 +70,14 @@ export default async function Footer() {
   }
 
   return (
-    <footer className="mt-auto border-t border-border-subtle bg-bark-900 text-bark-300">
+    /*
+      Inset and rounded, like every other panel on the page. A full-bleed
+      footer would be the one element that runs to the edges, and the reader
+      notices that -- it reads as the page ending and something else
+      beginning, rather than as the last panel in the stack.
+    */
+    <div className="mt-auto bg-canvas px-3 pb-3 sm:px-4 sm:pb-4">
+    <footer className="overflow-hidden rounded-xl bg-surface-inverse text-bark-200">
       <Container className="py-section-sm">
         <div className="grid grid-cols-2 gap-8 lg:grid-cols-6 lg:gap-12">
           <div className="col-span-2">
@@ -82,21 +89,21 @@ export default async function Footer() {
 
             <div className="mt-6 space-y-3 text-ui">
               <a
-                href="mailto:hello@vemco.pk"
-                className="flex items-center gap-3 rounded-sm transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-400"
+                href="mailto:hello@vimofurniture.pk"
+                className="flex items-center gap-3 rounded-sm transition-colors hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
               >
-                <Mail className="h-4 w-4 shrink-0 text-caramel-400" aria-hidden="true" />
-                hello@vemco.pk
+                <Mail className="h-4 w-4 shrink-0 text-bark-300" aria-hidden="true" />
+                hello@vimofurniture.pk
               </a>
               <a
                 href="tel:+924235000000"
-                className="flex items-center gap-3 rounded-sm transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-400"
+                className="flex items-center gap-3 rounded-sm transition-colors hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
               >
-                <Phone className="h-4 w-4 shrink-0 text-caramel-400" aria-hidden="true" />
+                <Phone className="h-4 w-4 shrink-0 text-bark-300" aria-hidden="true" />
                 +92 42 3500 0000
               </a>
               <p className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-caramel-400" aria-hidden="true" />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-bark-300" aria-hidden="true" />
                 <span>
                   Showroom 14, Gulberg III
                   <br />
@@ -108,7 +115,7 @@ export default async function Footer() {
 
           {SECTIONS.map(section => (
             <nav key={section.title} aria-label={section.title}>
-              <h2 className="mb-4 text-caption uppercase tracking-[0.06em] text-bark-400">
+              <h2 className="mb-4 text-caption uppercase tracking-[0.06em] text-bark-300">
                 {section.title}
               </h2>
               <ul className="space-y-2.5">
@@ -116,7 +123,7 @@ export default async function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="rounded-sm text-ui transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-400"
+                      className="rounded-sm text-ui transition-colors hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
                     >
                       {link.label}
                     </Link>
@@ -128,11 +135,11 @@ export default async function Footer() {
         </div>
       </Container>
 
-      <div className="border-t border-bark-800">
+      <div className="border-t border-bark-700">
         <Container className="flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
           <div className="flex flex-col items-center gap-1 sm:items-start">
-            <p className="text-caption text-bark-400">
-              © {new Date().getFullYear()} VEMCO. All rights reserved.
+            <p className="text-caption text-bark-300">
+              © {new Date().getFullYear()} Vimo Furniture House. All rights reserved.
             </p>
             <PoweredBy tone="inverted" />
           </div>
@@ -147,8 +154,8 @@ export default async function Footer() {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={`VEMCO on ${link.platform}`}
-                      className="flex h-11 w-11 items-center justify-center rounded-sm text-bark-400 transition-colors hover:bg-bark-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-400"
+                      aria-label={`Vimo Furniture House on ${link.platform}`}
+                      className="flex h-11 w-11 items-center justify-center rounded-sm text-bark-300 transition-colors hover:bg-bark-700 hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
                     >
                       <Icon className="h-5 w-5" />
                     </a>
@@ -160,5 +167,6 @@ export default async function Footer() {
         </Container>
       </div>
     </footer>
+    </div>
   )
 }

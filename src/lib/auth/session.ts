@@ -9,7 +9,7 @@
  * the server can hand out and later recognise as its own", which is one HMAC.
  */
 
-export const SESSION_COOKIE = 'vemco_admin'
+export const SESSION_COOKIE = 'vimo_admin'
 
 /** Eight hours: a working day, so an operator is not logged out mid-shift. */
 export const SESSION_TTL_SECONDS = 8 * 60 * 60

@@ -58,7 +58,7 @@ const RULES = [
       `\\b(?:${UTILITY_PREFIXES.join('|')})-(?:${TAILWIND_DEFAULT_PALETTE.join('|')})-\\d{2,3}\\b`,
       'g'
     ),
-    message: "Tailwind's default palette. Use a VEMCO ramp or a semantic alias.",
+    message: "Tailwind's default palette. Use a Vimo Furniture House ramp or a semantic alias.",
   },
   {
     id: 'hex',

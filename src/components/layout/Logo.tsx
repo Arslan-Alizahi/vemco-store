@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { cn } from '@/lib/cn'
+import { BRAND_MARK, BRAND_NAME } from '@/lib/brand'
 
 export interface LogoProps {
-  /** `onDark` inverts for the footer and the hero. */
+  /** `onDark` inverts for the footer and the one dark panel. */
   tone?: 'default' | 'onDark'
   size?: 'sm' | 'md'
   href?: string | null
@@ -10,62 +11,69 @@ export interface LogoProps {
 }
 
 /**
- * One mark, one treatment.
+ * A wordmark, not a logo.
  *
- * The header and footer previously used two different icons and two different
- * gradients, so the brand did not survive a scroll to the bottom of the page.
+ * The sofa glyph that used to sit here was doing the one job the word does
+ * better: at 24px it read as a rounded rectangle, and next to product
+ * photography of actual sofas it was a drawing of a thing the page was
+ * already showing. Furniture houses have signed their name for two hundred
+ * years and the name is the mark.
+ *
+ * The lockup is two lines because the shop is called three words. Set on one
+ * line it either shrinks below legibility in the header or eats the nav;
+ * stacked, the large word carries at a glance and the small line tells you
+ * what kind of shop it is -- which is exactly the job a signboard does.
  */
 export function Logo({ tone = 'default', size = 'md', href = '/', className }: LogoProps) {
+  const onDark = tone === 'onDark'
+
   const content = (
-    <>
-      <svg
-        viewBox="0 0 32 32"
-        aria-hidden="true"
-        className={cn('shrink-0', size === 'sm' ? 'h-5 w-5' : 'h-6 w-6')}
-      >
-        <rect
-          width="32"
-          height="32"
-          rx="7"
-          className={tone === 'onDark' ? 'fill-caramel-400' : 'fill-caramel-700'}
-        />
-        <path
-          d="M8 21V13.5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1V21"
-          fill="none"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          className={tone === 'onDark' ? 'stroke-bark-900' : 'stroke-canvas'}
-        />
-        <path
-          d="M6.5 21h19M10 21v2.5M22 21v2.5"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          className={tone === 'onDark' ? 'stroke-bark-900' : 'stroke-canvas'}
-        />
-      </svg>
+    <span className="flex flex-col">
       <span
         className={cn(
-          'font-serif tracking-[-0.015em]',
-          size === 'sm' ? 'text-body-lg' : 'text-h3',
-          tone === 'onDark' ? 'text-white' : 'text-text-primary'
+          'font-serif font-normal leading-none',
+          // Steps down on a phone. At the desktop size the wordmark took
+          // more than half the width of a 375px header, which on the one
+          // screen where space is scarce spends it on the one thing the
+          // visitor already knows -- whose shop they are in.
+          size === 'sm'
+            ? 'text-h3 tracking-[0.06em] sm:text-h2'
+            : 'text-h2 tracking-[0.07em] sm:text-h1',
+          onDark ? 'text-bark-50' : 'text-text-primary'
         )}
       >
-        VEMCO
+        {BRAND_MARK.top}
       </span>
-    </>
+      <span
+        className={cn(
+          'text-eyebrow mt-1 uppercase',
+          onDark ? 'text-bark-300' : 'text-text-tertiary'
+        )}
+      >
+        {BRAND_MARK.bottom}
+      </span>
+    </span>
   )
 
   const classes = cn(
-    'inline-flex items-center gap-2 rounded-sm',
+    'inline-flex rounded-sm',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-    tone === 'onDark' ? 'focus-visible:ring-offset-bark-900' : 'focus-visible:ring-offset-canvas',
+    onDark ? 'focus-visible:ring-offset-surface-inverse' : 'focus-visible:ring-offset-canvas',
     className
   )
 
-  if (!href) return <span className={classes}>{content}</span>
+  // The accessible name is the shop's real name, not the two stacked
+  // fragments a screen reader would otherwise read as "VIMO, FURNITURE
+  // HOUSE" with a pause in the middle of the business's name.
+  if (!href)
+    return (
+      <span className={classes} aria-label={BRAND_NAME} role="img">
+        {content}
+      </span>
+    )
 
   return (
-    <Link href={href} className={classes}>
+    <Link href={href} className={classes} aria-label={`${BRAND_NAME} — home`}>
       {content}
     </Link>
   )

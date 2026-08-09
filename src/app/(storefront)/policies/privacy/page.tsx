@@ -5,7 +5,7 @@ import LegalPage from '@/components/layout/LegalPage'
 export const metadata: Metadata = {
   title: 'Privacy policy',
   description:
-    'What VEMCO collects, why, who we share it with, and how to get it deleted.',
+    'What Vimo Furniture House collects, why, who we share it with, and how to get it deleted.',
 }
 
 export default function PrivacyPage() {
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               </ul>
               <p>
                 <strong>We never see your card details.</strong> Payment is handled entirely by
-                our payment processor; the card number does not pass through VEMCO systems and
+                our payment processor; the card number does not pass through Vimo Furniture House systems and
                 is not stored on our servers.
               </p>
             </>
@@ -92,7 +92,7 @@ export default function PrivacyPage() {
                 <li>Stop sending you marketing, at any time</li>
               </ul>
               <p>
-                Email <a href="mailto:privacy@vemco.pk">privacy@vemco.pk</a> and we will respond
+                Email <a href="mailto:privacy@vimofurniture.pk">privacy@vimofurniture.pk</a> and we will respond
                 within 30 days.
               </p>
             </>
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
           body: (
             <p>
               Questions about this policy go to{' '}
-              <a href="mailto:privacy@vemco.pk">privacy@vemco.pk</a>, or write to VEMCO,
+              <a href="mailto:privacy@vimofurniture.pk">privacy@vimofurniture.pk</a>, or write to Vimo Furniture House,
               Showroom 14, Gulberg III, Lahore.
             </p>
           ),

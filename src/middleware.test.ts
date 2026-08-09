@@ -266,10 +266,10 @@ describe('maintenance mode', () => {
 
       const granted = await middleware(request('/?bypass=let-me-in'))
       expect(granted?.status).toBe(307)
-      expect(granted?.cookies.get('vemco_bypass')?.value).toBe('let-me-in')
+      expect(granted?.cookies.get('vimo_bypass')?.value).toBe('let-me-in')
 
       const withCookie = new NextRequest(new URL('http://localhost/'), {
-        headers: { cookie: 'vemco_bypass=let-me-in' },
+        headers: { cookie: 'vimo_bypass=let-me-in' },
       })
       expect((await middleware(withCookie))?.status).toBe(200)
     })
@@ -277,7 +277,7 @@ describe('maintenance mode', () => {
     it('refuses a cookie holding the wrong value', async () => {
       process.env.MAINTENANCE_BYPASS = 'let-me-in'
       const withCookie = new NextRequest(new URL('http://localhost/'), {
-        headers: { cookie: 'vemco_bypass=guessed' },
+        headers: { cookie: 'vimo_bypass=guessed' },
       })
       expect((await middleware(withCookie))?.status).toBe(503)
     })

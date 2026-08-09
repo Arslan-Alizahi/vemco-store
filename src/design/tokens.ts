@@ -18,20 +18,36 @@
  * Steps 50-300 are decorative surfaces and hairlines only. 400 is the
  * lightest step permitted to carry meaning, because WCAG 1.4.11 requires
  * 3:1 for UI component boundaries.
+ *
+ * The light end is a linen ramp rather than a white one, because the page
+ * ground here is tinted and the panels float on top of it. A true white
+ * panel on a tinted ground reads as a hole punched in the page; a cream one
+ * reads as paper laid on a table, which is the whole idea.
  */
 export const bark: Record<string, string> = {
-  50: '#FAF8F5',
-  100: '#F2EEE8',
-  200: '#E6E0D6',
-  300: '#D3CABB',
-  400: '#94897A',
-  500: '#756A5D',
-  600: '#5C5343',
-  700: '#4A4238',
-  800: '#342E27',
-  900: '#221E19',
-  950: '#14110E',
+  50: '#F8F5EF',
+  100: '#F1ECE2',
+  200: '#E0D8C9',
+  300: '#CDC2AD',
+  400: '#857B69',
+  500: '#6B6049',
+  600: '#5B5142',
+  700: '#463E33',
+  800: '#332D25',
+  900: '#211D18',
+  950: '#14110D',
 }
+
+/**
+ * The page ground. Darker than the panels that sit on it -- deliberately.
+ *
+ * Every other surface token is lighter than this, so the page reads as a
+ * tinted table with pale panels resting on it. It is its own value rather
+ * than a bark step because it is the one colour the whole layout is
+ * measured against: nudging it shifts every contrast ratio in the system,
+ * and that should be a decision, not a side effect of retuning a ramp.
+ */
+export const ground = '#E9E2D6'
 
 /**
  * Caramel -- the brand.
@@ -123,14 +139,29 @@ export const rgbOf = (hex: string): string => {
 }
 
 export const semantic = {
-  canvas: bark[50],
-  surface: '#FFFFFF',
+  canvas: ground,
+  surface: bark[50],
   'surface-subtle': bark[100],
+  /** The one dark surface: the footer, and the single dark card per page. */
+  'surface-inverse': bark[900],
+  /**
+   * Paper. Printed documents only.
+   *
+   * The screen surface is a warm cream, which is right for a screen and
+   * wrong for a bill: a customer's printer would either lay down a full page
+   * of tinted ink or -- more usually -- drop the background entirely and
+   * leave the document's own colour a lie. Paper is white because paper is
+   * white, and that is not a decision the screen palette gets to make.
+   */
+  paper: '#FFFFFF',
   'border-subtle': bark[200],
   'border-strong': bark[400],
   'text-primary': bark[900],
   'text-secondary': bark[600],
   'text-tertiary': bark[500],
+  /** Solid espresso. Every primary action in the shop is this one colour. */
+  action: bark[800],
+  'action-hover': bark[950],
   ring: caramel[600],
   scrim: `rgb(${rgbOf(shadowInk)} / 0.32)`,
 } as const

@@ -9,7 +9,7 @@ import Money from '@/components/ui/Money'
 export const metadata: Metadata = {
   title: 'Delivery',
   description:
-    'VEMCO delivery rates and timescales across Pakistan, including room-of-choice delivery and access requirements.',
+    'Vimo Furniture House delivery rates and timescales across Pakistan, including room-of-choice delivery and access requirements.',
 }
 
 const TIERS = [

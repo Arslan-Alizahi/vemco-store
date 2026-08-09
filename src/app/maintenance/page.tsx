@@ -10,7 +10,7 @@ import Logo from '@/components/layout/Logo'
  */
 export const metadata: Metadata = {
   title: 'Back soon',
-  description: 'The VEMCO store is temporarily unavailable for maintenance.',
+  description: 'The Vimo Furniture House store is temporarily unavailable for maintenance.',
   // Belt and braces alongside the 503 the middleware sends: a maintenance
   // page must never be indexed in place of the real shop.
   robots: { index: false, follow: false },
@@ -37,10 +37,10 @@ export default function MaintenancePage() {
         <p className="mt-10 text-ui text-text-secondary">
           Need something in the meantime?{' '}
           <a
-            href="mailto:hello@vemco.pk"
+            href="mailto:hello@vimofurniture.pk"
             className="underline underline-offset-4 hover:text-text-primary"
           >
-            hello@vemco.pk
+            hello@vimofurniture.pk
           </a>{' '}
           &middot;{' '}
           <a

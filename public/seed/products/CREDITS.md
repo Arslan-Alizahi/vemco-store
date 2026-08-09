@@ -2,7 +2,7 @@
 
 These are the images used by the demo catalogue. They are stock photographs
 from Unsplash and Pexels, used to make the seeded store look real -- they are
-**not** VEMCO's own product shots. Replace them with real photography before
+**not** Vimo Furniture House's own product shots. Replace them with real photography before
 launch.
 
 | Product slug | Source file |

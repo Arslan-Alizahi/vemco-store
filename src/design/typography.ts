@@ -21,6 +21,30 @@
 type TypeStyle = [string, { lineHeight: string; letterSpacing: string; fontWeight: string }]
 
 export const fontSize = {
+  /**
+   * The editorial voice: one headline per page, set in the serif at regular
+   * weight.
+   *
+   * Regular, not semibold. At 72px a serif carries on its shape, and the
+   * bold weight of a text face at display size reads as shouting rather than
+   * as confidence -- which is the single most common way a furniture site
+   * ends up looking like a sale flyer. Leading below 1 lets the two lines
+   * lock together as a block, which is what makes the hero feel composed.
+   */
+  hero: ['4.5rem', { lineHeight: '0.98', letterSpacing: '-0.028em', fontWeight: '400' }],
+  /**
+   * Section headings in the same editorial voice, a step down.
+   */
+  'display-serif': ['2.75rem', { lineHeight: '1.06', letterSpacing: '-0.022em', fontWeight: '400' }],
+  /**
+   * The small caps label above a section: MATERIALS, FEATURED PIECES.
+   *
+   * Tracking this wide is what makes eleven pixels of uppercase legible
+   * rather than a smear -- and it is the piece of typography that does the
+   * most to place the page, because letterspaced caps over a serif headline
+   * is how furniture and fashion have set a section label for a century.
+   */
+  eyebrow: ['0.6875rem', { lineHeight: '1.30', letterSpacing: '0.170em', fontWeight: '500' }],
   display: ['3.5rem', { lineHeight: '1.05', letterSpacing: '-0.030em', fontWeight: '600' }],
   h1: ['2.25rem', { lineHeight: '1.15', letterSpacing: '-0.022em', fontWeight: '600' }],
   h2: ['1.5rem', { lineHeight: '1.25', letterSpacing: '-0.017em', fontWeight: '600' }],

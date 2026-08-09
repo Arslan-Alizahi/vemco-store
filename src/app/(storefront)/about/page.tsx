@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'VEMCO makes solid wood furniture in Lahore, publishes full specifications, and backs the structure for five years.',
+    'Vimo Furniture House makes solid wood furniture in Lahore, publishes full specifications, and backs the structure for five years.',
 }
 
 const PRINCIPLES = [
@@ -42,7 +42,7 @@ export default function AboutPage() {
     <>
       <Container className="pt-section-md">
         <PageHeader
-          eyebrow="About VEMCO"
+          eyebrow="About Vimo Furniture House"
           title="Furniture that outlasts the room you bought it for"
           lead="We build in Lahore, sell direct, and tell you what a piece is actually made of."
           align="center"
@@ -87,7 +87,7 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      <Section spacing="md" className="bg-caramel-700 text-white">
+      <Section spacing="md" className="bg-surface-inverse text-bark-50">
         <Container size="prose" className="text-center">
           <h2 className="mb-4 font-serif text-h1">Come and sit on it</h2>
           <p className="mb-8 text-body-lg text-caramel-100">
@@ -98,7 +98,7 @@ export default function AboutPage() {
             asChild
             size="lg"
             variant="outline"
-            className="border-white/30 text-white hover:bg-surface/10"
+            className="border-bark-400 text-bark-50 hover:bg-bark-800"
           >
             <Link href="/contact">Get directions</Link>
           </Button>

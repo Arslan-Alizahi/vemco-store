@@ -12,10 +12,10 @@ const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', displ
 
 export const metadata: Metadata = {
   title: {
-    default: 'VEMCO — Furniture for considered spaces',
+    default: 'Vimo Furniture House — Furniture for considered spaces',
     // Pages supply their own title in Phase 4; until then this template is
     // inert. All 24 routes currently share one title.
-    template: '%s — VEMCO',
+    template: '%s — Vimo Furniture House',
   },
   description:
     'Furniture built to last, photographed honestly, and priced without theatre.',

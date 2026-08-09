@@ -7,7 +7,7 @@ import Prose from '@/components/layout/Prose'
 export const metadata: Metadata = {
   title: 'Accessibility',
   description:
-    'What is accessible on the VEMCO site today, what is not yet, and how to tell us when something blocks you.',
+    'What is accessible on the Vimo Furniture House site today, what is not yet, and how to tell us when something blocks you.',
 }
 
 const DONE = [
@@ -32,7 +32,7 @@ export default function AccessibilityPage() {
     <Container size="prose" className="py-section-md">
       <PageHeader
         eyebrow="Accessibility"
-        title="Accessibility at VEMCO"
+        title="Accessibility at Vimo Furniture House"
         lead="An honest account of where this site stands, rather than a badge."
       />
 
@@ -78,7 +78,7 @@ export default function AccessibilityPage() {
       <Prose className="mt-12">
         <h2>If something blocks you</h2>
         <p>
-          Email <a href="mailto:access@vemco.pk">access@vemco.pk</a> or call{' '}
+          Email <a href="mailto:access@vimofurniture.pk">access@vimofurniture.pk</a> or call{' '}
           <a href="tel:+924235000000">+92 42 3500 0000</a>. Tell us the page and what happened —
           you do not need to know the technical term for it.
         </p>

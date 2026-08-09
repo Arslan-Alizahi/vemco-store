@@ -158,7 +158,7 @@ describe('checkout validation', () => {
     await screen.findByText('Emerald Velvet Sofa')
 
     await userEvent.type(document.querySelector('input[name="name"]')!, 'Arslan Khan')
-    await userEvent.type(document.querySelector('input[name="email"]')!, 'arslan@vemco.pk')
+    await userEvent.type(document.querySelector('input[name="email"]')!, 'arslan@vimofurniture.pk')
     await userEvent.type(document.querySelector('input[name="phone"]')!, '03001234567')
     await userEvent.type(document.querySelector('textarea[name="address"]')!, 'Showroom 14, Gulberg III')
     await userEvent.type(document.querySelector('input[name="city"]')!, 'Lahore')
@@ -180,7 +180,7 @@ describe('checkout validation', () => {
     await screen.findByText('Emerald Velvet Sofa')
 
     await userEvent.type(document.querySelector('input[name="name"]')!, 'Arslan Khan')
-    await userEvent.type(document.querySelector('input[name="email"]')!, 'arslan@vemco.pk')
+    await userEvent.type(document.querySelector('input[name="email"]')!, 'arslan@vimofurniture.pk')
     await userEvent.type(document.querySelector('input[name="phone"]')!, '03001234567')
     await userEvent.type(document.querySelector('textarea[name="address"]')!, 'Showroom 14')
     await userEvent.type(document.querySelector('input[name="city"]')!, 'Lahore')

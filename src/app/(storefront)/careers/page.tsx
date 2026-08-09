@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button'
 export const metadata: Metadata = {
   title: 'Careers',
   description:
-    'VEMCO is not hiring right now. What we look for when we are, and how to reach us in the meantime.',
+    'Vimo Furniture House is not hiring right now. What we look for when we are, and how to reach us in the meantime.',
 }
 
 const TEAMS = [
@@ -52,7 +52,7 @@ export default function CareersPage() {
 
       <div className="mb-14 text-center">
         <Button asChild size="lg">
-          <a href="mailto:careers@vemco.pk">Email careers@vemco.pk</a>
+          <a href="mailto:careers@vimofurniture.pk">Email careers@vimofurniture.pk</a>
         </Button>
       </div>
 

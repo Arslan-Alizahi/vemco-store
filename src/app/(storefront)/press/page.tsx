@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button'
 
 export const metadata: Metadata = {
   title: 'Press',
-  description: 'Company facts, brand assets and press contact for VEMCO.',
+  description: 'Company facts, brand assets and press contact for Vimo Furniture House.',
 }
 
 const FACTS = [
@@ -27,9 +27,9 @@ export default function PressPage() {
       />
 
       <Prose>
-        <h2>About VEMCO</h2>
+        <h2>About Vimo Furniture House</h2>
         <p>
-          VEMCO makes and sells solid wood furniture for the Pakistani market. We publish full
+          Vimo Furniture House makes and sells solid wood furniture for the Pakistani market. We publish full
           dimensions and materials on every listing, deliver into the room of your choice, and
           back the structure of every piece for five years.
         </p>
@@ -60,14 +60,14 @@ export default function PressPage() {
 
         <h2>Press contact</h2>
         <p>
-          <a href="mailto:press@vemco.pk">press@vemco.pk</a> — we reply within one working day.
+          <a href="mailto:press@vimofurniture.pk">press@vimofurniture.pk</a> — we reply within one working day.
           For anything on deadline, say so in the subject line.
         </p>
       </Prose>
 
       <div className="mt-10">
         <Button asChild>
-          <a href="mailto:press@vemco.pk">Email press@vemco.pk</a>
+          <a href="mailto:press@vimofurniture.pk">Email press@vimofurniture.pk</a>
         </Button>
       </div>
     </Container>

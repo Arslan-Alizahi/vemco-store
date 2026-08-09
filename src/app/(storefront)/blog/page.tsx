@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 export const metadata: Metadata = {
   title: 'Journal',
   description:
-    'Not published yet. What the VEMCO journal will cover — materials, joinery and buying furniture that lasts.',
+    'Not published yet. What the Vimo Furniture House journal will cover — materials, joinery and buying furniture that lasts.',
 }
 
 export default function BlogPage() {

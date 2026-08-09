@@ -38,7 +38,7 @@ export default function GlobalError({
       >
         <div style={{ maxWidth: '32rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.75rem', margin: '0 0 0.75rem', fontWeight: 600 }}>
-            VEMCO is temporarily unavailable
+            Vimo Furniture House is temporarily unavailable
           </h1>
           <p style={{ margin: '0 0 1.5rem', color: semantic['text-secondary'], lineHeight: 1.6 }}>
             Something failed at the root of the application. Reloading may resolve it.

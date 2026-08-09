@@ -17,7 +17,7 @@ const iconButtonVariants = cva(
         ghost: 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary',
         outline:
           'border border-border-subtle text-text-secondary hover:bg-surface-subtle hover:text-text-primary',
-        solid: 'bg-caramel-600 text-white hover:bg-caramel-700',
+        solid: 'bg-action text-bark-50 hover:bg-action-hover',
         danger: 'text-danger-600 hover:bg-danger-50',
       },
       // Every size clears the 44px minimum hit area even though the icon

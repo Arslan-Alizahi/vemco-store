@@ -38,9 +38,31 @@ describe('colour ramps', () => {
   })
 
   it('maps semantic aliases onto real ramp values', () => {
-    expect(semantic.canvas).toBe(bark[50])
+    expect(semantic.surface).toBe(bark[50])
     expect(semantic['text-primary']).toBe(bark[900])
     expect(semantic['border-strong']).toBe(bark[400])
     expect(semantic.ring).toBe(caramel[600])
+  })
+
+  /**
+   * The layout's one load-bearing colour fact.
+   *
+   * Every panel on the storefront is separated from its neighbours by the
+   * page ground showing through a gap -- no borders, no shadows. That works
+   * only while the ground is darker than the panels. Invert the two and the
+   * gaps stop being visible, the panels merge into one slab, and the whole
+   * page silently loses its structure with nothing in a type check, a build
+   * or a contrast gate to notice.
+   */
+  it('keeps the page ground darker than the panels that sit on it', () => {
+    const luminance = (hex: string) =>
+      [1, 3, 5]
+        .map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+        .map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+        .reduce((acc, v, i) => acc + v * [0.2126, 0.7152, 0.0722][i], 0)
+
+    expect(luminance(semantic.canvas)).toBeLessThan(luminance(semantic.surface))
+    // And paper stays paper: the printed bill must not inherit the tint.
+    expect(luminance(semantic.paper)).toBeGreaterThan(luminance(semantic.surface))
   })
 })

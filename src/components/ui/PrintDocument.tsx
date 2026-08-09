@@ -67,7 +67,7 @@ export default function PrintDocument({ children, title, actions, onClose }: Pri
   if (!host) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-modal flex flex-col bg-scrim print:static print:block print:bg-surface">
+    <div className="fixed inset-0 z-modal flex flex-col bg-scrim print:static print:block print:bg-paper">
       {/* Screen chrome. Never printed. */}
       <div className="flex items-center justify-between gap-4 border-b border-border-subtle bg-surface px-5 py-3 print:hidden">
         <h2 className="text-h3 text-text-primary">{title}</h2>
@@ -82,9 +82,9 @@ export default function PrintDocument({ children, title, actions, onClose }: Pri
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-surface-subtle p-6 print:overflow-visible print:bg-surface print:p-0">
+      <div className="flex-1 overflow-auto bg-surface-subtle p-6 print:overflow-visible print:bg-paper print:p-0">
         {/* The sheet. Sized to A4 on screen so the preview matches the paper. */}
-        <div className="mx-auto w-full max-w-[210mm] bg-surface p-8 shadow-e2 print:max-w-none print:p-0 print:shadow-none">
+        <div className="mx-auto w-full max-w-[210mm] bg-paper p-8 shadow-e2 print:max-w-none print:p-0 print:shadow-none">
           {children}
         </div>
       </div>

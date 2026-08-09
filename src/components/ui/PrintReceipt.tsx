@@ -49,10 +49,10 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
   return (
     <PrintDocument title="Receipt" onClose={onClose}>
       <header className="border-b border-border-strong pb-5 text-center">
-        <p className="font-serif text-h1 text-text-primary">VEMCO</p>
+        <p className="font-serif text-h1 text-text-primary">Vimo Furniture House</p>
         <p className="mt-1 text-ui text-text-secondary">Furniture for considered spaces</p>
         <p className="mt-2 text-caption text-text-secondary">
-          Showroom 14, Gulberg III, Lahore · +92 42 3500 0000 · hello@vemco.pk
+          Showroom 14, Gulberg III, Lahore · +92 42 3500 0000 · hello@vimofurniture.pk
         </p>
       </header>
 

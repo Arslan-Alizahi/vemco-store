@@ -184,7 +184,7 @@
 
   html,
   body {
-    background: theme('colors.surface') !important;
+    background: theme('colors.paper') !important;
     margin: 0 !important;
     padding: 0 !important;
   }

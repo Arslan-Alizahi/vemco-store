@@ -41,7 +41,7 @@ const refuseInShowcase = () => {
  * reload exhausts the project's connection limit within a few minutes of
  * working on a route. The global outlives the module.
  */
-const globalForDb = globalThis as unknown as { vemcoDb?: Sql }
+const globalForDb = globalThis as unknown as { vimoDb?: Sql }
 
 export const getDb = (): Sql => {
   refuseInShowcase()
@@ -55,8 +55,8 @@ export const getDb = (): Sql => {
     )
   }
 
-  if (!globalForDb.vemcoDb) {
-    globalForDb.vemcoDb = postgres(connectionString, {
+  if (!globalForDb.vimoDb) {
+    globalForDb.vimoDb = postgres(connectionString, {
       /**
        * Supabase's pooler in transaction mode does not support prepared
        * statements: one prepared on this connection is not there on the next.
@@ -226,7 +226,7 @@ export const getDb = (): Sql => {
     })
   }
 
-  return globalForDb.vemcoDb
+  return globalForDb.vimoDb
 }
 
 /**
@@ -339,8 +339,8 @@ export const runTransaction = async <T>(fn: (tx: Sql) => Promise<T>): Promise<T>
 
 /** Only for tests and scripts. Serverless instances are torn down for us. */
 export const closeDb = async () => {
-  if (globalForDb.vemcoDb) {
-    await globalForDb.vemcoDb.end()
-    globalForDb.vemcoDb = undefined
+  if (globalForDb.vimoDb) {
+    await globalForDb.vimoDb.end()
+    globalForDb.vimoDb = undefined
   }
 }

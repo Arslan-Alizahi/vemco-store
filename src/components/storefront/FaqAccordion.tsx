@@ -71,7 +71,7 @@ export function FaqAccordion({
               'rounded-full px-4 py-2 text-ui font-medium transition-colors duration-fast',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
               category === item.id
-                ? 'bg-caramel-600 text-white'
+                ? 'bg-action text-bark-50'
                 : 'bg-surface text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
             )}
           >

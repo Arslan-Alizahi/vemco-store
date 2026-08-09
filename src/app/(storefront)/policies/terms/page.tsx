@@ -5,14 +5,14 @@ import LegalPage from '@/components/layout/LegalPage'
 export const metadata: Metadata = {
   title: 'Terms of sale',
   description:
-    'The terms you agree to when ordering furniture from VEMCO — pricing, delivery, cancellation and liability.',
+    'The terms you agree to when ordering furniture from Vimo Furniture House — pricing, delivery, cancellation and liability.',
 }
 
 export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of sale"
-      lead="The agreement between you and VEMCO when you place an order."
+      lead="The agreement between you and Vimo Furniture House when you place an order."
       updated="12 June 2026"
       sections={[
         {
@@ -20,8 +20,8 @@ export default function TermsPage() {
           heading: 'Who we are',
           body: (
             <p>
-              VEMCO is a furniture retailer registered in Pakistan, trading from Showroom 14,
-              Gulberg III, Lahore. In these terms, &ldquo;we&rdquo; means VEMCO and
+              Vimo Furniture House is a furniture retailer registered in Pakistan, trading from Showroom 14,
+              Gulberg III, Lahore. In these terms, &ldquo;we&rdquo; means Vimo Furniture House and
               &ldquo;you&rdquo; means the person placing the order.
             </p>
           ),

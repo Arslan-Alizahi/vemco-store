@@ -25,7 +25,7 @@ export default function PrintStatement({ customer, purchases, onClose }: PrintSt
     <PrintDocument title={`Statement — ${customer.name}`} onClose={onClose}>
       <header className="flex items-start justify-between gap-6 border-b border-border-strong pb-5">
         <div>
-          <p className="font-serif text-h1 text-text-primary">VEMCO</p>
+          <p className="font-serif text-h1 text-text-primary">Vimo Furniture House</p>
           <p className="mt-1 text-caption text-text-secondary">
             Showroom 14, Gulberg III, Lahore · +92 42 3500 0000
           </p>

@@ -100,7 +100,7 @@ export default function Navbar({ links }: NavbarProps) {
     pathname === href || (href !== '/' && pathname.startsWith(href))
 
   const countPill =
-    'absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-caramel-600 px-1 text-[10px] font-medium tabular-nums text-white'
+    'absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-action px-1 text-[10px] font-medium tabular-nums text-bark-50'
 
   const iconLink =
     'relative flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
@@ -116,10 +116,20 @@ export default function Navbar({ links }: NavbarProps) {
       )}
     >
       <Container>
-        <nav aria-label="Main" className="flex h-16 items-center justify-between gap-4">
+        {/*
+          Three tracks rather than justify-between, so the nav sits on the
+          page's centre line and not on whatever centre the wordmark and the
+          icon cluster happen to leave between them. With space-between, a
+          shop whose name got one character longer would shunt the whole nav
+          sideways; here it cannot.
+        */}
+        <nav
+          aria-label="Main"
+          className="grid h-20 grid-cols-[auto_1fr] items-center gap-4 md:grid-cols-[1fr_auto_1fr]"
+        >
           <Logo />
 
-          <div className="hidden items-center gap-7 md:flex">
+          <div className="hidden items-center justify-center gap-8 md:flex">
             {links.map(link => {
               const Icon = getIcon(link.icon)
               const active = isActive(link.href)
@@ -130,7 +140,13 @@ export default function Navbar({ links }: NavbarProps) {
                   target={link.target || '_self'}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'relative flex items-center gap-1.5 rounded-sm py-1 text-ui font-medium',
+                    'relative flex items-center gap-1.5 rounded-sm py-1',
+                    // Letterspaced caps at 14px, not 11. The reference sets
+                    // its nav in small caps and that is the right voice for a
+                    // furniture house -- but shrinking it to a true small-cap
+                    // size makes the one row of text everybody needs the
+                    // hardest thing on the page to read.
+                    'text-ui font-medium uppercase tracking-[0.12em]',
                     'transition-colors duration-fast ease-standard',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
                     active ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
@@ -141,7 +157,7 @@ export default function Navbar({ links }: NavbarProps) {
                   {active && (
                     <span
                       aria-hidden="true"
-                      className="absolute -bottom-[21px] left-0 right-0 h-0.5 bg-caramel-600"
+                      className="absolute -bottom-1.5 left-0 right-0 h-px bg-action"
                     />
                   )}
                 </Link>
@@ -149,7 +165,7 @@ export default function Navbar({ links }: NavbarProps) {
             })}
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-end gap-1">
             <Link href="/products" aria-label="Search products" className={cn(iconLink, 'hidden sm:flex')}>
               <Search className="h-5 w-5" aria-hidden="true" />
             </Link>
@@ -220,11 +236,14 @@ export default function Navbar({ links }: NavbarProps) {
                         target={link.target || '_self'}
                         aria-current={active ? 'page' : undefined}
                         className={cn(
-                          'flex items-center gap-3 rounded-sm px-3 py-3 text-body font-medium',
+                          'flex items-center gap-3 rounded-sm border-l-2 px-3 py-3 text-body font-medium',
                           'transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          // The rule, not the tint, is what marks the current
+                          // page: hover also tints, and two states that look
+                          // the same tell you nothing.
                           active
-                            ? 'bg-caramel-50 text-text-primary'
-                            : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
+                            ? 'border-action bg-surface-subtle text-text-primary'
+                            : 'border-transparent text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
                         )}
                       >
                         {Icon && <Icon className="h-5 w-5" aria-hidden="true" />}

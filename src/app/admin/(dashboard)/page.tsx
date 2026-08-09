@@ -584,7 +584,7 @@ export default function AdminPage() {
                 'flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2 text-ui font-medium',
                 'transition-colors duration-fast ease-standard',
                 activeTab === tab.id
-                  ? 'border-caramel-600 text-caramel-800'
+                  ? 'border-action text-text-primary'
                   : 'border-transparent text-text-tertiary hover:text-text-primary'
               )}
             >

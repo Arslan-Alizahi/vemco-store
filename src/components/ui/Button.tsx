@@ -24,8 +24,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-caramel-600 text-white hover:bg-caramel-700',
-        secondary: 'bg-caramel-100 text-caramel-900 hover:bg-caramel-200',
+        // Espresso, not caramel. On a page whose every surface is warm and
+        // pale, the strongest thing available is depth rather than hue, and
+        // an amber button next to amber-toned walnut photography competes
+        // with the product for the same attention. This leaves caramel free
+        // to do the one job only it can do: the focus ring, where being the
+        // single saturated thing on the page is the entire point.
+        primary: 'bg-action text-bark-50 hover:bg-action-hover',
+        secondary: 'bg-surface-subtle text-text-primary hover:bg-bark-200',
         success: 'bg-success-600 text-white hover:bg-success-700',
         danger: 'bg-danger-600 text-white hover:bg-danger-700',
         // Was bg-yellow-500 with white text at 1.90:1 -- a clear AA failure.

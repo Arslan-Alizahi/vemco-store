@@ -8,7 +8,7 @@ import ContactForm from '@/components/storefront/ContactForm'
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Reach VEMCO by phone, email or WhatsApp, or visit the showroom in Gulberg III, Lahore.',
+    'Reach Vimo Furniture House by phone, email or WhatsApp, or visit the showroom in Gulberg III, Lahore.',
 }
 
 const DETAILS = [
@@ -22,8 +22,8 @@ const DETAILS = [
   {
     icon: Mail,
     label: 'Email',
-    value: 'hello@vemco.pk',
-    href: 'mailto:hello@vemco.pk',
+    value: 'hello@vimofurniture.pk',
+    href: 'mailto:hello@vimofurniture.pk',
     note: 'We reply within one working day',
   },
   {

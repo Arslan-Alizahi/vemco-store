@@ -3,78 +3,55 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { ArrowRight, Hammer, Quote, Ruler, Trees, Truck } from 'lucide-react'
+import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
 import ErrorState from '@/components/ui/ErrorState'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
-import { Carousel } from '@/components/ui/Carousel'
-import { Parallax } from '@/components/ui/motion/Parallax'
 import { Reveal } from '@/components/ui/motion/Reveal'
-import { Tilt } from '@/components/ui/motion/Tilt'
-import { AnimatedCounter } from '@/components/ui/motion/AnimatedCounter'
 import ProductCard from '@/components/storefront/ProductCard'
-import { ease, duration } from '@/design/motion'
+import Panel, { Eyebrow } from '@/components/layout/Panel'
+import Money from '@/components/ui/Money'
+import { BRAND_SHORT } from '@/lib/brand'
 import { Product } from '@/types/product'
 
-const FEATURES = [
-  {
-    icon: Trees,
-    title: 'Solid wood',
-    description: 'No veneer over particleboard. What you see on the edge is what it is made of.',
-  },
-  {
-    icon: Hammer,
-    title: 'Real joinery',
-    description: 'Mortise and tenon where it matters, so the frame stays square for decades.',
-  },
-  {
-    icon: Ruler,
-    title: 'Honest dimensions',
-    description: 'Every listing carries full measurements and a doorway clearance note.',
-  },
-  {
-    icon: Truck,
-    title: 'Room of choice',
-    description: 'Delivered, carried in, unwrapped, and the packaging taken away with us.',
-  },
+/**
+ * The four things a person weighs before spending a month's salary on a
+ * sofa, in the order they weigh them. Not features -- objections.
+ */
+const ASSURANCES = [
+  { figure: '5 yr', label: 'Structural guarantee' },
+  { figure: '3–5 days', label: 'Delivered nationwide' },
+  { figure: 'Room of choice', label: 'Carried in and unwrapped' },
+  { figure: '14 days', label: 'To change your mind' },
 ]
 
-const NUMBERS = [
-  { value: 5, suffix: ' yr', label: 'Structural guarantee' },
-  { value: 20, suffix: '+', label: 'Pieces in the collection' },
-  { value: 45000, suffix: '', label: 'Martindale rub count', format: true },
-  { value: 3, suffix: '-5 days', label: 'Delivered across Pakistan' },
+/**
+ * What the furniture is actually made of.
+ *
+ * A specification list rather than a virtues list: "solid wood" is a claim
+ * anyone can print, and "Sheesham, kiln-dried to 10% moisture" is one only a
+ * shop that did it can print. The numbers are the argument.
+ */
+const MATERIALS = [
+  { name: 'Sheesham & walnut', note: 'Kiln-dried to 10% moisture, so it will not move in a Lahore summer' },
+  { name: 'Mortise and tenon', note: 'Cut and glued, never stapled. The joint outlives the finish' },
+  { name: 'Velvet at 45,000 rubs', note: 'Martindale-tested upholstery, rated for daily family use' },
+  { name: 'High-resilience foam', note: '35kg/m³ in every seat, so the cushion returns after eight years' },
 ]
 
-const ROOMS = [
-  { slug: 'sofas-seating', name: 'Sofas & Seating', image: '/seed/products/emerald-velvet-sofa-sm.webp', id: 1 },
-  { slug: 'beds-bedroom', name: 'Beds & Bedroom', image: '/seed/products/curved-upholstered-bed-sm.webp', id: 2 },
-  { slug: 'dining', name: 'Dining', image: '/seed/products/grand-dining-table-sm.webp', id: 3 },
-  { slug: 'tables', name: 'Tables', image: '/seed/products/round-walnut-coffee-table-sm.webp', id: 4 },
-  { slug: 'storage', name: 'Storage', image: '/seed/products/sliding-door-wardrobe-sm.webp', id: 5 },
-]
-
-const VOICES = [
+const SERVICES = [
   {
-    quote:
-      'The sofa arrived on the day they said, carried up two flights, unwrapped, and the packaging went back down with them. Nobody does that.',
-    name: 'Sana R.',
-    place: 'DHA Phase 5, Lahore',
+    title: 'Measured before it ships',
+    body: 'Every listing carries full dimensions and a doorway clearance note, because the commonest reason furniture goes back is that it never got in.',
   },
   {
-    quote:
-      'I measured the doorway three times because the listing told me to. It cleared by four centimetres. Everything else I have ordered online got stuck.',
-    name: 'Bilal A.',
-    place: 'F-7, Islamabad',
+    title: 'Made to order, honestly dated',
+    body: 'Pieces built for you take four to six weeks. We put the date in writing before you pay, and we tell you the day it changes.',
   },
   {
-    quote:
-      'Four years in, the frame has not shifted and the velvet has not gone shiny where we sit. It cost more than the shop down the road and it has already outlasted two of theirs.',
-    name: 'Hina M.',
-    place: 'Clifton, Karachi',
+    title: 'Pay part now, the rest on delivery',
+    body: 'Reserve a piece with an advance at the showroom and settle the balance when it arrives. The bill shows both, every time.',
   },
 ]
 
@@ -103,199 +80,235 @@ export default function HomePage() {
 
   useEffect(loadFeatured, [loadFeatured])
 
+  /** The piece that gets the spotlight card in the bento row. */
+  const spotlight = featuredProducts[0]
+  const spotlightImage = spotlight?.primary_image || spotlight?.images?.[0]?.image_url
+
   return (
+    /*
+      One stack of panels on a tinted ground, with the gap between them as
+      the only divider. No section has its own background colour and no
+      section has a border: the ground shows through the gaps and does both
+      jobs at once. That is why the page ground is darker than the panels --
+      invert those two and every gap in this layout stops existing.
+    */
     <div className="bg-canvas">
-      {/* ---------------------------------------------------------------- */}
-      {/* Hero. Built in layers rather than as a flat panel: a photograph   */}
-      {/* that drifts on scroll, a warm wash over it, and the type on glass */}
-      {/* in front. The alpha on that glass is what keeps the white text at */}
-      {/* contrast -- the blur is decoration and carries no guarantee.      */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="relative isolate overflow-hidden bg-bark-950">
-        <Parallax distance={60} className="absolute inset-0 -z-10 scale-110">
-          {/* Decorative, at 40% opacity behind a scrim, so it does not need
-              the quality a product photograph does. At q=75 this was 192KB and
-              the largest thing on the page -- the LCP element. At q=40 it is
-              60KB and, at this opacity, indistinguishable. */}
-          <Image
-            src="/seed/products/classic-sofa-set-lg.webp"
-            alt=""
-            fill
-            priority
-            quality={40}
-            sizes="100vw"
-            className="object-cover opacity-40"
-          />
-        </Parallax>
+      <div className="mx-auto max-w-wide space-y-3 px-3 pb-3 sm:space-y-4 sm:px-4 sm:pb-4">
+        {/* ------------------------------------------------------------ */}
+        {/* Hero. Type on the left, the piece itself on the right.        */}
+        {/* ------------------------------------------------------------ */}
+        <Panel as="section" pad="none" className="grid lg:grid-cols-2">
+          <div className="order-2 flex flex-col justify-center p-7 sm:p-10 lg:order-1 lg:p-14">
+            <Eyebrow>Solid wood · Made in Lahore</Eyebrow>
 
-        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-grain-warm" />
-        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-bark-950/55" />
+            {/*
+              The measure is in ch, not pixels, so the headline keeps the
+              same number of words per line as the type scale changes -- a
+              pixel measure re-breaks the line at every breakpoint and the
+              hero reads differently on every screen.
 
-        <div className="relative mx-auto max-w-content px-5 py-section-lg sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-prose">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: duration.slow / 1000, ease: ease.standard }}
-              className="glass-dark rounded-xl p-8 text-center shadow-float sm:p-12"
-            >
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.12, duration: duration.slow / 1000, ease: ease.standard }}
-                className="mb-5 text-overline uppercase text-caramel-300"
-              >
-                Made to be lived with
-              </motion.p>
+              It lands on three lines in this column, and that is the right
+              answer rather than a compromise: at leading 1.02 the three
+              lines lock into a block the eye reads as one shape, and buying
+              back a line would mean shrinking the display type, which is the
+              only thing on the page doing the work of a shopfront.
+            */}
+            <h1 className="mt-6 max-w-[16ch] font-serif text-[2.75rem] leading-[1.02] tracking-[-0.025em] text-text-primary sm:text-display-serif lg:text-hero">
+              Furniture for considered spaces
+            </h1>
 
-              <motion.h1
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.18, duration: duration.slow / 1000, ease: ease.standard }}
-                className="mb-6 font-serif text-[2.5rem] leading-[1.05] tracking-[-0.03em] text-white md:text-display"
-              >
-                Furniture for considered spaces
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.26, duration: duration.slow / 1000, ease: ease.standard }}
-                className="mx-auto mb-10 max-w-[46ch] text-body-lg text-bark-100"
-              >
-                Solid wood, honest joinery, and pieces that earn their place. Built to
-                outlast the room you bought them for.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.34, duration: duration.slow / 1000, ease: ease.standard }}
-                className="flex flex-col justify-center gap-3 sm:flex-row"
-              >
-                <Button asChild size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-                  <Link href="/products">Shop the collection</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
-                >
-                  <Link href="/about">Our story</Link>
-                </Button>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Numbers. Counting up earns attention on a figure worth reading;   */}
-      {/* AnimatedCounter announces the final value to assistive tech once  */}
-      {/* rather than narrating every frame.                                */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="border-b border-border-subtle bg-surface">
-        <div className="mx-auto grid max-w-content grid-cols-2 gap-px overflow-hidden px-5 sm:px-6 lg:grid-cols-4 lg:px-8">
-          {NUMBERS.map((item, index) => (
-            <Reveal key={item.label} index={index} className="py-10 text-center">
-              <p className="font-serif text-h1 text-text-primary">
-                <AnimatedCounter
-                  value={item.value}
-                  format={n =>
-                    item.format ? n.toLocaleString('en-PK') : String(Math.round(n))
-                  }
-                />
-                {item.suffix}
-              </p>
-              <p className="mt-1 text-ui text-text-secondary">{item.label}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Shop by room. A carousel because the set is short and browsing by */}
-      {/* room is how people actually start.                                */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="py-section-md">
-        <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
-          <Reveal className="mb-10">
-            <p className="mb-2 text-overline uppercase text-caramel-700">Browse</p>
-            <h2 className="font-serif text-h1 text-text-primary">Start from the room</h2>
-          </Reveal>
-
-          <Carousel label="Shop by room" perView={{ base: 1, sm: 2, lg: 4 }} loop={false}>
-            {ROOMS.map(room => (
-              <Link
-                key={room.slug}
-                href={`/products?category=${room.id}`}
-                className="stage lift-on-hover group block overflow-hidden rounded-md shadow-e1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-              >
-                <div className="relative aspect-[3/4] overflow-hidden bg-surface-subtle">
-                  <Tilt max={5} className="h-full w-full">
-                    <Image
-                      src={room.image}
-                      alt=""
-                      fill
-                      sizes="(min-width: 1024px) 24vw, (min-width: 640px) 45vw, 90vw"
-                      className="scale-105 object-cover transition-transform duration-slow ease-standard group-hover:scale-110"
-                    />
-                  </Tilt>
-                  <div aria-hidden="true" className="scrim-fade" />
-                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-5">
-                    <span className="font-serif text-h2 text-white">{room.name}</span>
-                    <ArrowRight
-                      className="h-5 w-5 shrink-0 text-white transition-transform duration-fast group-hover:translate-x-1"
-                      aria-hidden="true"
-                    />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </Carousel>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Why. Cards lift under the pointer -- transform and shadow only,   */}
-      {/* so nothing inside them can drift out of contrast.                 */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="bg-surface-subtle py-section-md">
-        <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
-          <Reveal className="mb-12 text-center">
-            <h2 className="font-serif text-h1 text-text-primary">Why people keep coming back</h2>
-          </Reveal>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map((feature, index) => (
-              <Reveal key={feature.title} index={index}>
-                <Card className="lift-on-hover h-full bg-surface text-center">
-                  <div className="mb-4 flex justify-center">
-                    <span className="rounded-full bg-caramel-100 p-3 shadow-e1">
-                      <feature.icon className="h-6 w-6 text-caramel-700" aria-hidden="true" />
-                    </span>
-                  </div>
-                  <h3 className="mb-2 text-h3 text-text-primary">{feature.title}</h3>
-                  <p className="text-body text-text-secondary">{feature.description}</p>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* This season.                                                      */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="bg-surface py-section-md">
-        <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
-          <Reveal className="mb-12 text-center">
-            <h2 className="mb-3 font-serif text-h1 text-text-primary">This season</h2>
-            <p className="text-body-lg text-text-secondary">
-              A short list, chosen because they earn the room
+            <p className="mt-6 max-w-[46ch] text-body-lg text-text-secondary">
+              Solid wood, real joinery, and the full measurements on every listing.
+              Delivered to the room of your choice, anywhere in Pakistan.
             </p>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
+                <Link href="/products">Shop the collection</Link>
+              </Button>
+              <Button asChild size="lg" variant="ghost">
+                <Link href="/about">How we build</Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="relative order-1 min-h-[280px] bg-surface-subtle sm:min-h-[360px] lg:order-2 lg:min-h-[560px]">
+            {/* Decorative: the headline already names the subject, so a
+                description here would make a screen reader read the same
+                idea twice. */}
+            <Image
+              src="/seed/products/classic-sofa-set-lg.webp"
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="object-cover"
+            />
+          </div>
+        </Panel>
+
+        {/* ------------------------------------------------------------ */}
+        {/* The four objections, answered in four figures.                */}
+        {/* ------------------------------------------------------------ */}
+        <Panel as="section" pad="none" aria-label="What every order includes">
+          {/*
+            Hairlines by gap, not by border.
+            A one-pixel gap over the border colour draws exactly the rules a
+            grid needs at every column count -- and never the ones it does
+            not, which is what nth-child border juggling always eventually
+            gets wrong at one breakpoint nobody tested.
+          */}
+          <ul className="grid grid-cols-2 gap-px bg-border-subtle lg:grid-cols-4">
+            {ASSURANCES.map(item => (
+              <li key={item.label} className="bg-surface px-6 py-7 sm:px-8">
+                <p className="font-serif text-h2 text-text-primary">{item.figure}</p>
+                <p className="mt-1.5 text-ui text-text-secondary">{item.label}</p>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+
+        {/* ------------------------------------------------------------ */}
+        {/* Bento: what it is made of, who makes it, and one piece.       */}
+        {/* ------------------------------------------------------------ */}
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+          <Reveal className="h-full">
+            <Panel as="section" pad="md" className="h-full">
+              <Eyebrow>Our materials</Eyebrow>
+              <h2 className="mt-5 font-serif text-h1 text-text-primary">
+                What it is made of
+              </h2>
+              <dl className="mt-8 space-y-6">
+                {MATERIALS.map(material => (
+                  <div key={material.name}>
+                    <dt className="text-body font-medium text-text-primary">{material.name}</dt>
+                    <dd className="mt-1 text-ui text-text-secondary">{material.note}</dd>
+                  </div>
+                ))}
+              </dl>
+            </Panel>
           </Reveal>
+
+          {/*
+            The one dark panel on the page. A single inversion reads as
+            emphasis; a second one reads as a colour scheme, and then neither
+            of them is emphasis any more.
+          */}
+          <Reveal index={1} className="h-full">
+            <Panel as="section" tone="inverse" pad="none" className="relative flex h-full min-h-[420px] flex-col justify-end">
+              <Image
+                src="/seed/products/round-walnut-coffee-table-lg.webp"
+                alt=""
+                fill
+                quality={60}
+                sizes="(min-width: 1024px) 33vw, 100vw"
+                className="object-cover opacity-30"
+              />
+              {/*
+                A flat scrim first, then the gradient.
+
+                The gradient alone is nearly transparent at the top of the
+                panel, which meant the heading's contrast depended entirely
+                on how dark this particular photograph happened to be behind
+                this particular line. Swap the photograph for a lighter one
+                and the type quietly drops below AA with nothing in the build
+                to catch it. The flat layer makes the floor a property of the
+                panel instead: at 30% image over a half scrim, even a pure
+                white pixel leaves the body text above 7:1.
+              */}
+              <div aria-hidden="true" className="absolute inset-0 bg-bark-950/50" />
+              <div aria-hidden="true" className="absolute inset-0 bg-fade-up" />
+              <div className="relative p-7 sm:p-10">
+                <Eyebrow tone="inverse">In the workshop</Eyebrow>
+                <h2 className="mt-4 font-serif text-h1 text-bark-50">
+                  Eleven people, one bench at a time
+                </h2>
+                <p className="mt-4 max-w-[38ch] text-body text-bark-200">
+                  Nothing here comes off a container. Every frame is cut, joined and
+                  finished in our Gulberg workshop, and the person who built yours signs
+                  the underside.
+                </p>
+                <Link
+                  href="/about"
+                  className="mt-7 inline-flex items-center gap-2 rounded-sm text-ui font-medium uppercase tracking-[0.12em] text-bark-50 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-inverse"
+                >
+                  Meet the workshop
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
+            </Panel>
+          </Reveal>
+
+          {/*
+            One real piece, priced. A shop that will not show a price on its
+            own homepage is telling you something about the price.
+          */}
+          <Reveal index={2} className="h-full">
+            <Panel as="section" pad="none" className="flex h-full flex-col">
+              <div className="relative aspect-[4/3] bg-surface-subtle lg:aspect-auto lg:flex-1">
+                {spotlightImage && (
+                  <Image
+                    src={spotlightImage}
+                    alt=""
+                    fill
+                    sizes="(min-width: 1024px) 33vw, 100vw"
+                    className="object-cover"
+                  />
+                )}
+              </div>
+              <div className="p-7 sm:p-8">
+                <Eyebrow>Piece of the month</Eyebrow>
+                {spotlight ? (
+                  <>
+                    <h2 className="mt-4 font-serif text-h2 text-text-primary">
+                      <Link
+                        href={`/products/${spotlight.id}`}
+                        className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                      >
+                        {spotlight.name}
+                      </Link>
+                    </h2>
+                    <p className="mt-3 text-body-lg text-text-primary">
+                      <Money amount={spotlight.price} />
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-4 text-body text-text-secondary">
+                    Loading this month&rsquo;s pick.
+                  </p>
+                )}
+              </div>
+            </Panel>
+          </Reveal>
+        </div>
+
+        {/* ------------------------------------------------------------ */}
+        {/* The one sentence the shop would want remembered.              */}
+        {/* ------------------------------------------------------------ */}
+        <Panel as="section" pad="lg" tone="sunken" className="text-center">
+          <Eyebrow>Why we do it this way</Eyebrow>
+          <p className="mx-auto mt-6 max-w-[24ch] font-serif text-[2rem] leading-[1.12] tracking-[-0.02em] text-text-primary sm:max-w-[30ch] sm:text-display-serif">
+            Cheap furniture is bought three times. We would rather you bought once.
+          </p>
+        </Panel>
+
+        {/* ------------------------------------------------------------ */}
+        {/* Featured pieces.                                              */}
+        {/* ------------------------------------------------------------ */}
+        <Panel as="section" pad="lg">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <Eyebrow>Featured pieces</Eyebrow>
+              <h2 className="mt-4 font-serif text-h1 text-text-primary">This season</h2>
+            </div>
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-2 rounded-sm text-ui font-medium uppercase tracking-[0.12em] text-text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            >
+              View all
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
 
           {status === 'loading' ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -320,81 +333,44 @@ export default function HomePage() {
               }
             />
           ) : (
-            /* Manual only -- nothing autoplays on a page somebody is reading. */
-            <Carousel label="Featured furniture" perView={{ base: 1, sm: 2, lg: 4 }} loop={false}>
-              {featuredProducts.map(product => (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredProducts.slice(0, 4).map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
-            </Carousel>
+            </div>
           )}
+        </Panel>
 
-          <div className="mt-12 text-center">
-            <Button asChild size="lg" variant="outline" rightIcon={<ArrowRight className="h-4 w-4" />}>
-              <Link href="/products">View all products</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* What people say.                                                  */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="bg-surface-subtle py-section-md">
-        <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-8">
-          <Reveal className="mb-10 text-center">
-            <h2 className="font-serif text-h1 text-text-primary">What people say</h2>
-          </Reveal>
-
-          <Carousel label="Customer accounts" perView={{ base: 1, lg: 3 }} loop={false}>
-            {VOICES.map(voice => (
-              <Card key={voice.name} className="lift-on-hover h-full bg-surface">
-                <Quote className="mb-4 h-6 w-6 text-caramel-300" aria-hidden="true" />
-                <blockquote className="text-body text-text-primary">{voice.quote}</blockquote>
-                <footer className="mt-5 text-ui text-text-secondary">
-                  <span className="font-medium text-text-primary">{voice.name}</span>
-                  <span aria-hidden="true"> · </span>
-                  {voice.place}
-                </footer>
-              </Card>
+        {/* ------------------------------------------------------------ */}
+        {/* How buying here works.                                        */}
+        {/* ------------------------------------------------------------ */}
+        <Panel as="section" pad="none">
+          <div className="grid gap-px bg-border-subtle lg:grid-cols-3">
+            {SERVICES.map(service => (
+              <div key={service.title} className="bg-surface p-7 sm:p-10">
+                <h2 className="font-serif text-h2 text-text-primary">{service.title}</h2>
+                <p className="mt-3 text-body text-text-secondary">{service.body}</p>
+              </div>
             ))}
-          </Carousel>
-        </div>
-      </section>
+          </div>
+        </Panel>
 
-      {/* ---------------------------------------------------------------- */}
-      {/* Closing panel, over a drifting photograph.                        */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="relative isolate overflow-hidden bg-bark-950 py-section-lg">
-        <Parallax distance={50} className="absolute inset-0 -z-10 scale-110">
-          <Image
-            src="/seed/products/grand-dining-table-lg.webp"
-            alt=""
-            fill
-            quality={40}
-            sizes="100vw"
-            className="object-cover opacity-30"
-          />
-        </Parallax>
-        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-bark-950/65" />
-
-        <div className="relative mx-auto max-w-prose px-5 sm:px-6">
-          <Reveal className="glass-dark rounded-xl p-8 text-center shadow-float sm:p-12">
-            <h2 className="mb-4 font-serif text-h1 text-white">Not sure where to start?</h2>
-            <p className="mb-8 text-body-lg text-bark-100">
-              Tell us about the room and we will put a shortlist together. No obligation,
-              no showroom pressure.
-            </p>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-white/30 text-white hover:bg-white/10"
-            >
+        {/* ------------------------------------------------------------ */}
+        {/* Closing. One question, one door.                              */}
+        {/* ------------------------------------------------------------ */}
+        <Panel as="section" pad="lg" className="text-center">
+          <h2 className="font-serif text-h1 text-text-primary">Not sure where to start?</h2>
+          <p className="mx-auto mt-4 max-w-[52ch] text-body-lg text-text-secondary">
+            Tell {BRAND_SHORT} about the room — the size, the light, what it has to put up
+            with — and we will send back a shortlist. No obligation, no showroom pressure.
+          </p>
+          <div className="mt-8">
+            <Button asChild size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
               <Link href="/contact">Talk to us</Link>
             </Button>
-          </Reveal>
-        </div>
-      </section>
+          </div>
+        </Panel>
+      </div>
     </div>
   )
 }

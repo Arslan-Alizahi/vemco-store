@@ -36,7 +36,7 @@ export function PageHeader({
     >
       <div className={cn('max-w-prose', align === 'center' && 'mx-auto text-center')}>
         {eyebrow && (
-          <p className="mb-3 text-overline uppercase text-caramel-700">{eyebrow}</p>
+          <p className="mb-3 text-eyebrow uppercase text-text-tertiary">{eyebrow}</p>
         )}
         <h1 className="font-serif text-h1 text-text-primary">{title}</h1>
         {lead && <p className="mt-3 text-body-lg text-text-secondary">{lead}</p>}
