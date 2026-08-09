@@ -91,6 +91,19 @@ export const generateReceiptNumber = (): string => {
   return `RCP-${timestamp}-${random}`
 }
 
+/**
+ * Bookings get their own prefix.
+ *
+ * A customer holding a slip for three weeks needs to be able to read the
+ * number down the telephone, and the shop needs to know from the number alone
+ * whether it is looking for a finished sale or one that is still owed for.
+ */
+export const generateBookingNumber = (): string => {
+  const timestamp = Date.now().toString(36).toUpperCase()
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase()
+  return `BKG-${timestamp}-${random}`
+}
+
 export const generateSKU = (productName: string): string => {
   const prefix = productName
     .split(' ')

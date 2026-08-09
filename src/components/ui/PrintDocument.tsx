@@ -11,6 +11,14 @@ export interface PrintDocumentProps {
   children: React.ReactNode
   /** Shown in the on-screen chrome only. */
   title: string
+  /**
+   * Extra buttons beside Print, on screen only.
+   *
+   * For things a document can be done with other than printing it -- sending
+   * a booking bill on WhatsApp, say. They sit in the chrome, so they are
+   * never part of what reaches the paper.
+   */
+  actions?: React.ReactNode
   onClose: () => void
 }
 
@@ -30,7 +38,7 @@ export interface PrintDocumentProps {
  * this one — and it cannot be broken by anything a layout does further up
  * the tree, because there is nothing further up the tree.
  */
-export default function PrintDocument({ children, title, onClose }: PrintDocumentProps) {
+export default function PrintDocument({ children, title, actions, onClose }: PrintDocumentProps) {
   const [host, setHost] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -64,6 +72,7 @@ export default function PrintDocument({ children, title, onClose }: PrintDocumen
       <div className="flex items-center justify-between gap-4 border-b border-border-subtle bg-surface px-5 py-3 print:hidden">
         <h2 className="text-h3 text-text-primary">{title}</h2>
         <div className="flex items-center gap-2">
+          {actions}
           <Button size="sm" onClick={() => window.print()} leftIcon={<Printer className="h-4 w-4" />}>
             Print
           </Button>

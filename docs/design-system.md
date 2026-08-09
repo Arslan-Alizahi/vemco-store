@@ -208,8 +208,8 @@ Notes that are easy to get wrong:
 | --- | --- |
 | `verify:contrast` | 36 colour pairings meet AA. Reads `tokens.ts` directly. |
 | `verify:tokens` | No hex, `rgb()`, `hsl()`, Tailwind default palette or bracket colours anywhere outside the token file. Nothing is excluded. |
-| `verify:a11y` | 138 checks over 23 routes, storefront and staff screens alike — the admin ones audited signed in, using a throwaway password the gate mints for the run: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
-| `test` | 229 tests. Design system (tokens, motion, `cn`), cart arithmetic and stock caps, pricing and validation, the checkout gate rendered in jsdom, server-derived order pricing against a real Postgres schema the test creates and drops, the `?`-to-`$n` placeholder converter, currency conversion, sessions and password hashing, which routes middleware opens and shuts, and phone-number normalisation. |
+| `verify:a11y` | 144 checks over 24 routes, storefront and staff screens alike — the admin ones audited signed in, using a throwaway password the gate mints for the run: axe at two widths, reflow at 320px and 200% zoom, reduced motion, focus visibility. |
+| `test` | 249 tests. Design system (tokens, motion, `cn`), cart arithmetic and stock caps, pricing and validation, the checkout gate rendered in jsdom, server-derived order pricing against a real Postgres schema the test creates and drops, the `?`-to-`$n` placeholder converter, currency conversion, sessions and password hashing, which routes middleware opens and shuts, phone-number normalisation, and the booking bill's WhatsApp message and link. |
 
 `verify:a11y` needs a production build; `next dev` overwrites `.next`, so run
 `npm run build` after any dev session.

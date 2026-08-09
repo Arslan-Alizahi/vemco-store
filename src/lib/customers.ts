@@ -1,4 +1,5 @@
 import { runGet, runQuery } from '@/lib/db'
+import { normalisePhone } from '@/lib/phone'
 
 export interface Customer {
   id: number
@@ -26,8 +27,8 @@ export interface PurchaseLine {
 }
 
 export interface Purchase {
-  /** Where it was bought. A counter sale and a website order read differently. */
-  source: 'counter' | 'online'
+  /** Where it was bought. A counter sale, a website order and a booking all read differently. */
+  source: 'counter' | 'online' | 'booking'
   reference: string
   date: string
   subtotal: number
@@ -37,42 +38,25 @@ export interface Purchase {
   payment_method: string | null
   status: string | null
   items: PurchaseLine[]
+  /**
+   * Bookings only. A booking is a purchase that is not finished, so the two
+   * figures that make it different from a receipt travel with it: what has
+   * been paid so far, and when the furniture is due.
+   */
+  paid?: number
+  balance?: number
+  delivery_date?: string | null
 }
-
-/** Pakistan. Set this per deployment if the shop trades elsewhere. */
-const COUNTRY_CODE = process.env.NEXT_PUBLIC_PHONE_COUNTRY_CODE || '92'
-
-/** Digits in a local number after the trunk zero — 300 1234567 is ten. */
-const NATIONAL_LENGTH = 10
 
 /**
- * One phone number, one customer, however it was typed.
+ * Phone handling lives in `lib/phone.ts`, which imports nothing.
  *
- * Stripping punctuation is not enough. In Pakistan the leading 0 is a trunk
- * prefix that +92 replaces, so 0300 1234567 and +92 300 1234567 are the same
- * line — and a shop where the cashier types it one way on Monday and the
- * other on Friday would file one person as two, each with half their history.
- * That is the exact failure phone-as-identity exists to prevent.
- *
- * Everything is stored in the local 0-prefixed form, because that is what a
- * customer says out loud and what a cashier reads back.
+ * It used to be here, and anything that wanted `normalisePhone` in a browser
+ * -- the till's WhatsApp link, for one -- pulled this module's database
+ * connection into the bundle with it. Re-exported so existing callers are
+ * unaffected.
  */
-export const normalisePhone = (phone: string): string => {
-  let digits = phone.replace(/\D/g, '')
-
-  // 0092 300 1234567 — the international prefix written out.
-  if (digits.startsWith(`00${COUNTRY_CODE}`)) digits = digits.slice(2)
-
-  // 92 300 1234567, from a + that the strip above removed.
-  if (digits.startsWith(COUNTRY_CODE) && digits.length === COUNTRY_CODE.length + NATIONAL_LENGTH) {
-    digits = digits.slice(COUNTRY_CODE.length)
-  }
-
-  // 300 1234567, written without the trunk zero.
-  if (digits.length === NATIONAL_LENGTH && !digits.startsWith('0')) digits = `0${digits}`
-
-  return digits
-}
+export { normalisePhone, toInternationalPhone } from '@/lib/phone'
 
 /**
  * Finds a customer by phone, creating them if they are new, and keeps the
@@ -142,6 +126,24 @@ const PURCHASES_UNION = `
   FROM orders o
   JOIN customers cu ON o.customer_phone = cu.phone
   WHERE o.payment_status = 'paid'
+
+  UNION ALL
+
+  /**
+   * Bookings count what has been paid, not what was promised.
+   *
+   * A receipt and a paid order are money already taken, so their total is
+   * what the customer has spent. A booking is half-finished: someone with a
+   * Rs 200,000 sofa on order and Rs 50,000 down has spent Rs 50,000 here, and
+   * counting the whole total would inflate their lifetime value by money
+   * still in their pocket. Cancelled bookings keep whatever was paid against
+   * them, because that money did change hands.
+   */
+  SELECT b.customer_id, COALESCE(SUM(bp.amount), 0), b.created_at
+  FROM bookings b
+  LEFT JOIN booking_payments bp ON bp.booking_id = b.id
+  GROUP BY b.id, b.customer_id, b.created_at
+  HAVING COALESCE(SUM(bp.amount), 0) > 0
 `
 
 /**
@@ -262,10 +264,65 @@ export const getCustomerPurchases = async (id: number): Promise<Purchase[]> => {
       ])
     : [[], []]
 
+  /**
+   * Bookings, with what has been paid against each.
+   *
+   * They belong in the history even while unfinished: a customer telephoning
+   * about "my sofa" is asking about a booking, and a shop that can only show
+   * completed sales cannot answer.
+   */
+  const [bookings, bookingLines] = await Promise.all([
+    runQuery<{
+      id: number
+      booking_number: string
+      created_at: string
+      subtotal: number
+      tax: number
+      discount: number
+      total: number
+      paid: number
+      balance: number
+      status: string
+      delivery_date: string
+    }>(
+      `SELECT b.*, COALESCE(p.paid, 0) AS paid, b.total - COALESCE(p.paid, 0) AS balance
+       FROM bookings b
+       LEFT JOIN (
+         SELECT booking_id, SUM(amount) AS paid FROM booking_payments GROUP BY booking_id
+       ) p ON p.booking_id = b.id
+       WHERE b.customer_id = ?
+       ORDER BY b.created_at DESC`,
+      [id]
+    ),
+
+    runQuery<PurchaseLine & { parent_id: number }>(
+      `SELECT booking_id AS parent_id, product_name, product_sku, quantity, unit_price, subtotal
+       FROM booking_items
+       WHERE booking_id IN (SELECT id FROM bookings WHERE customer_id = ?)`,
+      [id]
+    ),
+  ])
+
   const receiptItems = byParent(receiptLines)
   const orderItems = byParent(orderLines)
+  const bookingItems = byParent(bookingLines)
 
   const purchases: Purchase[] = [
+    ...bookings.map(booking => ({
+      source: 'booking' as const,
+      reference: booking.booking_number,
+      date: booking.created_at,
+      subtotal: booking.subtotal,
+      tax: booking.tax,
+      discount: booking.discount,
+      total: booking.total,
+      payment_method: null,
+      status: booking.status,
+      items: bookingItems.get(booking.id) ?? [],
+      paid: booking.paid,
+      balance: booking.balance,
+      delivery_date: booking.delivery_date,
+    })),
     ...receipts.map(receipt => ({
       source: 'counter' as const,
       reference: receipt.receipt_number,

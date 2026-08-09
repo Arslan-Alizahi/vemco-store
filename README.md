@@ -2,7 +2,7 @@
 
 A furniture storefront, an admin panel, and a point-of-sale till sharing a single Postgres database. Next.js 14 (App Router), TypeScript, Tailwind CSS, and Stripe Checkout Sessions. Priced in PKR.
 
-> **Status:** the build is green and `npm run verify` runs six gates over it — types, 229 tests, 36 WCAG AA colour pairings, no raw colour literals, a production build, and 138 accessibility checks across 23 routes. The blocking security items listed here previously are fixed; what remains is under [Known Issues](#known-issues).
+> **Status:** the build is green and `npm run verify` runs six gates over it — types, 249 tests, 36 WCAG AA colour pairings, no raw colour literals, a production build, and 144 accessibility checks across 24 routes. The blocking security items listed here previously are fixed; what remains is under [Known Issues](#known-issues).
 
 ---
 
@@ -13,8 +13,8 @@ Three surfaces run off one database, so a stock change in any of them is immedia
 | Surface | Routes | Purpose |
 |---|---|---|
 | **Storefront** | `/`, `/products`, `/products/[slug]`, `/cart`, `/favorites`, `/categories` | Browse, cart, Stripe checkout |
-| **Admin** | `/admin`, `/admin/revenue`, `/admin/revenue/transactions` | Product/category/order/nav CRUD, revenue analytics, CSV export |
-| **POS** | `/billing` | Walk-in sales, printable receipts, change calculation |
+| **Admin** | `/admin`, `/admin/bookings`, `/admin/customers`, `/admin/revenue`, `/admin/revenue/transactions` | Product/category/order/nav CRUD, bookings, customers, revenue analytics, CSV export |
+| **POS** | `/billing` | Walk-in sales and bookings, printable receipts and bills, change calculation |
 
 Plus 12 static content pages (about, contact, FAQ, shipping, careers, press, blog, accessibility, and four policy pages).
 
@@ -28,6 +28,15 @@ Plus 12 static content pages (about, contact, FAQ, shipping, careers, press, blo
 
 **POS** — product search and quick-add grid, live totals with tax, cash/card/UPI/bank payment methods, automatic change calculation, atomic stock decrement, and a print-optimized receipt.
 
+**Bookings** — furniture ordered today and collected later, which is how most of this trade works. The till takes an advance and a delivery date; the piece is committed to that customer immediately, so nobody can sell it twice. Two rules hold the feature together:
+
+- **The balance is never stored.** It is the total minus the payments taken so far, worked out when asked. A stored balance is a second copy of the same fact and the two disagree the first time a payment is corrected.
+- **Revenue follows the money, not the promise.** Every instalment files its own revenue row, so a Rs 200,000 booking with Rs 50,000 down is Rs 50,000 of takings today. Recording the whole total on booking day would put money in the books that is still in the customer's pocket.
+
+The printed bill states the balance and the delivery date in a band at the top and lists every instalment with its date and method. `/admin/bookings` shows what is due, marks overdue collections in red, records further payments, and refuses to mark a booking delivered while money is outstanding — the furniture leaving the shop is the last leverage there is.
+
+**WhatsApp** — the booking bill can be sent as a message. It builds a `wa.me` link with the text already written and opens WhatsApp on the shop's own phone; the shopkeeper reads it and presses send. Nothing is transmitted by this application. The alternative is the WhatsApp Business API, which needs a Meta business account, a verified number, templates approved in advance and a per-message fee — the right answer at thousands of messages a month, and a great deal of machinery for a counter that sends a few a day.
+
 ## Tech Stack
 
 - **Framework** — Next.js 14.2 (App Router), React 18, TypeScript 5.7 (strict)
@@ -39,20 +48,20 @@ Plus 12 static content pages (about, contact, FAQ, shipping, careers, press, blo
 
 ## Getting Started
 
-**Requirements:** Node.js 18+ and a toolchain that can build `better-sqlite3` native bindings.
+**Requirements:** Node.js 18+ and a Postgres database. Supabase's free tier is what this is developed against.
 
 ```bash
 git clone https://github.com/Arslan-Alizahi/vemco-store.git
 cd vemco-store
 npm install
 
-cp .env.example .env.local   # then fill in your Stripe test keys
+cp .env.example .env.local   # then fill in DATABASE_URL and the Supabase keys
+npm run db:check              # is the database reachable?
+npm run db:seed               # the demo catalogue
 npm run dev
 ```
 
-Open <http://localhost:3000>. The SQLite database and its tables are created automatically on the first request — there are no migration commands to run.
-
-The database seeds itself with a demo catalogue on first run — twenty products with photographs, descriptions and dimensions. The admin panel can clear it.
+Open <http://localhost:3000>. Apply [`src/lib/db/schema.sql`](src/lib/db/schema.sql) to the database once — through Supabase's SQL editor or any Postgres client — and `npm run db:seed` fills it with the demo catalogue: twenty products with photographs, descriptions and dimensions. The admin panel can clear it again.
 
 Admin access needs one command, because there is deliberately no default password:
 
@@ -114,9 +123,9 @@ src/
 
 ## Database
 
-Twelve tables: `categories`, `products`, `product_images`, `orders`, `order_items`, `customers`, `billing_receipts`, `billing_items`, `nav_items`, `social_media_links`, `revenue_transactions` and `demo_seed`.
+Fifteen tables: `categories`, `products`, `product_images`, `orders`, `order_items`, `customers`, `billing_receipts`, `billing_items`, `bookings`, `booking_items`, `booking_payments`, `nav_items`, `social_media_links`, `revenue_transactions` and `demo_seed`.
 
-Nine triggers keep `updated_at` current on six tables and populate `revenue_transactions` automatically — one on receipt insert, one on paid-order insert, and one on an order transitioning to paid.
+Eleven triggers keep `updated_at` current on seven tables and populate `revenue_transactions` automatically — one on receipt insert, one on paid-order insert, one on an order transitioning to paid, and one on every booking payment.
 
 Schema lives in [`src/lib/db/schema.sql`](src/lib/db/schema.sql). It is applied to Supabase as a migration, and the order tests build a scratch schema from the same file, so there is one description of the tables rather than two that drift.
 

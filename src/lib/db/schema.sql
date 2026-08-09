@@ -313,3 +313,107 @@ CREATE TRIGGER update_revenue_on_order_payment AFTER UPDATE ON orders
     AND NEW.payment_status IN ('completed', 'paid')
   )
   EXECUTE FUNCTION record_order_revenue();
+
+-- Furniture ordered today, collected later.
+--
+-- The counter's receipts are for a sale that finishes at the till: money in,
+-- goods out, done. A booking is the other kind a furniture shop makes -- the
+-- customer picks a piece, leaves an advance, and is given a date. Different
+-- enough to keep apart: a receipt has change due, a booking has a balance
+-- outstanding and a date attached to it.
+CREATE TABLE IF NOT EXISTS bookings (
+  id SERIAL PRIMARY KEY,
+  booking_number TEXT UNIQUE NOT NULL,
+
+  -- Not optional here, unlike a walk-in receipt. Somebody coming back in
+  -- three weeks for a sofa has to be findable, and the shop has to be able to
+  -- telephone them if the delivery slips.
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+
+  subtotal NUMERIC(10, 2) NOT NULL,
+  tax NUMERIC(10, 2) DEFAULT 0,
+  discount NUMERIC(10, 2) DEFAULT 0,
+  total NUMERIC(10, 2) NOT NULL,
+
+  delivery_date DATE NOT NULL,
+  status TEXT NOT NULL DEFAULT 'booked',
+  delivered_at TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ,
+
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT bookings_status_known CHECK (status IN ('booked', 'delivered', 'cancelled'))
+);
+
+CREATE TABLE IF NOT EXISTS booking_items (
+  id SERIAL PRIMARY KEY,
+  booking_id INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
+  -- Copied, so a bill reprinted on delivery day says what was actually sold
+  -- even if the catalogue has been edited since.
+  product_name TEXT NOT NULL,
+  product_sku TEXT,
+  quantity INTEGER NOT NULL,
+  unit_price NUMERIC(10, 2) NOT NULL,
+  subtotal NUMERIC(10, 2) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Every instalment, not just the first. The balance is never stored: it is
+-- the total minus what this table holds. A stored balance is a second copy of
+-- the same fact, and the two drift the first time a payment is corrected.
+CREATE TABLE IF NOT EXISTS booking_payments (
+  id SERIAL PRIMARY KEY,
+  booking_id INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  amount NUMERIC(10, 2) NOT NULL CHECK (amount > 0),
+  payment_method TEXT NOT NULL DEFAULT 'cash',
+  notes TEXT,
+  paid_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_customer ON bookings(customer_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status_date ON bookings(status, delivery_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_number ON bookings(booking_number);
+CREATE INDEX IF NOT EXISTS idx_booking_items_booking ON booking_items(booking_id);
+CREATE INDEX IF NOT EXISTS idx_booking_payments_booking ON booking_payments(booking_id);
+
+DROP TRIGGER IF EXISTS update_bookings_timestamp ON bookings;
+CREATE TRIGGER update_bookings_timestamp BEFORE UPDATE ON bookings
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Revenue follows the money, not the promise.
+--
+-- A Rs 200,000 booking with Rs 50,000 down is Rs 50,000 of takings today and
+-- Rs 150,000 whenever the rest arrives. Filing the whole total on the day of
+-- booking would put money in the books that is still in the customer's
+-- pocket.
+CREATE OR REPLACE FUNCTION record_booking_payment_revenue() RETURNS TRIGGER AS $$
+DECLARE
+  b bookings%ROWTYPE;
+BEGIN
+  SELECT * INTO b FROM bookings WHERE id = NEW.booking_id;
+
+  INSERT INTO revenue_transactions (
+    transaction_type, reference_id, reference_number,
+    customer_name, customer_phone,
+    subtotal, tax, discount, total,
+    payment_method, payment_status, notes, transaction_date
+  ) VALUES (
+    'booking', b.id, b.booking_number,
+    b.customer_name, b.customer_phone,
+    NEW.amount, 0, 0, NEW.amount,
+    NEW.payment_method, 'completed',
+    COALESCE(NEW.notes, 'Booking payment'), NEW.paid_at
+  );
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS create_revenue_from_booking_payment ON booking_payments;
+CREATE TRIGGER create_revenue_from_booking_payment AFTER INSERT ON booking_payments
+  FOR EACH ROW EXECUTE FUNCTION record_booking_payment_revenue();

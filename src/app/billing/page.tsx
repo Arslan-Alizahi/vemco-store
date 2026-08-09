@@ -15,6 +15,7 @@ import { cn } from '@/lib/cn'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
 import { PrintReceipt } from '@/components/ui/PrintReceipt'
+import { PrintBookingBill } from '@/components/ui/PrintBookingBill'
 import { Search, Plus, Minus, Trash2, Receipt, Package, UserRound } from 'lucide-react'
 import { formatCurrency, generateReceiptNumber, calculateTax, calculateTotal, validateEmail } from '@/lib/utils'
 import { Product } from '@/types/product'
@@ -39,6 +40,20 @@ export default function BillingPage() {
   } | null>(null)
   const [currentReceipt, setCurrentReceipt] = useState<any>(null)
   const [showReceipt, setShowReceipt] = useState(false)
+
+  /**
+   * The two kinds of sale a furniture shop makes.
+   *
+   * `sale` finishes at the till: money in, goods out, change given. `booking`
+   * is the one this trade runs on -- the customer picks a piece, leaves an
+   * advance, and is given a date to collect. Same cart, same products; what
+   * differs is that a booking owes a balance and carries a date, so the
+   * dialog asks for a delivery date instead of offering change.
+   */
+  const [mode, setMode] = useState<'sale' | 'booking'>('sale')
+  const [deliveryDate, setDeliveryDate] = useState('')
+  const [currentBooking, setCurrentBooking] = useState<any>(null)
+  const [showBooking, setShowBooking] = useState(false)
   const { addToast } = useToast()
 
   // Calculate totals
@@ -124,6 +139,87 @@ export default function BillingPage() {
     setCustomerPhone('')
     setCustomerEmail('')
     setKnownCustomer(null)
+    setDeliveryDate('')
+  }
+
+  /**
+   * Three weeks out, which is what this shop quotes for a piece it has to
+   * order in. A suggestion, not a rule -- the cashier changes it when the
+   * customer asks for a particular day.
+   */
+  const defaultDeliveryDate = () => {
+    const date = new Date()
+    date.setDate(date.getDate() + 21)
+    return date.toISOString().slice(0, 10)
+  }
+
+  /** Never offer a date that has already passed. */
+  const earliestDeliveryDate = () => new Date().toISOString().slice(0, 10)
+
+  const advance = parseFloat(amountPaid) || 0
+  const balanceDue = Math.max(0, total - advance)
+
+  const processBooking = async () => {
+    if (cart.length === 0) {
+      addToast('Cart is empty', 'error')
+      return
+    }
+
+    // A booking is a promise to somebody. Without a name and a number there
+    // is nobody to hand the furniture to in three weeks.
+    if (!customerName.trim() || !customerPhone.trim()) {
+      addToast('A booking needs the customer’s name and phone number', 'error')
+      return
+    }
+
+    if (!deliveryDate) {
+      addToast('Choose the delivery date', 'error')
+      return
+    }
+
+    if (advance > total) {
+      addToast('The advance is more than the total', 'error')
+      return
+    }
+
+    if (emailError) {
+      addToast('Check the email address, or clear it', 'error')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart,
+          tax,
+          discount: 0,
+          delivery_date: deliveryDate,
+          advance,
+          payment_method: paymentMethod,
+          customer_name: customerName.trim(),
+          customer_phone: customerPhone.trim(),
+          customer_email: customerEmail.trim() || null,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        addToast('Booking taken', 'success')
+        setCurrentBooking(data.data)
+        setShowBooking(true)
+        clearCart()
+        setPaymentModal(false)
+        fetchProducts()
+      } else {
+        addToast(data.message || 'We could not take that booking', 'error')
+      }
+    } catch (error) {
+      console.error('Error creating booking:', error)
+      addToast('We could not take that booking', 'error')
+    }
   }
 
   const processBilling = async () => {
@@ -464,10 +560,44 @@ export default function BillingPage() {
       <Modal
         isOpen={paymentModal}
         onClose={() => setPaymentModal(false)}
-        title="Take payment"
+        title={mode === 'booking' ? 'Take a booking' : 'Take payment'}
         size="md"
       >
         <div className="space-y-4">
+          {/* Which kind of sale this is. First, because it changes what the
+              rest of the dialog asks for. */}
+          <div
+            role="radiogroup"
+            aria-label="Kind of sale"
+            className="grid grid-cols-2 gap-1 rounded-sm border border-border-subtle bg-surface-subtle p-1 shadow-well"
+          >
+            {([
+              ['sale', 'Paying now', 'Goods leave today'],
+              ['booking', 'Booking', 'Advance now, collect later'],
+            ] as const).map(([value, label, hint]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={mode === value}
+                onClick={() => {
+                  setMode(value)
+                  if (value === 'booking' && !deliveryDate) setDeliveryDate(defaultDeliveryDate())
+                }}
+                className={cn(
+                  'rounded-xs px-3 py-2 text-left transition-colors duration-fast ease-standard',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  mode === value
+                    ? 'bg-surface text-text-primary shadow-e1'
+                    : 'text-text-secondary hover:text-text-primary'
+                )}
+              >
+                <span className="block text-ui font-medium">{label}</span>
+                <span className="block text-caption text-text-tertiary">{hint}</span>
+              </button>
+            ))}
+          </div>
+
           {/* Who this is for.
               Optional by design -- a walk-in who does not want to leave a
               number should not be held up at the counter -- but the phone is
@@ -477,7 +607,11 @@ export default function BillingPage() {
             <div className="mb-3 flex items-center gap-2">
               <UserRound className="h-4 w-4 text-text-secondary" aria-hidden="true" />
               <p className="text-ui font-medium text-text-primary">Customer</p>
-              <span className="text-caption text-text-tertiary">optional</span>
+              {/* Optional for a sale that finishes now; required for one that
+                  does not, because somebody has to be handed the furniture. */}
+              <span className="text-caption text-text-tertiary">
+                {mode === 'booking' ? 'required' : 'optional'}
+              </span>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -532,20 +666,31 @@ export default function BillingPage() {
             ]}
           />
 
+          {mode === 'booking' && (
+            <Input
+              label="Delivery date"
+              type="date"
+              value={deliveryDate}
+              min={earliestDeliveryDate()}
+              onChange={e => setDeliveryDate(e.target.value)}
+              helperText="The day the customer comes to collect"
+            />
+          )}
+
           {/* The currency affix used to be a DollarSign icon, on a shop that
               prices everything in rupees. */}
           <Input
-            label="Amount paid"
+            label={mode === 'booking' ? 'Advance taken' : 'Amount paid'}
             type="number"
             step="1"
             inputMode="numeric"
             value={amountPaid}
             onChange={(e) => setAmountPaid(e.target.value)}
-            placeholder={String(Math.round(total))}
+            placeholder={String(Math.round(mode === 'booking' ? total / 2 : total))}
             leftIcon={<span className="text-ui text-text-tertiary">Rs</span>}
           />
 
-          {amountPaid && parseFloat(amountPaid) >= total && (
+          {mode === 'sale' && amountPaid && parseFloat(amountPaid) >= total && (
             <div className="rounded-md bg-success-50 p-3">
               <p className="text-ui text-success-900">
                 Change due: <Money amount={changeAmount} className="font-medium" />
@@ -553,8 +698,19 @@ export default function BillingPage() {
             </div>
           )}
 
+          {/* The number the customer will ask about, so it is stated before
+              the booking is taken rather than discovered on the printed bill. */}
+          {mode === 'booking' && (
+            <div className="rounded-md border border-border-subtle bg-surface-subtle p-3">
+              <p className="text-ui text-text-secondary">Balance due on collection</p>
+              <Money amount={balanceDue} className="text-h2 text-text-primary" />
+            </div>
+          )}
+
           <div className="rounded-md bg-surface-subtle p-3">
-            <p className="text-ui text-text-secondary">Total due</p>
+            <p className="text-ui text-text-secondary">
+              {mode === 'booking' ? 'Order total' : 'Total due'}
+            </p>
             <Money amount={total} className="text-h1 text-text-primary" />
           </div>
 
@@ -564,11 +720,11 @@ export default function BillingPage() {
             </Button>
             <Button
               variant="primary"
-              onClick={processBilling}
+              onClick={mode === 'booking' ? processBooking : processBilling}
               disabled={cart.length === 0}
               fullWidth
             >
-              Complete sale
+              {mode === 'booking' ? 'Take booking' : 'Complete sale'}
             </Button>
           </div>
         </div>
@@ -581,6 +737,16 @@ export default function BillingPage() {
           onClose={() => {
             setShowReceipt(false)
             setCurrentReceipt(null)
+          }}
+        />
+      )}
+
+      {showBooking && currentBooking && (
+        <PrintBookingBill
+          booking={currentBooking}
+          onClose={() => {
+            setShowBooking(false)
+            setCurrentBooking(null)
           }}
         />
       )}

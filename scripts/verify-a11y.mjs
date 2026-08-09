@@ -95,6 +95,7 @@ const STATIC_ROUTES = [
   '/admin/login',
   '/admin',
   '/billing',
+  '/admin/bookings',
   '/admin/customers',
   '/admin/revenue',
   '/admin/revenue/transactions',

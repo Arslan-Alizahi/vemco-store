@@ -46,6 +46,8 @@ describe('closed without a session', () => {
   it.each([
     '/api/orders',
     '/api/billing',
+    '/api/bookings',
+    '/api/bookings/1',
     '/api/admin/demo-data',
     '/api/admin/revenue/analytics',
   ])('reading %s answers 401, because it holds customer records', async path => {

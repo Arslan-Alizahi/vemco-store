@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowUpRight, BarChart3, LayoutDashboard, LogOut, Receipt, Store, Users } from 'lucide-react'
+import { ArrowUpRight, BarChart3, CalendarClock, LayoutDashboard, LogOut, Receipt, Store, Users } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import Container from './Container'
 import Logo from './Logo'
@@ -18,6 +18,9 @@ import AppFrame from './AppFrame'
 const SECTIONS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/billing', label: 'Point of sale', icon: Store },
+  // Third, next to the till that creates them: a booking is unfinished work,
+  // and unfinished work needs to be somewhere a shop looks every morning.
+  { href: '/admin/bookings', label: 'Bookings', icon: CalendarClock },
   { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/revenue', label: 'Revenue', icon: BarChart3 },
   { href: '/admin/revenue/transactions', label: 'Transactions', icon: Receipt },

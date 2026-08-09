@@ -176,6 +176,23 @@ export const getDb = (): Sql => {
          * was displayed five hours off in Pakistan. An ISO string carries its
          * offset and lands on the right minute.
          */
+        /**
+         * A DATE is a day, not an instant.
+         *
+         * Left to the driver it comes back as a JS Date at midnight UTC, and
+         * `formatDate` then renders it in the reader's timezone -- which
+         * shows a delivery promised for the 29th as the 28th to anyone west
+         * of Greenwich. A booking's delivery date has no time of day and no
+         * timezone; it is the day written on the customer's bill, so it stays
+         * the string Postgres sent.
+         */
+        date: {
+          to: 1082,
+          from: [1082],
+          serialize: (value: string) => value,
+          parse: (value: string) => value,
+        },
+
         timestamptz: {
           to: 1184,
           from: [1184, 1114],

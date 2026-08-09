@@ -22,7 +22,15 @@ const PROTECTED_PREFIXES = ['/admin', '/billing', '/api/admin']
  * Reads here expose customer records, so they are protected as tightly as
  * writes. The public storefront needs none of these.
  */
-const PROTECTED_READ_PREFIXES = ['/api/orders', '/api/billing', '/api/customers']
+const PROTECTED_READ_PREFIXES = [
+  '/api/orders',
+  '/api/billing',
+  '/api/customers',
+  // A booking holds a name, a phone number, a delivery date and what is
+  // still owed. Reading that list should need a session as much as reading
+  // the customer table does.
+  '/api/bookings',
+]
 
 /**
  * Public writes, by necessity.
@@ -76,7 +84,16 @@ const needsSession = (request: NextRequest): boolean => {
  * URL is worse than none. They are refused outright rather than left to fail
  * on a missing table.
  */
-const SHOWCASE_CLOSED = ['/admin', '/billing', '/api/admin', '/api/customers', '/api/orders', '/api/billing', '/api/upload']
+const SHOWCASE_CLOSED = [
+  '/admin',
+  '/billing',
+  '/api/admin',
+  '/api/customers',
+  '/api/orders',
+  '/api/billing',
+  '/api/bookings',
+  '/api/upload',
+]
 
 /**
  * The maintenance page, and what it needs in order to look like itself.
