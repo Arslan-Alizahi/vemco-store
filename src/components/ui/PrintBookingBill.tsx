@@ -5,6 +5,7 @@ import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { bookingWhatsappLink } from '@/lib/whatsapp'
 import type { BookingDetail } from '@/lib/bookings'
 import PrintDocument from './PrintDocument'
+import { PoweredByPrint } from '@/components/layout/PoweredBy'
 import Button from './Button'
 
 /**
@@ -191,6 +192,7 @@ export function PrintBookingBill({
           leaves the showroom. Exchanges within 14 days, unused and in original packaging.
           Structural guarantee of five years on all solid wood frames.
         </p>
+        <PoweredByPrint className="mt-4" />
       </footer>
     </PrintDocument>
   )

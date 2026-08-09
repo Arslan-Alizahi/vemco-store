@@ -2,6 +2,7 @@
 
 import { formatCurrency, formatDate } from '@/lib/utils'
 import PrintDocument from './PrintDocument'
+import { PoweredByPrint } from '@/components/layout/PoweredBy'
 import type { CustomerSummary, Purchase } from '@/lib/customers'
 
 interface PrintStatementProps {
@@ -143,6 +144,7 @@ export default function PrintStatement({ customer, purchases, onClose }: PrintSt
           This statement is a record of purchases, not a tax invoice. Structural guarantee
           of five years applies from each purchase date on solid wood frames.
         </p>
+        <PoweredByPrint className="mt-4" />
       </footer>
     </PrintDocument>
   )

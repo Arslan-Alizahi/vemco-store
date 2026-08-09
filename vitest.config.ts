@@ -26,6 +26,22 @@ export default defineConfig({
     env,
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+
+    /**
+     * Fifteen seconds, not the default five.
+     *
+     * Most of these tests are pure and finish in single-digit milliseconds,
+     * but the order tests talk to a real Postgres in Mumbai -- that is the
+     * point of them -- and each assertion is a round trip. Under the load of
+     * `npm run verify`, which is building the application at the same time,
+     * one of them crossed five seconds and the whole gate failed on a test
+     * that had found nothing wrong.
+     *
+     * A gate that fails at random is worse than no gate: people learn to
+     * re-run it rather than read it.
+     */
+    testTimeout: 15_000,
+    hookTimeout: 60_000,
   },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },

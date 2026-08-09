@@ -4,6 +4,7 @@ import { runQuery } from '@/lib/db'
 import type { SocialMediaLink } from '@/types/social-media'
 import Container from './Container'
 import Logo from './Logo'
+import PoweredBy from './PoweredBy'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   facebook: Facebook,
@@ -129,9 +130,12 @@ export default async function Footer() {
 
       <div className="border-t border-bark-800">
         <Container className="flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
-          <p className="text-caption text-bark-400">
-            © {new Date().getFullYear()} VEMCO. All rights reserved.
-          </p>
+          <div className="flex flex-col items-center gap-1 sm:items-start">
+            <p className="text-caption text-bark-400">
+              © {new Date().getFullYear()} VEMCO. All rights reserved.
+            </p>
+            <PoweredBy tone="inverted" />
+          </div>
 
           {socialLinks.length > 0 && (
             <ul className="flex items-center gap-2">

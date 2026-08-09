@@ -2,6 +2,7 @@
 
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import PrintDocument from './PrintDocument'
+import { PoweredByPrint } from '@/components/layout/PoweredBy'
 
 interface ReceiptItem {
   product_name: string
@@ -160,6 +161,7 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
           Exchanges within 14 days with this receipt, unused and in original packaging.
           Structural guarantee of five years on all solid wood frames.
         </p>
+        <PoweredByPrint className="mt-4" />
       </footer>
     </PrintDocument>
   )

@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn'
 import Container from './Container'
 import Logo from './Logo'
 import AppFrame from './AppFrame'
+import PoweredBy from './PoweredBy'
 
 /**
  * The sections, in the order somebody actually works through them.
@@ -140,6 +141,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </div>
           </Container>
         </header>
+      }
+      footer={
+        // The back office had no footer at all. One quiet line is enough:
+        // whoever is standing at this screen all day should not have a second
+        // brand shouting at them.
+        <footer className="border-t border-border-subtle bg-surface">
+          <Container size="wide">
+            <div className="flex justify-center py-4">
+              <PoweredBy />
+            </div>
+          </Container>
+        </footer>
       }
     >
       {children}
