@@ -1,4 +1,4 @@
-# Vimo Furniture House design system
+# Vimco Furniture House design system
 
 Everything visual comes from four files — storefront, admin and the
 register alike. If a value is not

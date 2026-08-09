@@ -3,8 +3,8 @@ import { bark, caramel } from '@/design/tokens'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Vimo Furniture House',
-    short_name: 'Vimo Furniture House',
+    name: 'Vimco Furniture House',
+    short_name: 'Vimco Furniture House',
     description: 'Furniture for considered spaces.',
     start_url: '/',
     display: 'standalone',

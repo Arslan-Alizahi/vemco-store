@@ -8,8 +8,8 @@ import { cn } from '@/lib/cn'
  * near-identical lines that drift apart the first time one of them is edited.
  *
  * Deliberately quiet. It sits below the shop's own copyright in the smallest
- * text on the page: a maker's mark, not a second brand competing with Vimo Furniture House
- * on Vimo Furniture House's own storefront.
+ * text on the page: a maker's mark, not a second brand competing with Vimco Furniture House
+ * on Vimco Furniture House's own storefront.
  */
 
 export const BUILDER_NAME = 'CodeChoicez'

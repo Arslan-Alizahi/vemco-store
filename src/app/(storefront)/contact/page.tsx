@@ -4,32 +4,39 @@ import Container from '@/components/layout/Container'
 import PageHeader from '@/components/layout/PageHeader'
 import Card from '@/components/ui/Card'
 import ContactForm from '@/components/storefront/ContactForm'
+import { BRAND_ADDRESS, BRAND_EMAIL, BRAND_NAME, BRAND_PHONES, telHref } from '@/lib/brand'
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description:
-    'Reach Vimo Furniture House by phone, email or WhatsApp, or visit the showroom in Gulberg III, Lahore.',
+  description: `Reach ${BRAND_NAME} on either phone line, by email or WhatsApp, or visit the showroom on Dhindhiyan Road, Haripur.`,
 }
 
 const DETAILS = [
   {
     icon: Phone,
     label: 'Phone',
-    value: '+92 42 3500 0000',
-    href: 'tel:+924235000000',
+    value: BRAND_PHONES[0],
+    href: telHref(BRAND_PHONES[0]),
     note: 'Mon-Sat, 10am to 8pm',
+  },
+  {
+    icon: Phone,
+    label: 'Second line',
+    value: BRAND_PHONES[1],
+    href: telHref(BRAND_PHONES[1]),
+    note: 'If the first line is busy',
   },
   {
     icon: Mail,
     label: 'Email',
-    value: 'hello@vimofurniture.pk',
-    href: 'mailto:hello@vimofurniture.pk',
+    value: BRAND_EMAIL,
+    href: `mailto:${BRAND_EMAIL}`,
     note: 'We reply within one working day',
   },
   {
     icon: MapPin,
     label: 'Showroom',
-    value: 'Showroom 14, Gulberg III, Lahore',
+    value: BRAND_ADDRESS,
     href: null,
     note: 'Open seven days, 11am to 8pm',
   },

@@ -4,7 +4,7 @@ import LegalPage from '@/components/layout/LegalPage'
 
 export const metadata: Metadata = {
   title: 'Cookie policy',
-  description: 'The cookies Vimo Furniture House sets, what each one does, and how to turn them off.',
+  description: 'The cookies Vimco Furniture House sets, what each one does, and how to turn them off.',
 }
 
 export default function CookiePolicyPage() {
@@ -79,7 +79,7 @@ export default function CookiePolicyPage() {
           heading: 'Contact',
           body: (
             <p>
-              Questions go to <a href="mailto:privacy@vimofurniture.pk">privacy@vimofurniture.pk</a>. See also
+              Questions go to <a href="mailto:hj680787@gmail.com">hj680787@gmail.com</a>. See also
               our <Link href="/policies/privacy">privacy policy</Link>.
             </p>
           ),

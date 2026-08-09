@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Vimo Furniture House makes solid wood furniture in Lahore, publishes full specifications, and backs the structure for five years.',
+    'Vimco Furniture House makes solid wood furniture in Lahore, publishes full specifications, and backs the structure for five years.',
 }
 
 const PRINCIPLES = [
@@ -42,7 +42,7 @@ export default function AboutPage() {
     <>
       <Container className="pt-section-md">
         <PageHeader
-          eyebrow="About Vimo Furniture House"
+          eyebrow="About Vimco Furniture House"
           title="Furniture that outlasts the room you bought it for"
           lead="We build in Lahore, sell direct, and tell you what a piece is actually made of."
           align="center"
@@ -61,7 +61,7 @@ export default function AboutPage() {
             fits through your door.
           </p>
           <p>
-            We sell direct from our own workshop and a single showroom in Gulberg. No
+            We sell direct from our own workshop and a single showroom in Haripur. No
             middlemen, which is the only reason the pricing works at this level of
             construction.
           </p>
@@ -91,7 +91,7 @@ export default function AboutPage() {
         <Container size="prose" className="text-center">
           <h2 className="mb-4 font-serif text-h1">Come and sit on it</h2>
           <p className="mb-8 text-body-lg text-bark-200">
-            Photographs only go so far. The showroom is open seven days a week in Gulberg III,
+            Photographs only go so far. The showroom is open seven days a week on Dhindhiyan Road, Haripur,
             and nobody there works on commission.
           </p>
           <Button

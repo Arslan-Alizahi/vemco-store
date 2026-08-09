@@ -18,7 +18,7 @@ import type { BookingDetail } from '@/lib/bookings'
  * day, and it cannot be set up from here.
  */
 
-const SHOP_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Vimo Furniture House'
+const SHOP_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Vimco Furniture House'
 
 /** Dates as a customer reads them, not as a database stores them. */
 const readableDate = (value: string): string =>

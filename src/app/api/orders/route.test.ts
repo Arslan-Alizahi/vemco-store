@@ -21,7 +21,7 @@ import { config } from 'dotenv'
 config({ path: '.env.local' })
 config({ path: '.env' })
 
-const SCHEMA = `vimo_test_${process.pid}`
+const SCHEMA = `vimco_test_${process.pid}`
 process.env.DATABASE_SCHEMA = SCHEMA
 
 /**
@@ -68,7 +68,7 @@ const seedProduct = async (
 
 const customer = {
   customer_name: 'Arslan Khan',
-  customer_email: 'arslan@vimofurniture.pk',
+  customer_email: 'hj680787@gmail.com',
   customer_phone: '03001234567',
   shipping_address: 'Showroom 14, Lahore',
 }

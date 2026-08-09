@@ -5,6 +5,7 @@ import type { SocialMediaLink } from '@/types/social-media'
 import Container from './Container'
 import Logo from './Logo'
 import PoweredBy from './PoweredBy'
+import { BRAND_ADDRESS, BRAND_EMAIL, BRAND_NAME, BRAND_PHONES, telHref } from '@/lib/brand'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   facebook: Facebook,
@@ -89,26 +90,38 @@ export default async function Footer() {
 
             <div className="mt-6 space-y-3 text-ui">
               <a
-                href="mailto:hello@vimofurniture.pk"
+                href={`mailto:${BRAND_EMAIL}`}
                 className="flex items-center gap-3 rounded-sm transition-colors hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
               >
                 <Mail className="h-4 w-4 shrink-0 text-bark-300" aria-hidden="true" />
-                hello@vimofurniture.pk
+                {BRAND_EMAIL}
               </a>
-              <a
-                href="tel:+924235000000"
-                className="flex items-center gap-3 rounded-sm transition-colors hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
-              >
-                <Phone className="h-4 w-4 shrink-0 text-bark-300" aria-hidden="true" />
-                +92 42 3500 0000
-              </a>
+
+              {/*
+                Both lines are listed, and the icon only appears on the first.
+                Repeating the handset glyph down a column reads as two
+                unrelated facts; one icon over a stack reads as "these are the
+                phone numbers", which is what it is.
+              */}
+              <div className="flex items-start gap-3">
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-bark-300" aria-hidden="true" />
+                <ul className="space-y-1">
+                  {BRAND_PHONES.map(phone => (
+                    <li key={phone}>
+                      <a
+                        href={telHref(phone)}
+                        className="rounded-sm transition-colors hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
+                      >
+                        {phone}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <p className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-bark-300" aria-hidden="true" />
-                <span>
-                  Showroom 14, Gulberg III
-                  <br />
-                  Lahore, Punjab
-                </span>
+                <span>{BRAND_ADDRESS}</span>
               </p>
             </div>
           </div>
@@ -139,7 +152,7 @@ export default async function Footer() {
         <Container className="flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
           <div className="flex flex-col items-center gap-1 sm:items-start">
             <p className="text-caption text-bark-300">
-              © {new Date().getFullYear()} Vimo Furniture House. All rights reserved.
+              © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
             </p>
             <PoweredBy tone="inverted" />
           </div>
@@ -154,7 +167,7 @@ export default async function Footer() {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={`Vimo Furniture House on ${link.platform}`}
+                      aria-label={`${BRAND_NAME} on ${link.platform}`}
                       className="flex h-11 w-11 items-center justify-center rounded-sm text-bark-300 transition-colors hover:bg-bark-700 hover:text-bark-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel-300"
                     >
                       <Icon className="h-5 w-5" />

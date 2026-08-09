@@ -89,10 +89,10 @@ describe('pagination', () => {
 
 describe('validateEmail', () => {
   it('accepts an ordinary address', () => {
-    expect(validateEmail('someone@vimofurniture.pk')).toBe(true)
+    expect(validateEmail('hj680787@gmail.com')).toBe(true)
   })
 
-  it.each(['someone', 'someone@', '@vimofurniture.pk', 'someone@vimofurniture', 'a b@vimofurniture.pk', ''])(
+  it.each(['someone', 'someone@', '@gmail.com', 'someone@gmail', 'a b@gmail.com', ''])(
     'rejects %j',
     value => {
       expect(validateEmail(value)).toBe(false)

@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Categories',
   description:
-    'Browse Vimo Furniture House by room: sofas and seating, beds and bedroom, dining, tables, and storage. Solid wood, full specifications, delivered across Pakistan.',
+    'Browse Vimco Furniture House by room: sofas and seating, beds and bedroom, dining, tables, and storage. Solid wood, full specifications, delivered across Pakistan.',
 }
 
 /**

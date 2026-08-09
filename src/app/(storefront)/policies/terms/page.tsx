@@ -1,3 +1,4 @@
+import { BRAND_ADDRESS, BRAND_NAME } from '@/lib/brand'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import LegalPage from '@/components/layout/LegalPage'
@@ -5,14 +6,14 @@ import LegalPage from '@/components/layout/LegalPage'
 export const metadata: Metadata = {
   title: 'Terms of sale',
   description:
-    'The terms you agree to when ordering furniture from Vimo Furniture House — pricing, delivery, cancellation and liability.',
+    'The terms you agree to when ordering furniture from Vimco Furniture House — pricing, delivery, cancellation and liability.',
 }
 
 export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of sale"
-      lead="The agreement between you and Vimo Furniture House when you place an order."
+      lead="The agreement between you and Vimco Furniture House when you place an order."
       updated="12 June 2026"
       sections={[
         {
@@ -20,8 +21,8 @@ export default function TermsPage() {
           heading: 'Who we are',
           body: (
             <p>
-              Vimo Furniture House is a furniture retailer registered in Pakistan, trading from Showroom 14,
-              Gulberg III, Lahore. In these terms, &ldquo;we&rdquo; means Vimo Furniture House and
+              {BRAND_NAME} is a furniture retailer registered in Pakistan, trading from{' '}
+              {BRAND_ADDRESS}. In these terms, &ldquo;we&rdquo; means {BRAND_NAME} and
               &ldquo;you&rdquo; means the person placing the order.
             </p>
           ),
@@ -105,7 +106,7 @@ export default function TermsPage() {
           heading: 'Governing law',
           body: (
             <p>
-              These terms are governed by the laws of Pakistan, and the courts of Lahore have
+              These terms are governed by the laws of Pakistan, and the courts of Haripur have
               jurisdiction over any dispute.
             </p>
           ),

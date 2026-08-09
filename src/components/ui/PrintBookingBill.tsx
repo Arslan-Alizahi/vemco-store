@@ -5,6 +5,7 @@ import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { bookingWhatsappLink } from '@/lib/whatsapp'
 import type { BookingDetail } from '@/lib/bookings'
 import PrintDocument from './PrintDocument'
+import PrintLetterhead from './PrintLetterhead'
 import { PoweredByPrint } from '@/components/layout/PoweredBy'
 import Button from './Button'
 
@@ -48,13 +49,7 @@ export function PrintBookingBill({
         ) : null
       }
     >
-      <header className="border-b border-border-strong pb-5 text-center">
-        <p className="font-serif text-h1 text-text-primary">Vimo Furniture House</p>
-        <p className="mt-1 text-ui text-text-secondary">Furniture for considered spaces</p>
-        <p className="mt-2 text-caption text-text-secondary">
-          Showroom 14, Gulberg III, Lahore · +92 42 3500 0000 · hello@vimofurniture.pk
-        </p>
-      </header>
+      <PrintLetterhead />
 
       <p className="mt-5 text-center text-overline uppercase tracking-wide text-text-secondary">
         {booking.status === 'cancelled'

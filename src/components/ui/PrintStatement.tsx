@@ -2,6 +2,7 @@
 
 import { formatCurrency, formatDate } from '@/lib/utils'
 import PrintDocument from './PrintDocument'
+import PrintLetterhead from './PrintLetterhead'
 import { PoweredByPrint } from '@/components/layout/PoweredBy'
 import type { CustomerSummary, Purchase } from '@/lib/customers'
 
@@ -23,20 +24,14 @@ interface PrintStatementProps {
 export default function PrintStatement({ customer, purchases, onClose }: PrintStatementProps) {
   return (
     <PrintDocument title={`Statement — ${customer.name}`} onClose={onClose}>
-      <header className="flex items-start justify-between gap-6 border-b border-border-strong pb-5">
-        <div>
-          <p className="font-serif text-h1 text-text-primary">Vimo Furniture House</p>
-          <p className="mt-1 text-caption text-text-secondary">
-            Showroom 14, Gulberg III, Lahore · +92 42 3500 0000
-          </p>
-        </div>
-        <div className="text-right">
+      <PrintLetterhead layout="aside">
+        <div className="shrink-0 text-right">
           <p className="text-h3 text-text-primary">Purchase statement</p>
           <p className="mt-1 text-caption text-text-secondary">
             Issued {formatDate(new Date().toISOString())}
           </p>
         </div>
-      </header>
+      </PrintLetterhead>
 
       <section className="mt-5 flex flex-wrap items-start justify-between gap-6">
         <div>

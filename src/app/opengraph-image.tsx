@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { bark, caramel, semantic } from '@/design/tokens'
 
 export const runtime = 'edge'
-export const alt = 'Vimo Furniture House — Furniture for considered spaces'
+export const alt = 'Vimco Furniture House — Furniture for considered spaces'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -43,7 +43,7 @@ export default async function OpengraphImage() {
               justifyContent: 'center',
             }}
           />
-          <span style={{ color: semantic.canvas, fontSize: 34, letterSpacing: '-0.01em' }}>Vimo Furniture House</span>
+          <span style={{ color: semantic.canvas, fontSize: 34, letterSpacing: '-0.01em' }}>Vimco Furniture House</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>

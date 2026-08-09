@@ -8,7 +8,7 @@ import FaqAccordion, { type FaqCategory, type FaqItem } from '@/components/store
 export const metadata: Metadata = {
   title: 'FAQ',
   description:
-    'Answers on Vimo Furniture House delivery, payment, returns, warranty and made-to-order timescales.',
+    'Answers on Vimco Furniture House delivery, payment, returns, warranty and made-to-order timescales.',
 }
 
 const CATEGORIES: FaqCategory[] = [
@@ -32,7 +32,7 @@ const FAQS: FaqItem[] = [
     category: 'ordering',
     question: 'Can I change or cancel my order?',
     answer:
-      'Yes, any time before dispatch — email support@vimofurniture.pk with your order number. Made-to-order pieces can be cancelled free until production starts, and we tell you in writing before that happens.',
+      'Yes, any time before dispatch — email hj680787@gmail.com with your order number. Made-to-order pieces can be cancelled free until production starts, and we tell you in writing before that happens.',
   },
   {
     id: 'order-stock',
@@ -95,7 +95,7 @@ const FAQS: FaqItem[] = [
     category: 'returns',
     question: 'What if something arrives damaged?',
     answer:
-      'Tell the delivery team before they leave, or send photographs to support@vimofurniture.pk within 48 hours. We collect at our cost and repair, replace or refund. There is no charge to you either way.',
+      'Tell the delivery team before they leave, or send photographs to hj680787@gmail.com within 48 hours. We collect at our cost and repair, replace or refund. There is no charge to you either way.',
   },
   {
     id: 'returns-warranty',

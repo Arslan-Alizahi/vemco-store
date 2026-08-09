@@ -1,7 +1,7 @@
 import { runDelete, runGet, runInsert, runTransaction, type Sql } from './index'
 
 /**
- * Vimo Furniture House demo catalogue -- furniture, priced in PKR for the Pakistani market.
+ * Vimco Furniture House demo catalogue -- furniture, priced in PKR for the Pakistani market.
  *
  * Every seeded row is recorded in the `demo_seed` ledger, so clearing demo
  * data removes exactly what the seeder created and never touches rows an
@@ -9,7 +9,7 @@ import { runDelete, runGet, runInsert, runTransaction, type Sql } from './index'
  *
  * Images are real photographs processed by scripts/prepare-seed-images.mjs
  * into 4:5 crops at two widths in AVIF, WebP and JPEG. They are stock images,
- * not Vimo Furniture House's own product shots -- see public/seed/products/CREDITS.md.
+ * not Vimco Furniture House's own product shots -- see public/seed/products/CREDITS.md.
  */
 
 // Cards load the small crop; the detail page gets the large one as a second
@@ -339,9 +339,9 @@ export const footerNavItems = [
 ]
 
 export const socialLinks = [
-  { platform: 'Instagram', url: 'https://instagram.com/vimofurniture.pk', icon: 'instagram', display_order: 0 },
-  { platform: 'Facebook', url: 'https://facebook.com/vimofurniture.pk', icon: 'facebook', display_order: 1 },
-  { platform: 'YouTube', url: 'https://youtube.com/@vimofurniture', icon: 'youtube', display_order: 2 },
+  { platform: 'Instagram', url: 'https://instagram.com/vimcofurniture.pk', icon: 'instagram', display_order: 0 },
+  { platform: 'Facebook', url: 'https://facebook.com/vimcofurniture.pk', icon: 'facebook', display_order: 1 },
+  { platform: 'YouTube', url: 'https://youtube.com/@vimcofurniture', icon: 'youtube', display_order: 2 },
 ]
 
 export const isDatabaseEmpty = async (db?: Sql): Promise<boolean> => {

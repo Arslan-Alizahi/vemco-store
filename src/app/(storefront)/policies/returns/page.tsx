@@ -61,7 +61,7 @@ export default function ReturnsPage() {
               </p>
               <p>
                 If you find a problem later, send photographs to{' '}
-                <a href="mailto:support@vimofurniture.pk">support@vimofurniture.pk</a> within 48 hours. We
+                <a href="mailto:hj680787@gmail.com">hj680787@gmail.com</a> within 48 hours. We
                 collect at our cost and either repair, replace or refund. There is no charge to
                 you either way.
               </p>
@@ -104,7 +104,7 @@ export default function ReturnsPage() {
           heading: 'Starting a return',
           body: (
             <p>
-              Email <a href="mailto:support@vimofurniture.pk">support@vimofurniture.pk</a> with your order
+              Email <a href="mailto:hj680787@gmail.com">hj680787@gmail.com</a> with your order
               number and what you would like to do. We reply within one working day and arrange
               collection from there.
             </p>

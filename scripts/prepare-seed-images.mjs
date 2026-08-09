@@ -10,7 +10,7 @@
  * Run: npm run seed:images
  *
  * Attribution lives in public/seed/products/CREDITS.md -- these are Unsplash
- * and Pexels photographs, not Vimo Furniture House's own product shots, and the demo data
+ * and Pexels photographs, not Vimco Furniture House's own product shots, and the demo data
  * says so.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -99,7 +99,7 @@ writeFileSync(
 
 These are the images used by the demo catalogue. They are stock photographs
 from Unsplash and Pexels, used to make the seeded store look real -- they are
-**not** Vimo Furniture House's own product shots. Replace them with real photography before
+**not** Vimco Furniture House's own product shots. Replace them with real photography before
 launch.
 
 | Product slug | Source file |

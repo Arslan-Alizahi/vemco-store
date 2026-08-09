@@ -1,4 +1,4 @@
-# Vimo Furniture House
+# Vimco Furniture House
 
 A furniture storefront, an admin panel, and a point-of-sale till sharing a single Postgres database. Next.js 14 (App Router), TypeScript, Tailwind CSS, and Stripe Checkout Sessions. Priced in PKR.
 

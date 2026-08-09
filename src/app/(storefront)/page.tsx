@@ -34,7 +34,7 @@ const ASSURANCES = [
  * shop that did it can print. The numbers are the argument.
  */
 const MATERIALS = [
-  { name: 'Sheesham & walnut', note: 'Kiln-dried to 10% moisture, so it will not move in a Lahore summer' },
+  { name: 'Sheesham & walnut', note: 'Kiln-dried to 10% moisture, so it will not move in a Haripur summer' },
   { name: 'Mortise and tenon', note: 'Cut and glued, never stapled. The joint outlives the finish' },
   { name: 'Velvet at 45,000 rubs', note: 'Martindale-tested upholstery, rated for daily family use' },
   { name: 'High-resilience foam', note: '35kg/m³ in every seat, so the cushion returns after eight years' },
@@ -99,7 +99,7 @@ export default function HomePage() {
         {/* ------------------------------------------------------------ */}
         <Panel as="section" pad="none" className="grid lg:grid-cols-2">
           <div className="order-2 flex flex-col justify-center p-7 sm:p-10 lg:order-1 lg:p-14">
-            <Eyebrow>Solid wood · Made in Lahore</Eyebrow>
+            <Eyebrow>Solid wood, honestly built</Eyebrow>
 
             {/*
               The measure is in ch, not pixels, so the headline keeps the
@@ -225,7 +225,7 @@ export default function HomePage() {
                 </h2>
                 <p className="mt-4 max-w-[38ch] text-body text-bark-200">
                   Nothing here comes off a container. Every frame is cut, joined and
-                  finished in our Gulberg workshop, and the person who built yours signs
+                  finished in our Haripur workshop, and the person who built yours signs
                   the underside.
                 </p>
                 <Link

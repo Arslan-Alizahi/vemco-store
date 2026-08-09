@@ -2,6 +2,7 @@
 
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import PrintDocument from './PrintDocument'
+import PrintLetterhead from './PrintLetterhead'
 import { PoweredByPrint } from '@/components/layout/PoweredBy'
 
 interface ReceiptItem {
@@ -48,13 +49,7 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
 
   return (
     <PrintDocument title="Receipt" onClose={onClose}>
-      <header className="border-b border-border-strong pb-5 text-center">
-        <p className="font-serif text-h1 text-text-primary">Vimo Furniture House</p>
-        <p className="mt-1 text-ui text-text-secondary">Furniture for considered spaces</p>
-        <p className="mt-2 text-caption text-text-secondary">
-          Showroom 14, Gulberg III, Lahore · +92 42 3500 0000 · hello@vimofurniture.pk
-        </p>
-      </header>
+      <PrintLetterhead />
 
       <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2 text-ui">
         <div className="flex justify-between">
