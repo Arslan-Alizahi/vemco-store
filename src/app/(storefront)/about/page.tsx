@@ -90,7 +90,7 @@ export default function AboutPage() {
       <Section spacing="md" className="bg-surface-inverse text-bark-50">
         <Container size="prose" className="text-center">
           <h2 className="mb-4 font-serif text-h1">Come and sit on it</h2>
-          <p className="mb-8 text-body-lg text-caramel-100">
+          <p className="mb-8 text-body-lg text-bark-200">
             Photographs only go so far. The showroom is open seven days a week in Gulberg III,
             and nobody there works on commission.
           </p>
