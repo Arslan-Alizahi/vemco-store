@@ -639,9 +639,13 @@ export default function BillingPage() {
             </div>
 
             {/* Full width, and last. The phone is what identifies somebody at
-                a counter; an email is for sending a copy of the receipt or a
-                delivery note, so it is worth having and never worth holding
-                up a queue for. */}
+                a counter; an email is where the written copy goes, so it is
+                worth having and never worth holding up a queue for.
+
+                The helper text names what the email will contain rather than
+                saying "optional" again -- a cashier who knows the customer
+                gets the balance and the date in writing has a reason to ask
+                for the address, and asking is the whole point of the field. */}
             <Input
               className="mt-3"
               label="Email"
@@ -651,6 +655,11 @@ export default function BillingPage() {
               value={customerEmail}
               onChange={e => setCustomerEmail(e.target.value)}
               error={emailError}
+              helperText={
+                mode === 'booking'
+                  ? 'We email the delivery date, the advance and the balance to this address'
+                  : 'We email a copy of the receipt to this address'
+              }
             />
           </div>
 

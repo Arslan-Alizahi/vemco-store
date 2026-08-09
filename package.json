@@ -1,5 +1,5 @@
 {
-  "name": "vimo-storefront-admin-pos",
+  "name": "vimco-storefront-admin-pos",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -22,7 +22,8 @@
     "admin:env": "node scripts/set-admin-env.mjs",
     "reset:counter": "tsx scripts/reset-counter-demo.mts",
     "build:showcase": "node scripts/with-showcase.mjs build",
-    "start:showcase": "node scripts/with-showcase.mjs start"
+    "start:showcase": "node scripts/with-showcase.mjs start",
+    "mail:check": "node --env-file=.env.local scripts/mail-smoke.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.3.3",
@@ -36,6 +37,7 @@
     "postgres": "^3.4.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "server-only": "^0.0.1",
     "stripe": "^19.3.1",
     "swr": "^2.2.5",
     "tailwind-merge": "^2.5.5"
@@ -46,6 +48,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.10.0",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.7.0",

@@ -4,6 +4,7 @@ import { Order } from '@/types/order'
 import { apiResponse, apiError, generateOrderNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING } from '@/lib/shipping'
 import { normalisePhone, upsertCustomer } from '@/lib/customers'
+import { orderConfirmationMail, sendMail } from '@/lib/mail'
 
 /**
  * Never evaluated at build time.
@@ -117,6 +118,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     const requested = parseItems(body.items)
+
+    /**
+     * Filled inside the transaction, used after it commits.
+     *
+     * A box rather than a bare `let`, because TypeScript's control flow
+     * analysis cannot see an assignment made inside a callback: a plain
+     * variable stays narrowed to `null` and every read of it below is a
+     * compile error. Narrowing on a property is reset by the intervening
+     * call, which is exactly the behaviour wanted here.
+     */
+    const placed: { value: { order: any; items: any[] } | null } = { value: null }
 
     // Two lines for the same product would each pass the stock check on their
     // own and together take more than there is.
@@ -276,6 +288,13 @@ export async function POST(request: NextRequest) {
 
       const items = await runQuery('SELECT * FROM order_items WHERE order_id = ?', [orderId], tx)
 
+      // Kept for the confirmation email below. The response body is a
+      // NextResponse by the time the transaction returns and cannot be read
+      // back, and the email must not be sent from inside the transaction --
+      // a slow mail server would hold a database lock open, and a rolled-back
+      // order would have already told the customer it was placed.
+      placed.value = { order, items }
+
       return NextResponse.json(
         apiResponse({ ...order, items }),
         { status: 201 },
@@ -306,6 +325,47 @@ export async function POST(request: NextRequest) {
         })
       } catch (error) {
         console.error('Order placed, but the customer record could not be saved:', error)
+      }
+    }
+
+    /**
+     * Say thank you, and put the order in writing.
+     *
+     * After the commit and never awaited into the failure path, for the same
+     * reason the customer record is written here: the money has moved and the
+     * order exists. A mail server that is down is the shop's problem to chase,
+     * not a reason to tell somebody their purchase failed.
+     *
+     * Awaited rather than fired and forgotten, because a serverless function
+     * can be frozen the moment it returns a response -- an un-awaited promise
+     * there is simply an email that never sends, silently, in production only.
+     */
+    const confirmed = placed.value
+    if (confirmed && body.customer_email) {
+      try {
+        const result = await sendMail(
+          orderConfirmationMail({
+            to: String(body.customer_email),
+            customerName: body.customer_name ? String(body.customer_name) : null,
+            orderNumber: confirmed.order.order_number,
+            items: confirmed.items.map((item: any) => ({
+              product_name: item.product_name,
+              quantity: item.quantity,
+              subtotal: item.subtotal,
+              unit_price: item.unit_price,
+            })),
+            subtotal: confirmed.order.subtotal,
+            tax: confirmed.order.tax,
+            shipping: confirmed.order.shipping_cost,
+            total: confirmed.order.total,
+            deliveryAddress: confirmed.order.shipping_address,
+          })
+        )
+        if (!result.sent) {
+          console.warn(`Order ${confirmed.order.order_number} placed, no email sent: ${result.reason}`)
+        }
+      } catch (error) {
+        console.error('Order placed, but the confirmation email failed:', error)
       }
     }
 

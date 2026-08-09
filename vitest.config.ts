@@ -44,6 +44,10 @@ export default defineConfig({
     hookTimeout: 60_000,
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') },
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      // See the note in the stub: the real package throws under jsdom.
+      'server-only': path.resolve(__dirname, './src/test/server-only-stub.ts'),
+    },
   },
 })

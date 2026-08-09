@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { runGet, runQuery, runTransaction, runUpdate } from '@/lib/db'
 import { apiResponse, apiError, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
 import { upsertCustomer } from '@/lib/customers'
+import { orderConfirmationMail, sendMail } from '@/lib/mail'
 
 /**
  * Never evaluated at build time.
@@ -17,6 +18,10 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+
+    /** Filled inside the transaction, read after it commits. See the note
+     *  on the same pattern in src/app/api/orders/route.ts. */
+    const rung: { value: { receipt: any; items: any[] } | null } = { value: null }
 
     // Validate required fields
     if (!body.items || body.items.length === 0) {
@@ -48,7 +53,7 @@ export async function POST(request: NextRequest) {
           })
         : null
 
-    return await runTransaction(async tx => {
+    const response = await runTransaction(async tx => {
       // Calculate totals
       let subtotal = 0
       for (const item of body.items) {
@@ -131,11 +136,60 @@ export async function POST(request: NextRequest) {
         tx
       )
 
+      // For the thank-you below. Not sent from inside the transaction: a
+      // slow mail server would hold the stock rows locked, and a sale that
+      // then rolled back would already have been thanked for.
+      rung.value = { receipt, items }
+
       return NextResponse.json(
         apiResponse({ ...receipt, items }),
         { status: 201 }
       )
     })
+
+    /**
+     * A thank-you for a counter sale, when we have somewhere to send it.
+     *
+     * Most of this shop's trade happens at the counter, not online, so a
+     * confirmation that only ever went to web orders would in practice never
+     * be sent. The receipt is printed either way -- this is the copy that
+     * survives losing the piece of paper.
+     *
+     * After the commit, and a failure here is logged rather than raised. The
+     * goods have left the shop.
+     */
+    const email = typeof body.customer_email === 'string' ? body.customer_email.trim() : ''
+    const sale = rung.value
+    if (sale && email) {
+      try {
+        const result = await sendMail(
+          orderConfirmationMail({
+            to: email,
+            customerName: body.customer_name ? String(body.customer_name) : null,
+            orderNumber: sale.receipt.receipt_number,
+            items: sale.items.map((item: any) => ({
+              product_name: item.product_name,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              subtotal: item.subtotal,
+            })),
+            subtotal: sale.receipt.subtotal,
+            tax: sale.receipt.tax,
+            // Nothing is delivered on a counter sale: they are carrying it out.
+            shipping: 0,
+            total: sale.receipt.total,
+            deliveryAddress: null,
+          })
+        )
+        if (!result.sent) {
+          console.warn(`Receipt ${sale.receipt.receipt_number} rung up, no email sent: ${result.reason}`)
+        }
+      } catch (error) {
+        console.error('Sale completed, but the thank-you email failed:', error)
+      }
+    }
+
+    return response
   } catch (error: any) {
     console.error('Error creating receipt:', error)
     return NextResponse.json(

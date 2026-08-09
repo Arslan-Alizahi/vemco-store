@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { apiError, apiResponse } from '@/lib/utils'
 import { createBooking, listBookings } from '@/lib/bookings'
+import { bookingConfirmationMail, sendMail } from '@/lib/mail'
 
 /**
  * Never evaluated at build time -- it reads the database.
@@ -49,6 +50,44 @@ export async function POST(request: NextRequest) {
       payment_method: body?.payment_method ?? 'cash',
       notes: body?.notes ?? null,
     })
+
+    /**
+     * Put the booking in writing, to the customer.
+     *
+     * This is the message that matters most in the shop: a booking is a
+     * promise about a date and a sum of money, made across a counter, and
+     * without it the customer walks out holding only a printed slip they can
+     * lose. It repeats the delivery date, what they handed over, and what is
+     * still owed -- the three things they will be asked about at the door.
+     *
+     * Never allowed to fail the booking. The advance has been taken and the
+     * stock is reserved; an unreachable mail server does not undo that.
+     */
+    const email = typeof body?.customer_email === 'string' ? body.customer_email.trim() : ''
+    if (email) {
+      try {
+        const result = await sendMail(
+          bookingConfirmationMail({
+            to: email,
+            customerName: booking.customer_name,
+            bookingNumber: booking.booking_number,
+            items: booking.items,
+            subtotal: booking.subtotal,
+            tax: booking.tax,
+            discount: booking.discount,
+            total: booking.total,
+            paid: booking.paid,
+            balance: booking.balance,
+            deliveryDate: booking.delivery_date,
+          })
+        )
+        if (!result.sent) {
+          console.warn(`Booking ${booking.booking_number} taken, no email sent: ${result.reason}`)
+        }
+      } catch (error) {
+        console.error('Booking taken, but the confirmation email failed:', error)
+      }
+    }
 
     return NextResponse.json(apiResponse(booking), { status: 201 })
   } catch (error: any) {
