@@ -17,9 +17,21 @@ import { useToast } from '@/components/ui/Toast'
 import { PrintReceipt } from '@/components/ui/PrintReceipt'
 import { PrintBookingBill } from '@/components/ui/PrintBookingBill'
 import { Search, Plus, Minus, Trash2, Receipt, Package, UserRound } from 'lucide-react'
-import { formatCurrency, generateReceiptNumber, calculateTax, calculateTotal, validateEmail } from '@/lib/utils'
+import { formatCurrency, generateReceiptNumber, calculateTotal, validateEmail } from '@/lib/utils'
+import {
+  COUNTER_TAX_RATES,
+  DEFAULT_COUNTER_TAX_RATE,
+  asCounterTaxRate,
+  formatTaxRate,
+  taxOn,
+  taxRowLabel,
+  type CounterTaxRate,
+} from '@/lib/tax'
 import { Product } from '@/types/product'
 import { BillingCartItem } from '@/types/billing'
+
+/** Where the till remembers the rate the owner last chose. */
+const TAX_RATE_KEY = 'vimco.pos.taxRate'
 
 export default function BillingPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -56,9 +68,36 @@ export default function BillingPage() {
   const [showBooking, setShowBooking] = useState(false)
   const { addToast } = useToast()
 
+  /**
+   * What this shop charges today, decided at the till.
+   *
+   * It used to be 18% compiled into the app, applied to every sale whether
+   * the owner wanted it or not and changeable only by a redeploy. Most of
+   * this trade is cash across a counter; whether tax goes on the bill is the
+   * owner's call, and it can differ between a walk-in and a trade customer
+   * an hour apart.
+   */
+  const [taxRate, setTaxRate] = useState<CounterTaxRate>(DEFAULT_COUNTER_TAX_RATE)
+
+  /**
+   * Remembered between sales, and between shifts.
+   *
+   * A shop that charges no tax charges no tax all day. Making the cashier
+   * re-pick on every single sale is how the wrong rate eventually ends up on
+   * a bill: the one they forget to change is the one that goes out.
+   */
+  useEffect(() => {
+    setTaxRate(asCounterTaxRate(window.localStorage.getItem(TAX_RATE_KEY)))
+  }, [])
+
+  const chooseTaxRate = (rate: CounterTaxRate) => {
+    setTaxRate(rate)
+    window.localStorage.setItem(TAX_RATE_KEY, String(rate))
+  }
+
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
-  const tax = calculateTax(subtotal)
+  const tax = taxOn(subtotal, taxRate)
   const total = calculateTotal(subtotal, tax, 0, 0)
 
   useEffect(() => {
@@ -516,12 +555,19 @@ export default function BillingPage() {
                     <Money amount={subtotal} className="font-medium" />
                   </dd>
                 </div>
-                <div className="flex justify-between text-body">
-                  <dt className="text-text-secondary">Tax (18%)</dt>
-                  <dd>
-                    <Money amount={tax} className="font-medium" />
-                  </dd>
-                </div>
+                {/*
+                  Only shown when something is actually being charged. A row
+                  reading "Tax  Rs 0" on every untaxed sale is noise on the
+                  one panel the customer leans over to read.
+                */}
+                {taxRate > 0 && (
+                  <div className="flex justify-between text-body">
+                    <dt className="text-text-secondary">{taxRowLabel(taxRate)}</dt>
+                    <dd>
+                      <Money amount={tax} className="font-medium" />
+                    </dd>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-border-subtle pt-2">
                   <dt className="text-h3 text-text-primary">Total</dt>
                   <dd>
@@ -531,6 +577,50 @@ export default function BillingPage() {
                   </dd>
                 </div>
               </dl>
+
+              {/*
+                The rate, on the panel showing the total rather than buried in
+                the payment dialog. The customer is usually leaning over this
+                panel while the cashier decides, and changing the rate here
+                moves the total in front of both of them -- so the number
+                being agreed is the number that gets charged.
+
+                A radiogroup, because it is one choice out of a fixed few and
+                the arrow keys should move between them. Preset buttons and
+                not a number field: a cashier in a hurry types 18 where they
+                meant 1.8, and a wrong rate on a printed bill is the shop's
+                problem for as long as the customer keeps the paper.
+              */}
+              <div className="mt-5 border-t border-border-subtle pt-4">
+                <div className="mb-2 flex items-baseline justify-between">
+                  <p className="text-ui font-medium text-text-primary">Sales tax</p>
+                  <p className="text-caption text-text-tertiary">Applies to this sale</p>
+                </div>
+                <div
+                  role="radiogroup"
+                  aria-label="Sales tax rate"
+                  className="grid grid-cols-4 gap-1 rounded-sm border border-border-subtle bg-surface-subtle p-1"
+                >
+                  {COUNTER_TAX_RATES.map(rate => (
+                    <button
+                      key={rate}
+                      type="button"
+                      role="radio"
+                      aria-checked={taxRate === rate}
+                      onClick={() => chooseTaxRate(rate)}
+                      className={cn(
+                        'rounded-xs px-2 py-2 text-ui font-medium transition-colors duration-fast',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        taxRate === rate
+                          ? 'bg-action text-bark-50'
+                          : 'text-text-secondary hover:bg-surface hover:text-text-primary'
+                      )}
+                    >
+                      {rate === 0 ? 'None' : formatTaxRate(rate)}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="mt-6 flex gap-3">
                 <Button

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runGet, runQuery, runTransaction, runUpdate } from '@/lib/db'
 import { Order } from '@/types/order'
-import { apiResponse, apiError, generateOrderNumber, calculateTax, calculateTotal } from '@/lib/utils'
+import { apiResponse, apiError, generateOrderNumber, calculateTotal } from '@/lib/utils'
+import { ONLINE_TAX_RATE, taxOn } from '@/lib/tax'
 import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING } from '@/lib/shipping'
 import { normalisePhone, upsertCustomer } from '@/lib/customers'
 import { orderConfirmationMail, sendMail } from '@/lib/mail'
@@ -208,7 +209,13 @@ export async function POST(request: NextRequest) {
       const subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0)
       // Tax and shipping are policy, not customer input. Free delivery over
       // Rs 100,000 is the same rule the cart shows.
-      const tax = calculateTax(subtotal)
+      //
+      // Online is not taxed. The shelf price is the price charged, so the
+      // basket total the customer read on the cart page is the amount that
+      // reaches the payment page -- no percentage appears between the two.
+      // The column is still written, because the counter does charge tax and
+      // the revenue reports read one shape of row.
+      const tax = taxOn(subtotal, ONLINE_TAX_RATE)
       const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING
       const discount = 0
       const total = calculateTotal(subtotal, tax, shipping, discount)

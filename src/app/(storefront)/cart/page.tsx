@@ -17,7 +17,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/ui/Toast'
 import { useCart } from '@/hooks/useCart'
-import { calculateTax, calculateTotal, validateEmail } from '@/lib/utils'
+import { calculateTotal, validateEmail } from '@/lib/utils'
 import { shippingFor } from '@/lib/shipping'
 
 /**
@@ -55,9 +55,12 @@ export default function CartPage() {
 
   // Shown here, decided on the server. Both read the same constants so the
   // figure the customer sees is the figure the order route computes.
-  const tax = calculateTax(subtotal)
+  //
+  // Online carries no tax at all -- see ONLINE_TAX_RATE. The listed price is
+  // what gets charged, so there is no tax row to show and nothing here has to
+  // agree with anything.
   const shipping = shippingFor(subtotal)
-  const total = calculateTotal(subtotal, tax, shipping, 0)
+  const total = calculateTotal(subtotal, 0, shipping, 0)
 
   const set =
     (field: keyof Fields) =>
@@ -293,12 +296,6 @@ export default function CartPage() {
                 <dt className="text-text-secondary">Subtotal</dt>
                 <dd>
                   <Money amount={subtotal} />
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-text-secondary">Sales tax</dt>
-                <dd>
-                  <Money amount={tax} />
                 </dd>
               </div>
               <div className="flex justify-between">

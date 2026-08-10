@@ -65,10 +65,12 @@ export const truncate = (text: string, length: number = 100): string => {
 }
 
 // Number utilities
-export const calculateTax = (amount: number, taxRate?: number): number => {
-  const rate = taxRate || parseFloat(process.env.NEXT_PUBLIC_TAX_RATE || '0.18')
-  return amount * rate
-}
+//
+// calculateTax used to live here, reading NEXT_PUBLIC_TAX_RATE and defaulting
+// to 18%. Tax is no longer one number for the whole business: online charges
+// none and the counter charges whatever the owner picks that day, so it lives
+// in src/lib/tax.ts where both answers can be stated and neither is a default
+// somebody inherits by accident.
 
 export const calculateTotal = (
   subtotal: number,

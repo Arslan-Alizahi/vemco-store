@@ -120,7 +120,22 @@ describe('the price comes from the catalogue', () => {
 
     expect(body.data.subtotal).toBe(SOFA_PRICE)
     expect(body.data.discount).toBe(0)
-    expect(body.data.total).toBeGreaterThan(SOFA_PRICE)
+
+    /*
+      The customer asked to be charged Rs 1. They are charged the catalogue
+      price plus whatever the shop's own rules add.
+
+      This used to assert `toBeGreaterThan(SOFA_PRICE)`, which only held
+      because 18% tax was always added to something. With online tax removed
+      and this sofa over the free-delivery threshold, the honest total is
+      exactly the subtotal -- and the old assertion would have failed a
+      correct order. Assert the arithmetic instead of a side effect of it.
+    */
+    expect(body.data.total).toBeCloseTo(
+      SOFA_PRICE + body.data.tax + body.data.shipping_cost,
+      2
+    )
+    expect(body.data.total).toBeGreaterThanOrEqual(SOFA_PRICE)
   })
 
   it('bills the quantity ordered', async () => {
@@ -141,6 +156,21 @@ describe('the price comes from the catalogue', () => {
     const { body } = await post({ ...customer, items: [{ product_id: 9001, quantity: 1 }] })
     const { subtotal, tax, shipping_cost, total } = body.data
     expect(total).toBeCloseTo(subtotal + tax + shipping_cost, 2)
+  })
+
+  /**
+   * The shelf price is the price charged.
+   *
+   * Nothing is added between the total the customer read on the cart page
+   * and the amount the payment page asks for -- which is the whole point of
+   * taking tax off the online shop, and the kind of thing that comes back
+   * silently the first time somebody reinstates a default rate somewhere.
+   */
+  it('charges no tax online, so the basket total is what gets paid', async () => {
+    const { body } = await post({ ...customer, items: [{ product_id: 9001, quantity: 2 }] })
+    const { subtotal, tax, shipping_cost, total } = body.data
+    expect(tax).toBe(0)
+    expect(total).toBeCloseTo(subtotal + shipping_cost, 2)
   })
 })
 

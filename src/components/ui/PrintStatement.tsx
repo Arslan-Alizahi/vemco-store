@@ -113,12 +113,17 @@ export default function PrintStatement({ customer, purchases, onClose }: PrintSt
                       </td>
                     </tr>
                   )}
-                  <tr>
-                    <td colSpan={2} className="text-right text-text-secondary">Tax</td>
-                    <td className="text-right tabular-nums text-text-primary">
-                      {formatCurrency(purchase.tax)}
-                    </td>
-                  </tr>
+                  {/* Older purchases carry tax; newer untaxed ones do not,
+                      and a statement spanning both should show the row only
+                      where it means something. */}
+                  {purchase.tax > 0 && (
+                    <tr>
+                      <td colSpan={2} className="text-right text-text-secondary">Tax</td>
+                      <td className="text-right tabular-nums text-text-primary">
+                        {formatCurrency(purchase.tax)}
+                      </td>
+                    </tr>
+                  )}
                   <tr>
                     <td colSpan={2} className="pt-0.5 text-right font-medium text-text-primary">
                       Paid

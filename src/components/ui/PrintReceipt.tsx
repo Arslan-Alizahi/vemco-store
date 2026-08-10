@@ -117,10 +117,15 @@ export function PrintReceipt({ receipt, onClose }: PrintReceiptProps) {
             <dt className="text-text-secondary">Subtotal</dt>
             <dd className="tabular-nums text-text-primary">{formatCurrency(receipt.subtotal)}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Tax</dt>
-            <dd className="tabular-nums text-text-primary">{formatCurrency(receipt.tax)}</dd>
-          </div>
+          {/* Only when there is tax to declare. The till can be set to charge
+              none, and a printed line reading "Tax  Rs 0" invites the exact
+              question the line exists to prevent. */}
+          {receipt.tax > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-text-secondary">Tax</dt>
+              <dd className="tabular-nums text-text-primary">{formatCurrency(receipt.tax)}</dd>
+            </div>
+          )}
           {receipt.discount > 0 && (
             <div className="flex justify-between text-sage-700">
               <dt>Discount</dt>

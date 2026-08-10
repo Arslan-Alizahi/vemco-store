@@ -138,10 +138,13 @@ export function PrintBookingBill({
           <span className="text-text-secondary">Subtotal</span>
           <span className="tabular-nums text-text-primary">{formatCurrency(booking.subtotal)}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-text-secondary">Tax</span>
-          <span className="tabular-nums text-text-primary">{formatCurrency(booking.tax)}</span>
-        </div>
+        {/* Only when there is tax to declare -- the till can charge none. */}
+        {booking.tax > 0 && (
+          <div className="flex justify-between">
+            <span className="text-text-secondary">Tax</span>
+            <span className="tabular-nums text-text-primary">{formatCurrency(booking.tax)}</span>
+          </div>
+        )}
         {booking.discount > 0 && (
           <div className="flex justify-between">
             <span className="text-text-secondary">Discount</span>

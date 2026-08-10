@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runGet, runQuery, runTransaction, runUpdate } from '@/lib/db'
-import { apiResponse, apiError, generateReceiptNumber, calculateTax, calculateTotal } from '@/lib/utils'
+import { apiResponse, apiError, generateReceiptNumber, calculateTotal } from '@/lib/utils'
+import { resolveCounterTax } from '@/lib/tax'
 import { upsertCustomer } from '@/lib/customers'
 import { orderConfirmationMail, sendMail } from '@/lib/mail'
 
@@ -60,7 +61,10 @@ export async function POST(request: NextRequest) {
         subtotal += item.unit_price * item.quantity
       }
 
-      const tax = body.tax || calculateTax(subtotal)
+      // A chosen zero is an answer, not a missing field. See the note on
+      // resolveCounterTax -- this was `body.tax || ...` and quietly taxed
+      // every sale the cashier had marked as untaxed.
+      const tax = resolveCounterTax(body.tax, subtotal)
       const discount = body.discount || 0
       const total = calculateTotal(subtotal, tax, 0, discount)
       const changeAmount = (body.amount_paid || total) - total

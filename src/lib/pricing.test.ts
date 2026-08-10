@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   calculatePagination,
-  calculateTax,
   calculateTotal,
   formatAmount,
   formatCurrency,
@@ -51,21 +50,13 @@ describe('formatAmount', () => {
   })
 })
 
-describe('tax and totals', () => {
-  it('applies the given rate', () => {
-    expect(calculateTax(100_000, 0.18)).toBeCloseTo(18_000)
-  })
-
+describe('totals', () => {
   it('adds tax and shipping and takes off the discount', () => {
     expect(calculateTotal(100_000, 18_000, 2_500, 5_000)).toBe(115_500)
   })
 
   it('treats the optional parts as zero when they are not passed', () => {
     expect(calculateTotal(100_000)).toBe(100_000)
-  })
-
-  it('charges no tax on an empty basket', () => {
-    expect(calculateTax(0, 0.18)).toBe(0)
   })
 })
 

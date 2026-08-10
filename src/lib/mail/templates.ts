@@ -161,7 +161,7 @@ export function orderConfirmationMail(order: OrderMailInput): Mail {
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
       ${row('Subtotal', formatCurrency(order.subtotal))}
-      ${row('Tax', formatCurrency(order.tax))}
+      ${order.tax > 0 ? row('Tax', formatCurrency(order.tax)) : ''}
       ${row(
         'Delivery',
         order.shipping > 0 ? formatCurrency(order.shipping) : 'Free'
@@ -194,7 +194,7 @@ export function orderConfirmationMail(order: OrderMailInput): Mail {
     itemLines(order.items),
     '',
     `Subtotal   ${formatCurrency(order.subtotal)}`,
-    `Tax        ${formatCurrency(order.tax)}`,
+    ...(order.tax > 0 ? [`Tax        ${formatCurrency(order.tax)}`] : []),
     `Delivery   ${order.shipping > 0 ? formatCurrency(order.shipping) : 'Free'}`,
     `Total paid ${formatCurrency(order.total)}`,
     ...(order.deliveryAddress ? ['', `Delivering to: ${order.deliveryAddress}`] : []),
@@ -283,7 +283,7 @@ export function bookingConfirmationMail(booking: BookingMailInput): Mail {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
       ${row('Subtotal', formatCurrency(booking.subtotal))}
       ${booking.discount > 0 ? row('Discount', `-${formatCurrency(booking.discount)}`) : ''}
-      ${row('Tax', formatCurrency(booking.tax))}
+      ${booking.tax > 0 ? row('Tax', formatCurrency(booking.tax)) : ''}
       ${row('Order total', formatCurrency(booking.total), true)}
       ${row('Advance paid', formatCurrency(booking.paid))}
       ${row('Balance remaining', formatCurrency(booking.balance), true)}
@@ -312,7 +312,7 @@ export function bookingConfirmationMail(booking: BookingMailInput): Mail {
     '',
     `Subtotal           ${formatCurrency(booking.subtotal)}`,
     ...(booking.discount > 0 ? [`Discount           -${formatCurrency(booking.discount)}`] : []),
-    `Tax                ${formatCurrency(booking.tax)}`,
+    ...(booking.tax > 0 ? [`Tax                ${formatCurrency(booking.tax)}`] : []),
     `Order total        ${formatCurrency(booking.total)}`,
     `Advance paid       ${formatCurrency(booking.paid)}`,
     `Balance remaining  ${formatCurrency(booking.balance)}`,

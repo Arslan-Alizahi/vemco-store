@@ -92,7 +92,6 @@ See [`.env.example`](.env.example) for the full list with comments. The ones tha
 | `SUPABASE_SERVICE_ROLE_KEY` | Uploads and deletes in Supabase Storage. **Server-only** — never give it a `NEXT_PUBLIC_` prefix |
 | `SHOP_TIMEZONE` | Which day "today's revenue" means (default `Asia/Karachi`) |
 | `NEXT_PUBLIC_SITE_URL` | Used to build the Stripe post-payment redirect |
-| `NEXT_PUBLIC_TAX_RATE` | Tax rate as a decimal (`0.18` = 18%) |
 | `STRIPE_SECRET_KEY` | Server-side Stripe key |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signature verification |
 | `DATABASE_POOL_MAX` | Connections per instance (default 3). Only worth changing under load |
