@@ -17,6 +17,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/Toast'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import type { CustomerSummary, Purchase } from '@/lib/customers'
+import { adminUrl } from '@/lib/admin-path'
 
 export default function CustomerDetailPage() {
   const params = useParams()
@@ -48,7 +49,7 @@ export default function CustomerDetailPage() {
     }
 
     addToast(`${data.data.name} deleted`, 'success')
-    router.push('/admin/customers')
+    router.push(adminUrl('/customers'))
   }
 
   const load = useCallback(() => {
@@ -98,7 +99,7 @@ export default function CustomerDetailPage() {
       )}
 
       <Link
-        href="/admin/customers"
+        href={adminUrl('/customers')}
         className="mb-5 inline-flex items-center gap-2 text-ui text-text-secondary transition-colors duration-fast hover:text-text-primary"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />

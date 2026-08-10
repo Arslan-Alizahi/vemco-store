@@ -28,6 +28,18 @@ import { randomBytes, scrypt } from 'node:crypto'
 import { promisify } from 'node:util'
 import { chromium } from 'playwright'
 import AxeBuilder from '@axe-core/playwright'
+import { config as loadEnv } from 'dotenv'
+
+/**
+ * The same file Next read when it built.
+ *
+ * NEXT_PUBLIC_ values are baked into the build, so if .env.local moved the
+ * staff screens then the build serves them from the new path -- and this
+ * gate, which does not otherwise read that file, would go looking for them
+ * where they used to be and audit seven 404s. It did exactly that once.
+ * Missing file is fine; dotenv ignores it.
+ */
+loadEnv({ path: '.env.local' })
 
 const scryptAsync = promisify(scrypt)
 
@@ -55,6 +67,10 @@ const buildCredentials = async () => {
     },
   }
 }
+
+/** Where the staff screens answer. Mirrors src/lib/admin-path.ts. */
+const STAFF_PATH =
+  (process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin').replace(/^\/+|\/+$/g, '').trim() || 'admin'
 
 const PORT = process.env.A11Y_PORT || 3210
 const ORIGIN = `http://127.0.0.1:${PORT}`
@@ -92,13 +108,13 @@ const STATIC_ROUTES = [
   // The staff screens, audited signed in. The gate mints a throwaway password
   // and holds a session, so these are the real dashboards rather than four
   // copies of the login screen a redirect would have produced.
-  '/admin/login',
-  '/admin',
-  '/billing',
-  '/admin/bookings',
-  '/admin/customers',
-  '/admin/revenue',
-  '/admin/revenue/transactions',
+  //
+  // Built from the configured path, because a shop that has moved its panel
+  // serves a 404 on /admin -- and axe finds nothing wrong with a 404, so the
+  // gate would have reported seven passes for seven pages it never saw.
+  ...['/login', '', '/billing', '/bookings', '/customers', '/revenue', '/revenue/transactions'].map(
+    suffix => `/${STAFF_PATH}${suffix}`
+  ),
 ]
 
 /**
@@ -387,6 +403,9 @@ const run = async () => {
     }
 
     const failures = []
+    /** Routes that answered 4xx/5xx. Kept apart: they have no violations to
+     *  print, and an empty entry in the violations list crashed the report. */
+    const unreached = []
     let checks = 0
     let reflowFailures = 0
     let motionFailures = 0
@@ -400,7 +419,24 @@ const run = async () => {
       const page = await context.newPage()
 
       for (const route of routes) {
-        await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle' })
+        const response = await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle' })
+
+        /**
+         * A page that did not load is not a page that passed.
+         *
+         * axe finds nothing wrong with a 404, so without this the gate
+         * reports PASS for every route it failed to reach -- which is exactly
+         * what happened the first time the admin moved to its own path and
+         * seven staff screens quietly became seven green 404s.
+         */
+        if ((response?.status() ?? 0) >= 400) {
+          unreached.push({ route, viewport: viewport.name, status: response?.status() })
+          console.log(
+            `  ${'FAIL'.padEnd(6)}${viewport.name.padEnd(9)}${route.padEnd(28)}HTTP ${response?.status()} — page not reached`
+          )
+          checks += 1
+          continue
+        }
 
         const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze()
         checks += 1

@@ -8,6 +8,7 @@ import Container from './Container'
 import Logo from './Logo'
 import AppFrame from './AppFrame'
 import PoweredBy from './PoweredBy'
+import { adminUrl, posUrl } from '@/lib/admin-path'
 
 /**
  * The sections, in the order somebody actually works through them.
@@ -17,18 +18,20 @@ import PoweredBy from './PoweredBy'
  * shop uses most, so it sits second.
  */
 const SECTIONS = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/billing', label: 'Point of sale', icon: Store },
+  { href: adminUrl(), label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  // The till lives under the same prefix, so a customer who guesses
+  // /billing finds nothing either. See lib/admin-path.
+  { href: posUrl(), label: 'Point of sale', icon: Store },
   // Third, next to the till that creates them: a booking is unfinished work,
   // and unfinished work needs to be somewhere a shop looks every morning.
   // Above bookings, because an enquiry is the step before one: somebody
   // waiting for a call back is time-sensitive in a way a booked delivery
   // three weeks out is not.
-  { href: '/admin/enquiries', label: 'Enquiries', icon: MessageCircle },
-  { href: '/admin/bookings', label: 'Bookings', icon: CalendarClock },
-  { href: '/admin/customers', label: 'Customers', icon: Users },
-  { href: '/admin/revenue', label: 'Revenue', icon: BarChart3 },
-  { href: '/admin/revenue/transactions', label: 'Transactions', icon: Receipt },
+  { href: adminUrl('/enquiries'), label: 'Enquiries', icon: MessageCircle },
+  { href: adminUrl('/bookings'), label: 'Bookings', icon: CalendarClock },
+  { href: adminUrl('/customers'), label: 'Customers', icon: Users },
+  { href: adminUrl('/revenue'), label: 'Revenue', icon: BarChart3 },
+  { href: adminUrl('/revenue/transactions'), label: 'Transactions', icon: Receipt },
 ]
 
 /**
@@ -61,7 +64,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const signOut = async () => {
     await fetch('/api/admin/login', { method: 'DELETE' })
     // A full navigation, so middleware sees the cleared cookie.
-    window.location.href = '/admin/login'
+    window.location.href = adminUrl('/login')
   }
 
   return (
@@ -77,7 +80,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 nav scrolling inside itself. */}
             <div className="flex h-14 min-w-0 items-center justify-between gap-3 sm:gap-6">
               <div className="flex shrink-0 items-center gap-3 sm:gap-6">
-                <Logo size="sm" href="/admin" />
+                <Logo size="sm" href={adminUrl()} />
                 <span className="hidden rounded-xs bg-surface-subtle px-2 py-0.5 text-overline uppercase text-text-secondary sm:inline">
                   Admin
                 </span>

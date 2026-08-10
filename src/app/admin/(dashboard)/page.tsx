@@ -20,6 +20,7 @@ import { cn } from '@/lib/cn'
 import { Product } from '@/types/product'
 import { Category } from '@/types/category'
 import { SocialMediaLink } from '@/types/social-media'
+import { adminUrl } from '@/lib/admin-path'
 
 /** "products", "products and orders", "products, orders and receipts". */
 const formatList = (items: string[]): string =>
@@ -686,7 +687,7 @@ export default function AdminPage() {
                   fullWidth
                   leftIcon={<Wallet className="h-4 w-4" />}
                 >
-                  <Link href="/admin/revenue">Open revenue dashboard</Link>
+                  <Link href={adminUrl('/revenue')}>Open revenue dashboard</Link>
                 </Button>
               </CardContent>
             </Card>

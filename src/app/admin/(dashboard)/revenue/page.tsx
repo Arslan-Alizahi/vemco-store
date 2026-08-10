@@ -12,6 +12,7 @@ import {
   BarChart3, Filter
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { adminUrl } from '@/lib/admin-path'
 
 interface RevenueOverview {
   total: {
@@ -140,7 +141,7 @@ export default function RevenuePage() {
           {/* Header */}
           <div className="mb-6">
             <Link
-              href="/admin"
+              href={adminUrl()}
               className="mb-4 inline-flex items-center text-caramel-700 transition-colors hover:text-caramel-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -356,7 +357,7 @@ export default function RevenuePage() {
               <div className="flex justify-between items-center">
                 <CardTitle>Recent Transactions</CardTitle>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/admin/revenue/transactions">View all</Link>
+                  <Link href={adminUrl('/revenue/transactions')}>View all</Link>
                 </Button>
               </div>
             </CardHeader>

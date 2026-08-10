@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import Container from './Container'
 import Logo from './Logo'
 import AppFrame from './AppFrame'
+import { adminUrl } from '@/lib/admin-path'
 
 /**
  * Point-of-sale chrome.
@@ -40,7 +41,7 @@ export default function PosShell({ children }: { children: React.ReactNode }) {
                   matches the visible text exactly, so a voice-control user
                   saying what they can see still hits it. */}
               <Link
-                href="/admin"
+                href={adminUrl()}
                 aria-label="Exit to admin"
                 className="flex items-center gap-1.5 rounded-sm px-3 py-2 text-ui text-text-tertiary transition-colors duration-fast hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >

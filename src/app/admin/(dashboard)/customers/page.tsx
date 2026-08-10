@@ -14,6 +14,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import ErrorState from '@/components/ui/ErrorState'
 import { formatDate } from '@/lib/utils'
 import type { CustomerSummary } from '@/lib/customers'
+import { adminUrl } from '@/lib/admin-path'
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerSummary[]>([])
@@ -131,7 +132,7 @@ export default function CustomersPage() {
                   >
                     <td className="px-4 py-3">
                       <Link
-                        href={`/admin/customers/${customer.id}`}
+                        href={adminUrl(`/customers/${customer.id}`)}
                         className="font-medium text-text-primary hover:underline"
                       >
                         {customer.name}
@@ -162,7 +163,7 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        href={`/admin/customers/${customer.id}`}
+                        href={adminUrl(`/customers/${customer.id}`)}
                         aria-label={`Open ${customer.name}`}
                         className="inline-flex rounded-sm p-1 text-text-tertiary transition-colors duration-fast hover:text-text-primary"
                       >

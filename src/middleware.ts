@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE, readSessionToken } from '@/lib/auth/session'
+import { adminPathIsCustom, adminUrl, internalStaffPath } from '@/lib/admin-path'
 
 /**
  * The only thing that runs before both pages and API routes.
@@ -56,8 +57,7 @@ const PUBLIC_WRITE_PATHS = [
 const isUnder = (pathname: string, prefixes: string[]) =>
   prefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))
 
-const needsSession = (request: NextRequest): boolean => {
-  const { pathname } = request.nextUrl
+const needsSession = (request: NextRequest, pathname: string): boolean => {
   const method = request.method
 
   // The way in has to stay open to the logged out, or nobody can ever log in.
@@ -196,22 +196,60 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!needsSession(request)) return NextResponse.next()
+  /**
+   * Where the staff screens live, versus where they appear to live.
+   *
+   * Worked out before the session check rather than after, because a rewrite
+   * does not re-run middleware: whatever is decided here is the last chance
+   * to decide it. The session is then judged against the *real* route, so
+   * moving the panel cannot accidentally move it outside the guard.
+   */
+  const publicPath = request.nextUrl.pathname
+  const internal = internalStaffPath(publicPath)
+
+  if (adminPathIsCustom() && internal === null && isUnder(publicPath, ['/admin', '/billing'])) {
+    /**
+     * The real paths, once the shop has moved the panel: gone, as far as
+     * anybody outside is concerned.
+     *
+     * A 404 rewrite rather than a redirect to the new place, obviously -- and
+     * rather than a 403, which would confirm there is something here to be
+     * forbidden from. It is the same response as any address that was never
+     * a page.
+     */
+    return NextResponse.rewrite(new URL('/not-found', request.url), { status: 404 })
+  }
+
+  const routed = internal ?? publicPath
+  const serve = () =>
+    internal
+      ? NextResponse.rewrite(new URL(internal + request.nextUrl.search, request.url))
+      : NextResponse.next()
+
+  if (!needsSession(request, routed)) return serve()
 
   const session = await readSessionToken(request.cookies.get(SESSION_COOKIE)?.value)
-  if (session) return NextResponse.next()
+  if (session) return serve()
 
   // APIs get a status they can act on; pages get sent to the login screen
   // with somewhere to come back to.
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (routed.startsWith('/api/')) {
     return NextResponse.json(
       { success: false, message: 'Sign in to do that' },
       { status: 401 }
     )
   }
 
-  const login = new URL('/admin/login', request.url)
-  login.searchParams.set('next', request.nextUrl.pathname + request.nextUrl.search)
+  /**
+   * Both halves of this are the public path, not the internal one.
+   *
+   * Sending somebody to /admin/login would land them on the 404 above, and
+   * putting the internal path in `next` would bounce them there after a
+   * successful sign-in -- locking the shop out of its own panel with correct
+   * credentials.
+   */
+  const login = new URL(adminUrl('/login'), request.url)
+  login.searchParams.set('next', publicPath + request.nextUrl.search)
   return NextResponse.redirect(login)
 }
 

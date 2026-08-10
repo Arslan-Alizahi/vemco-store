@@ -14,6 +14,16 @@ import { SESSION_COOKIE, createSessionToken } from '@/lib/auth/session'
  */
 beforeEach(() => {
   process.env.AUTH_SECRET = 'test-secret-value-for-signing-sessions'
+
+  /**
+   * Pinned, not inherited.
+   *
+   * The staff path comes from NEXT_PUBLIC_ADMIN_PATH, and vitest loads
+   * .env.local -- so without this every assertion below would pass or fail
+   * according to a file that is not in the repository. The masked case gets
+   * its own describe block, where the value is set deliberately.
+   */
+  process.env.NEXT_PUBLIC_ADMIN_PATH = 'admin'
 })
 
 const request = (path: string, method = 'GET', cookie?: string) =>
@@ -287,5 +297,75 @@ describe('maintenance mode', () => {
     delete process.env.MAINTENANCE_MODE
     expect((await middleware(request('/')))?.status).toBe(200)
     expect((await middleware(request('/products')))?.status).toBe(200)
+  })
+})
+
+/**
+ * Moving the staff screens somewhere the public cannot guess.
+ *
+ * This is not what keeps people out -- the password and the signed session
+ * do that, and neither depends on the path. What it buys is that the door is
+ * not advertised: the scanners that sweep /admin and /wp-admin across the
+ * whole internet find the same 404 as any address that was never a page.
+ */
+describe('when the shop has moved the panel', () => {
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_ADMIN_PATH = 'vimco-office'
+  })
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_ADMIN_PATH = 'admin'
+  })
+
+  it.each(['/admin', '/admin/login', '/admin/customers', '/billing'])(
+    '%s is a plain 404, not a login box',
+    async path => {
+      const response = await middleware(request(path))
+      expect(response?.status).toBe(404)
+      // Not a redirect: a 30x to the new place would hand over the address.
+      expect(response?.headers.get('location')).toBeNull()
+    }
+  )
+
+  it('sends an unauthenticated visitor to the login on the new path', async () => {
+    const response = await middleware(request('/vimco-office/customers'))
+    expect(response?.status).toBe(307)
+    expect(response?.headers.get('location')).toContain('/vimco-office/login')
+  })
+
+  /**
+   * The return address has to be the public path too. Putting the internal
+   * one in `next` would bounce a correctly signed-in shopkeeper straight
+   * into the 404 above -- locked out of their own panel by valid credentials.
+   */
+  it('comes back to where you were going, in public terms', async () => {
+    const response = await middleware(request('/vimco-office/revenue'))
+    expect(response?.headers.get('location')).toContain('next=%2Fvimco-office%2Frevenue')
+  })
+
+  it('serves the panel on the new path once signed in', async () => {
+    const response = await middleware(request('/vimco-office/customers', 'GET', await signedIn()))
+    expect(response?.status).not.toBe(404)
+    expect(response?.headers.get('location')).toBeNull()
+  })
+
+  it('serves the till on the new path once signed in', async () => {
+    const response = await middleware(request('/vimco-office/billing', 'GET', await signedIn()))
+    expect(response?.status).not.toBe(404)
+  })
+
+  /**
+   * The APIs keep their real addresses. The panel's own fetches use them, and
+   * they already answer 401 without a session -- masking them would break the
+   * thing being protected in order to hide a door that is already locked.
+   */
+  it('leaves the APIs where they are, still closed', async () => {
+    const response = await middleware(request('/api/customers'))
+    expect(response?.status).toBe(401)
+  })
+
+  it('does not touch the storefront', async () => {
+    const response = await middleware(request('/products'))
+    expect(response?.status).not.toBe(404)
   })
 })

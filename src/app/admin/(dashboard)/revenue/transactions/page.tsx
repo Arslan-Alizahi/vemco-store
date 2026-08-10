@@ -12,6 +12,7 @@ import {
   Store, Receipt, ChevronLeft, ChevronRight, Eye
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { adminUrl } from '@/lib/admin-path'
 
 interface Transaction {
   id: number
@@ -133,7 +134,7 @@ export default function TransactionsPage() {
           {/* Header */}
           <div className="mb-6">
             <Link
-              href="/admin/revenue"
+              href={adminUrl('/revenue')}
               className="mb-4 inline-flex items-center text-caramel-700 transition-colors hover:text-caramel-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />

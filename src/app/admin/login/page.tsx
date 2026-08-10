@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Spinner from '@/components/ui/Spinner'
+import { adminUrl } from '@/lib/admin-path'
 
 /**
  * The login screen.
@@ -20,7 +21,7 @@ import Spinner from '@/components/ui/Spinner'
 function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
-  const next = params.get('next') || '/admin'
+  const next = params.get('next') || adminUrl()
 
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
