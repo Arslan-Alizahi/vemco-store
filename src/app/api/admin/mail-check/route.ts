@@ -24,8 +24,32 @@ export async function GET(request: NextRequest) {
   const password = process.env.SMTP_PASSWORD
 
   const configured = Boolean(user && password)
+
+  /**
+   * Which SMTP_* names reached this deployment at all, and whether each one
+   * carries anything.
+   *
+   * Names only, never values. It separates the three states that all look
+   * the same from outside -- never added, added but empty, and added with a
+   * scope that excludes the running function -- and each of those has a
+   * different fix. Without it the answer to "I added it" is a guess.
+   */
+  const smtpKeys = Object.keys(process.env)
+    .filter(key => key.toUpperCase().startsWith('SMTP'))
+    .sort()
+    .map(key => `${key}=${process.env[key] ? '(set)' : '(empty)'}`)
+
   const state = {
     configured,
+    smtpKeys,
+    /**
+     * The commit this deployment was built from -- Netlify sets it.
+     *
+     * "I added the variable" and "the site was rebuilt after I added it" are
+     * different claims, and only the second one changes anything. If this
+     * does not move between two checks, nothing was rebuilt.
+     */
+    builtFrom: (process.env.COMMIT_REF || 'unknown').slice(0, 7),
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT) || 465,
     user: user || null,
