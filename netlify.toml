@@ -14,19 +14,33 @@
   NODE_VERSION = "20"
 
 # Every environment variable this needs is set in the Netlify UI, not here:
-# DATABASE_URL and SUPABASE_SERVICE_ROLE_KEY are secrets, and a file in the
-# repository is the one place a secret must never be.
+# DATABASE_URL, the service role key and the mail password are secrets, and a
+# file in the repository is the one place a secret must never be.
 #
+# Required
 #   DATABASE_URL                 Supabase transaction pooler (port 6543)
 #   NEXT_PUBLIC_SUPABASE_URL     project URL, public
 #   SUPABASE_SERVICE_ROLE_KEY    storage uploads, server-only
 #   AUTH_SECRET                  signs the admin session cookie
-#   ADMIN_PASSWORD_HASH          scrypt hash, never the password
-#   SHOP_TIMEZONE                Asia/Karachi
-#   NEXT_PUBLIC_SITE_URL         the deployed URL, for Stripe redirects
-#   NEXT_PUBLIC_TAX_RATE         0.18
-#   NEXT_PUBLIC_CURRENCY         PKR
-#   NEXT_PUBLIC_CURRENCY_LOCALE  en-PK
-#   STRIPE_SECRET_KEY            if online payment is switched on
-#   STRIPE_WEBHOOK_SECRET        likewise
+#   ADMIN_PASSWORD_HASH          scrypt hash, never the password itself
+#   NEXT_PUBLIC_SITE_URL         the deployed URL, used in metadata
+#
+# Where the staff screens answer. Leave it unset and they stay on /admin and
+# /billing for anyone who cares to type them. Set it and both of those return
+# a plain 404 while the panel answers on /<value>. It is baked into the build,
+# so changing it means redeploying.
+#   NEXT_PUBLIC_ADMIN_PATH
+#
+# Email. Without these the shop works exactly the same and simply sends
+# nothing -- no order confirmations, no booking bills, no enquiry replies.
+#   SMTP_HOST                    smtp.gmail.com
+#   SMTP_PORT                    465
+#   SMTP_USER                    the shop's Gmail address
+#   SMTP_PASSWORD                a Gmail app password, not the account password
+#
+# Optional
+#   SHOP_TIMEZONE                Asia/Karachi (the default)
+#   NEXT_PUBLIC_CURRENCY         PKR (the default)
+#   NEXT_PUBLIC_CURRENCY_LOCALE  en-PK (the default)
 #   MAINTENANCE_MODE             "true" closes the shop with a 503
+#   MAINTENANCE_BYPASS           a secret that lets you in while it is closed
