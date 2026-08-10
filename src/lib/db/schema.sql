@@ -417,3 +417,74 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS create_revenue_from_booking_payment ON booking_payments;
 CREATE TRIGGER create_revenue_from_booking_payment AFTER INSERT ON booking_payments
   FOR EACH ROW EXECUTE FUNCTION record_booking_payment_revenue();
+
+-- ---------------------------------------------------------------------------
+-- Enquiries
+-- ---------------------------------------------------------------------------
+-- Nobody buys a sofa the way they buy a phone charger. They look, they ask
+-- what it is made of, they want to sit on it, and they want to talk to a
+-- person before parting with a month's salary. The website's job is therefore
+-- not to take the money -- it is to hand the shop a name and a number, and
+-- hand the customer a reference and a route to a human.
+--
+-- No money moves here and nothing is reserved. A piece is held when an advance
+-- is paid at the shop, not when a form is submitted; anything else would show
+-- a customer an item as unavailable because a stranger filled in a form and
+-- never called back.
+CREATE TABLE IF NOT EXISTS enquiries (
+  id SERIAL PRIMARY KEY,
+
+  -- What the customer quotes on the phone. Without it the shop answers a call
+  -- about "the brown sofa" and has no way to find which enquiry it is.
+  reference TEXT UNIQUE NOT NULL,
+
+  -- Which of the three conversations this is. The shop answers each one
+  -- differently, so it is stored rather than guessed from the message.
+  intent TEXT NOT NULL,
+
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_email TEXT,
+  city TEXT,
+
+  -- Only meaningful for a showroom visit; null for the other two.
+  visit_date DATE,
+
+  message TEXT,
+
+  -- What the basket was worth when they sent it. Copied rather than joined,
+  -- because a price that changes next month must not silently rewrite what
+  -- the customer was looking at.
+  items_total NUMERIC(10, 2) NOT NULL DEFAULT 0,
+
+  status TEXT NOT NULL DEFAULT 'new',
+  handled_at TIMESTAMPTZ,
+  notes TEXT,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT enquiries_intent_known CHECK (intent IN ('visit', 'reserve', 'delivery')),
+  CONSTRAINT enquiries_status_known CHECK (status IN ('new', 'contacted', 'closed'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_enquiries_phone ON enquiries(customer_phone);
+
+-- The pieces the customer was asking about, named and priced as they were on
+-- the day. product_id may go null if the piece is later withdrawn; the name
+-- and the price stay, because the conversation was about them.
+CREATE TABLE IF NOT EXISTS enquiry_items (
+  id SERIAL PRIMARY KEY,
+  enquiry_id INTEGER NOT NULL REFERENCES enquiries(id) ON DELETE CASCADE,
+  product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
+  product_name TEXT NOT NULL,
+  product_sku TEXT,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  unit_price NUMERIC(10, 2) NOT NULL,
+  subtotal NUMERIC(10, 2) NOT NULL,
+
+  CONSTRAINT enquiry_items_quantity_positive CHECK (quantity > 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_enquiry_items_enquiry ON enquiry_items(enquiry_id);

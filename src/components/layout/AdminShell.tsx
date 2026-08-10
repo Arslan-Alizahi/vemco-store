@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowUpRight, BarChart3, CalendarClock, LayoutDashboard, LogOut, Receipt, Store, Users } from 'lucide-react'
+import { ArrowUpRight, BarChart3, CalendarClock, LayoutDashboard, LogOut, MessageCircle, Receipt, Store, Users } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import Container from './Container'
 import Logo from './Logo'
@@ -21,6 +21,10 @@ const SECTIONS = [
   { href: '/billing', label: 'Point of sale', icon: Store },
   // Third, next to the till that creates them: a booking is unfinished work,
   // and unfinished work needs to be somewhere a shop looks every morning.
+  // Above bookings, because an enquiry is the step before one: somebody
+  // waiting for a call back is time-sensitive in a way a booked delivery
+  // three weeks out is not.
+  { href: '/admin/enquiries', label: 'Enquiries', icon: MessageCircle },
   { href: '/admin/bookings', label: 'Bookings', icon: CalendarClock },
   { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/revenue', label: 'Revenue', icon: BarChart3 },

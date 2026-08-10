@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Minus, Plus, ShieldCheck, ShoppingBag, Trash2, Truck } from 'lucide-react'
+import { ArrowLeft, Minus, Phone, Plus, ShieldCheck, ShoppingBag, Trash2, Truck } from 'lucide-react'
 import Container from '@/components/layout/Container'
 import PageHeader from '@/components/layout/PageHeader'
 import Button from '@/components/ui/Button'
@@ -19,6 +19,7 @@ import { useToast } from '@/components/ui/Toast'
 import { useCart } from '@/hooks/useCart'
 import { calculateTotal, validateEmail } from '@/lib/utils'
 import { shippingFor } from '@/lib/shipping'
+import { cn } from '@/lib/cn'
 
 /**
  * Read once at module scope. NEXT_PUBLIC_ variables are inlined at build
@@ -30,14 +31,51 @@ interface Fields {
   name: string
   email: string
   phone: string
-  address: string
   city: string
+  visitDate: string
+  message: string
 }
 
-const EMPTY: Fields = { name: '', email: '', phone: '', address: '', city: '' }
+const EMPTY: Fields = { name: '', email: '', phone: '', city: '', visitDate: '', message: '' }
 
 /** Visual order, so "the first error" means the first one down the page. */
-const FIELD_ORDER: (keyof Fields)[] = ['name', 'email', 'phone', 'address', 'city']
+const FIELD_ORDER: (keyof Fields)[] = ['name', 'phone', 'email', 'city', 'visitDate']
+
+/**
+ * The three conversations a customer can start.
+ *
+ * Nobody buys a sofa the way they buy a phone charger, so the shop does not
+ * try to take the money here. Each of these ends the same way -- with the
+ * shop's phone numbers and a reference to quote -- but the shop answers each
+ * one differently, so the customer says which up front rather than the shop
+ * guessing from a free-text message.
+ */
+const INTENTS = [
+  {
+    value: 'visit' as const,
+    label: 'Book a showroom visit',
+    hint: 'Come and see it before you decide',
+  },
+  {
+    value: 'reserve' as const,
+    label: 'Reserve this piece',
+    hint: 'Talk it through, then hold it with an advance',
+  },
+  {
+    value: 'delivery' as const,
+    label: 'Buy and have it delivered',
+    hint: 'Agree the price and a delivery day on the phone',
+  },
+]
+
+type Intent = (typeof INTENTS)[number]['value']
+
+/** Tomorrow, in the format a date input wants. Nobody visits yesterday. */
+const earliestVisitDate = () => {
+  const date = new Date()
+  date.setDate(date.getDate() + 1)
+  return date.toISOString().slice(0, 10)
+}
 
 export default function CartPage() {
   const router = useRouter()
@@ -51,6 +89,7 @@ export default function CartPage() {
   const [values, setValues] = useState<Fields>(EMPTY)
   const [errors, setErrors] = useState<Partial<Fields>>({})
   const [isProcessing, setIsProcessing] = useState(false)
+  const [intent, setIntent] = useState<Intent>('visit')
   const formRef = useRef<HTMLFormElement>(null)
 
   // Shown here, decided on the server. Both read the same constants so the
@@ -71,12 +110,23 @@ export default function CartPage() {
 
   const validate = () => {
     const next: Partial<Fields> = {}
-    if (!values.name.trim()) next.name = 'We need a name for the delivery'
-    if (!values.email.trim()) next.email = 'We send the order confirmation here'
-    else if (!validateEmail(values.email)) next.email = 'That does not look like an email address'
-    if (!values.phone.trim()) next.phone = 'The delivery team calls before they set off'
-    if (!values.address.trim()) next.address = 'We need somewhere to deliver to'
-    if (!values.city.trim()) next.city = 'City decides the delivery rate'
+
+    // The phone number is the only thing this form genuinely needs. Everything
+    // else can be settled in the conversation it exists to start, and every
+    // extra required field is another reason to abandon it.
+    if (!values.name.trim()) next.name = 'We need a name to put on the enquiry'
+    if (!values.phone.trim()) next.phone = 'This is the number we will ring you on'
+
+    // Optional, but if it is given it has to be usable -- a typo here means
+    // the written copy with the reference never arrives.
+    if (values.email.trim() && !validateEmail(values.email)) {
+      next.email = 'That does not look like an email address'
+    }
+
+    if (intent === 'visit' && !values.visitDate) {
+      next.visitDate = 'Which day would you like to come?'
+    }
+
     setErrors(next)
 
     // Land on the first problem rather than leaving focus on the button that
@@ -106,68 +156,55 @@ export default function CartPage() {
     })
   }
 
-  const handleCheckout = async (event: React.FormEvent) => {
+  const handleEnquiry = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!validate()) return
 
     setIsProcessing(true)
     try {
-      const orderRes = await fetch('/api/orders', {
+      const res = await fetch('/api/enquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: values.name,
-          customer_email: values.email,
-          customer_phone: values.phone,
-          shipping_address: `${values.address}, ${values.city}`,
-          // Which product, how many. Nothing else.
-          //
-          // This used to send the price too, and the server used it. Posting
-          // unit_price: 1 for a Rs 185,000 sofa produced an order totalling
-          // Rs 1.18, and the payment was raised against that total. The names,
-          // prices, tax and delivery all come from the catalogue now, so the
-          // figures below are for display only.
+          intent,
+          customer_name: values.name.trim(),
+          customer_phone: values.phone.trim(),
+          customer_email: values.email.trim() || null,
+          city: values.city.trim() || null,
+          visit_date: intent === 'visit' ? values.visitDate : null,
+          message: values.message.trim() || null,
+          /**
+           * The names and prices as the customer was looking at them.
+           *
+           * Nothing is charged from this, so unlike an order there is no risk
+           * in sending what is on screen -- and there is a real benefit: the
+           * shop needs to know what the customer *thought* the price was when
+           * they enquired, because that is what the phone call will be about.
+           */
           items: cart.map(item => ({
             product_id: item.product_id,
+            product_name: item.product_name,
+            product_sku: item.product_sku,
             quantity: item.quantity,
+            unit_price: item.unit_price,
           })),
-          payment_method: 'stripe',
         }),
       })
 
-      const orderData = await orderRes.json()
-      if (!orderData.success) {
-        addToast(orderData.message || 'We could not create the order', 'error')
+      const data = await res.json()
+      if (!data.success) {
+        addToast(data.message || 'We could not send that enquiry', 'error')
         setIsProcessing(false)
         return
       }
 
-      const order = orderData.data
-
-      const paymentRes = await fetch('/api/stripe/create-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.id }),
-      })
-      const paymentData = await paymentRes.json()
-
-      if (!paymentData.success) {
-        addToast(paymentData.message || 'We could not start the payment', 'error')
-        setIsProcessing(false)
-        return
-      }
-
-      // The cart is deliberately NOT cleared here. It used to be emptied before
-      // the redirect, so anyone who abandoned payment came back to an empty
-      // cart with nothing to resume. It is cleared on the success page instead.
-      if (paymentData.data.paymentUrl) {
-        window.location.href = paymentData.data.paymentUrl
-      } else {
-        router.push(`/order/success?orderId=${order.id}`)
-      }
+      // The basket is deliberately NOT cleared. Nothing has been bought, and
+      // a customer who rings the shop an hour later will want the same list
+      // in front of them.
+      router.push(`/enquiry/${data.data.reference}`)
     } catch (error) {
-      console.error('Checkout failed:', error)
-      addToast('Checkout failed. Nothing has been charged.', 'error')
+      console.error('Enquiry failed:', error)
+      addToast('We could not send that just now. Nothing has been charged.', 'error')
       setIsProcessing(false)
     }
   }
@@ -212,7 +249,7 @@ export default function CartPage() {
          * header is the one that is right: a customer buying two chairs has
          * two chairs coming.
          */
-        lead={`${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'} ready for checkout.`}
+        lead={`${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'} to ask about.`}
       />
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -290,7 +327,7 @@ export default function CartPage() {
 
         <div className="space-y-6">
           <Card>
-            <h2 className="mb-4 text-h3 text-text-primary">Order summary</h2>
+            <h2 className="mb-4 text-h3 text-text-primary">What you are asking about</h2>
             <dl className="space-y-2 border-b border-border-subtle pb-4 text-ui">
               <div className="flex justify-between">
                 <dt className="text-text-secondary">Subtotal</dt>
@@ -303,8 +340,12 @@ export default function CartPage() {
                 <dd>{shipping === 0 ? 'Free' : <Money amount={shipping} />}</dd>
               </div>
             </dl>
+            {/* "Listed at", not "Total". Nothing is being charged here, and
+                a line saying Total invites the customer to believe the number
+                is settled when the whole point of the next step is that it is
+                not -- delivery, and anything they negotiate, come after. */}
             <div className="flex items-baseline justify-between pt-4">
-              <span className="text-body font-medium text-text-primary">Total</span>
+              <span className="text-body font-medium text-text-primary">Listed at</span>
               <Money amount={total} className="text-h2 text-text-primary" />
             </div>
             {shipping > 0 && (
@@ -342,12 +383,52 @@ export default function CartPage() {
             </Card>
           ) : (
           <Card>
-            <h2 className="mb-4 text-h3 text-text-primary">Delivery details</h2>
+            <h2 className="mb-1 text-h3 text-text-primary">Talk to us about this</h2>
+            <p className="mb-5 text-ui text-text-secondary">
+              Furniture is worth a conversation. Leave your details and we will call
+              you — no payment is taken on this website.
+            </p>
 
             {/* A real form: submits on Enter, and every field carries an
-                autocomplete token so the browser can fill it. Previously this
-                was loose inputs in a div with no autocomplete at all. */}
-            <form ref={formRef} onSubmit={handleCheckout} noValidate className="space-y-4">
+                autocomplete token so the browser can fill it. */}
+            <form ref={formRef} onSubmit={handleEnquiry} noValidate className="space-y-4">
+              {/*
+                What kind of conversation, first, because it changes what the
+                form asks for and what the shop says when it rings back. A
+                radiogroup rather than a select: three options is few enough
+                to show, and a customer choosing how to buy should see all of
+                their choices at once rather than one at a time.
+              */}
+              <div
+                role="radiogroup"
+                aria-label="What would you like to do?"
+                className="space-y-2"
+              >
+                {INTENTS.map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={intent === option.value}
+                    onClick={() => setIntent(option.value)}
+                    className={cn(
+                      'w-full rounded-sm border px-4 py-3 text-left transition-colors duration-fast',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
+                      intent === option.value
+                        ? 'border-action bg-surface-subtle'
+                        : 'border-border-subtle hover:bg-surface-subtle'
+                    )}
+                  >
+                    <span className="block text-body font-medium text-text-primary">
+                      {option.label}
+                    </span>
+                    <span className="block text-caption text-text-secondary">
+                      {option.hint}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
               <Input
                 label="Full name"
                 name="name"
@@ -358,6 +439,19 @@ export default function CartPage() {
                 required
               />
               <Input
+                label="Phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="0300 1234567"
+                value={values.phone}
+                onChange={set('phone')}
+                error={errors.phone}
+                helperText="The number we will ring you on"
+                required
+              />
+              <Input
                 label="Email"
                 name="email"
                 type="email"
@@ -365,28 +459,7 @@ export default function CartPage() {
                 value={values.email}
                 onChange={set('email')}
                 error={errors.email}
-                required
-              />
-              <Input
-                label="Phone"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                value={values.phone}
-                onChange={set('phone')}
-                error={errors.phone}
-                required
-              />
-              <Textarea
-                label="Address"
-                name="address"
-                rows={3}
-                autoComplete="street-address"
-                placeholder="House and street, plus any access notes"
-                value={values.address}
-                onChange={set('address')}
-                error={errors.address}
-                required
+                helperText="Optional — we send your reference here in writing"
               />
               <Input
                 label="City"
@@ -395,27 +468,55 @@ export default function CartPage() {
                 value={values.city}
                 onChange={set('city')}
                 error={errors.city}
-                required
+                helperText="Optional"
+              />
+
+              {intent === 'visit' && (
+                <Input
+                  label="Day you would like to come"
+                  name="visitDate"
+                  type="date"
+                  min={earliestVisitDate()}
+                  value={values.visitDate}
+                  onChange={set('visitDate')}
+                  error={errors.visitDate}
+                  helperText="We are open seven days, 11am to 8pm"
+                  required
+                />
+              )}
+
+              <Textarea
+                label="Anything you want to ask"
+                name="message"
+                rows={3}
+                placeholder="Fabric, size, colour, how soon you need it…"
+                value={values.message}
+                onChange={set('message')}
               />
 
               <Button type="submit" size="lg" fullWidth isLoading={isProcessing}>
-                {isProcessing ? 'Starting payment' : 'Continue to payment'}
+                {isProcessing ? 'Sending' : 'Send enquiry'}
               </Button>
             </form>
 
             <ul className="mt-5 space-y-2 border-t border-border-subtle pt-5">
               <li className="flex items-center gap-2 text-caption text-text-secondary">
+                <Phone className="h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
+                We call back within one working day
+              </li>
+              <li className="flex items-center gap-2 text-caption text-text-secondary">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
-                Card details never touch our servers
+                No payment on this website — nothing is charged
               </li>
               <li className="flex items-center gap-2 text-caption text-text-secondary">
                 <Truck className="h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
-                Delivered in 3-5 working days
+                Delivery and price agreed on the phone
               </li>
             </ul>
 
             <p className="mt-4 text-caption text-text-tertiary">
-              By continuing you agree to our{' '}
+              Sending this does not hold the piece — it is held once an advance is paid.
+              See our{' '}
               <Link href="/policies/terms" className="underline underline-offset-4">
                 terms
               </Link>{' '}

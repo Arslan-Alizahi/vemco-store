@@ -31,7 +31,7 @@ export interface MailLine {
   subtotal: number
 }
 
-const escape = (value: string) =>
+export const escape = (value: string) =>
   value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -39,12 +39,12 @@ const escape = (value: string) =>
     .replace(/"/g, '&quot;')
 
 /** The customer's own name, or a greeting that works without one. */
-const greeting = (name?: string | null) => {
+export const greeting = (name?: string | null) => {
   const first = (name || '').trim().split(/\s+/)[0]
   return first ? `Hello ${first},` : 'Hello,'
 }
 
-const row = (label: string, value: string, strong = false) => `
+export const row = (label: string, value: string, strong = false) => `
   <tr>
     <td style="padding:6px 0;color:${strong ? bark[900] : bark[600]};font-size:14px;${
       strong ? 'font-weight:600;' : ''
@@ -54,7 +54,7 @@ const row = (label: string, value: string, strong = false) => `
     };font-size:14px;${strong ? 'font-weight:600;' : ''}">${escape(value)}</td>
   </tr>`
 
-const itemRows = (items: MailLine[]) =>
+export const itemRows = (items: MailLine[]) =>
   items
     .map(
       item => `
@@ -70,7 +70,7 @@ const itemRows = (items: MailLine[]) =>
     )
     .join('')
 
-const itemLines = (items: MailLine[]) =>
+export const itemLines = (items: MailLine[]) =>
   items
     .map(item => `  ${item.product_name} x${item.quantity}   ${formatCurrency(item.subtotal)}`)
     .join('\n')
@@ -83,7 +83,7 @@ const itemLines = (items: MailLine[]) =>
  * phone with a question about their delivery should not have to go and find
  * the website to get a phone number.
  */
-const layout = (title: string, body: string) => `<!doctype html>
+export const layout = (title: string, body: string) => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(title)}</title></head>
@@ -114,7 +114,7 @@ const layout = (title: string, body: string) => `<!doctype html>
   </table>
 </body></html>`
 
-const textFooter = () =>
+export const textFooter = () =>
   [
     '',
     BRAND_ADDRESS,

@@ -39,7 +39,7 @@ beforeEach(() => {
   localStorage.clear()
   vi.spyOn(global, 'fetch').mockResolvedValue({
     ok: true,
-    json: async () => ({ success: true, data: { id: 1, orderNumber: 'ORD-1' } }),
+    json: async () => ({ success: true, data: { id: 1, reference: 'VIM-K7R2QX' } }),
   } as Response)
 })
 
@@ -50,10 +50,10 @@ describe('an empty cart', () => {
     expect(screen.getByRole('link', { name: /browse furniture/i })).toBeInTheDocument()
   })
 
-  it('does not show a checkout form there is nothing to check out', async () => {
+  it('does not show an enquiry form when there is nothing to ask about', async () => {
     renderCart()
     await screen.findByText(/your cart is empty/i)
-    expect(screen.queryByRole('button', { name: /continue to payment/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /send enquiry/i })).not.toBeInTheDocument()
   })
 })
 
@@ -90,51 +90,75 @@ describe('a cart with something in it', () => {
 })
 
 /**
- * The checkout gate. These assert the two things that decide whether an order
- * is any use: that an incomplete one cannot be submitted, and that the
- * customer is told what is wrong in a way assistive technology can convey.
+ * The enquiry gate.
+ *
+ * Nothing is paid for on this website, so the thing that decides whether the
+ * online shop works at all is whether an enquiry can reach the shop with a
+ * name and a number attached -- and whether an incomplete one is refused
+ * clearly enough that the customer fixes it rather than leaving.
  */
-describe('checkout validation', () => {
+describe('sending an enquiry', () => {
   beforeEach(() => addToCart(SOFA))
+
+  const send = () => screen.getByRole('button', { name: /send enquiry/i })
 
   it('refuses to submit an empty form', async () => {
     renderCart()
     await screen.findByText('Emerald Velvet Sofa')
 
-    await userEvent.click(screen.getByRole('button', { name: /continue to payment/i }))
+    await userEvent.click(send())
 
-    expect(global.fetch).not.toHaveBeenCalledWith('/api/orders', expect.anything())
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/enquiries', expect.anything())
   })
 
-  it('marks every missing field invalid and says why', async () => {
+  /**
+   * Name, phone and -- because a visit is the default -- a day. Everything
+   * else is optional on purpose: this form exists to start a phone call, and
+   * every extra required field is another reason to abandon it.
+   */
+  it('marks the missing fields invalid and says why', async () => {
     renderCart()
     await screen.findByText('Emerald Velvet Sofa')
 
-    await userEvent.click(screen.getByRole('button', { name: /continue to payment/i }))
+    await userEvent.click(send())
 
     const alerts = await screen.findAllByRole('alert')
-    expect(alerts.length).toBe(5)
-    expect(document.querySelectorAll('[aria-invalid="true"]')).toHaveLength(5)
+    expect(alerts.length).toBe(3)
+    expect(document.querySelectorAll('[aria-invalid="true"]')).toHaveLength(3)
   })
 
   it('moves focus to the first field that failed', async () => {
     renderCart()
     await screen.findByText('Emerald Velvet Sofa')
 
-    await userEvent.click(screen.getByRole('button', { name: /continue to payment/i }))
+    await userEvent.click(send())
 
     await waitFor(() => {
       expect(document.querySelector('input[name="name"]')).toHaveFocus()
     })
   })
 
-  it('rejects an address that is not an email address', async () => {
+  it('does not ask for a visit date unless they are asking to visit', async () => {
     renderCart()
     await screen.findByText('Emerald Velvet Sofa')
 
-    await userEvent.type(screen.getByRole('textbox', { name: /full name/i }), 'Arslan Khan')
+    expect(document.querySelector('input[name="visitDate"]')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('radio', { name: /buy and have it delivered/i }))
+
+    expect(document.querySelector('input[name="visitDate"]')).not.toBeInTheDocument()
+  })
+
+  /**
+   * The email is optional, so an empty one must pass -- but a typed one has
+   * to be usable, because it is where the written copy of the reference goes.
+   */
+  it('accepts no email, and rejects a broken one', async () => {
+    renderCart()
+    await screen.findByText('Emerald Velvet Sofa')
+
     await userEvent.type(document.querySelector('input[name="email"]')!, 'not-an-email')
-    await userEvent.click(screen.getByRole('button', { name: /continue to payment/i }))
+    await userEvent.click(send())
 
     expect(await screen.findByText(/does not look like an email/i)).toBeInTheDocument()
   })
@@ -143,49 +167,59 @@ describe('checkout validation', () => {
     renderCart()
     await screen.findByText('Emerald Velvet Sofa')
 
-    await userEvent.click(screen.getByRole('button', { name: /continue to payment/i }))
-    expect(await screen.findByText(/we need a name for the delivery/i)).toBeInTheDocument()
+    await userEvent.click(send())
+    expect(await screen.findByText(/we need a name to put on the enquiry/i)).toBeInTheDocument()
 
     await userEvent.type(document.querySelector('input[name="name"]')!, 'Arslan Khan')
 
     await waitFor(() => {
-      expect(screen.queryByText(/we need a name for the delivery/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/we need a name to put on the enquiry/i)).not.toBeInTheDocument()
     })
   })
 
-  it('submits once the form is complete', async () => {
+  it('sends once a name, a number and a day are given', async () => {
     renderCart()
     await screen.findByText('Emerald Velvet Sofa')
 
     await userEvent.type(document.querySelector('input[name="name"]')!, 'Arslan Khan')
-    await userEvent.type(document.querySelector('input[name="email"]')!, 'hj680787@gmail.com')
     await userEvent.type(document.querySelector('input[name="phone"]')!, '03001234567')
-    await userEvent.type(document.querySelector('textarea[name="address"]')!, 'Dhindhiyan Road, Haripur')
-    await userEvent.type(document.querySelector('input[name="city"]')!, 'Lahore')
+    await userEvent.type(document.querySelector('input[name="visitDate"]')!, '2026-09-01')
 
-    await userEvent.click(screen.getByRole('button', { name: /continue to payment/i }))
+    await userEvent.click(send())
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/orders', expect.anything())
+      expect(global.fetch).toHaveBeenCalledWith('/api/enquiries', expect.anything())
+    })
+  })
+
+  it('goes through without an email address', async () => {
+    renderCart()
+    await screen.findByText('Emerald Velvet Sofa')
+
+    await userEvent.click(screen.getByRole('radio', { name: /reserve this piece/i }))
+    await userEvent.type(document.querySelector('input[name="name"]')!, 'Arslan Khan')
+    await userEvent.type(document.querySelector('input[name="phone"]')!, '03001234567')
+
+    await userEvent.click(send())
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/enquiries', expect.anything())
     })
   })
 
   /**
-   * The cart is emptied on the success page, never before the redirect.
-   * Clearing it early left an abandoned payment with an empty basket and no
-   * way back -- the worst possible moment to lose one.
+   * Nothing has been bought, so the basket stays. A customer who rings the
+   * shop an hour later wants the same list in front of them.
    */
-  it('does not empty the cart on the way to payment', async () => {
+  it('keeps the basket after sending', async () => {
     renderCart()
     await screen.findByText('Emerald Velvet Sofa')
 
+    await userEvent.click(screen.getByRole('radio', { name: /buy and have it delivered/i }))
     await userEvent.type(document.querySelector('input[name="name"]')!, 'Arslan Khan')
-    await userEvent.type(document.querySelector('input[name="email"]')!, 'hj680787@gmail.com')
     await userEvent.type(document.querySelector('input[name="phone"]')!, '03001234567')
-    await userEvent.type(document.querySelector('textarea[name="address"]')!, 'Showroom 14')
-    await userEvent.type(document.querySelector('input[name="city"]')!, 'Lahore')
 
-    await userEvent.click(screen.getByRole('button', { name: /continue to payment/i }))
+    await userEvent.click(send())
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled())
     expect(JSON.parse(localStorage.getItem('shopping_cart') ?? '[]')).toHaveLength(1)

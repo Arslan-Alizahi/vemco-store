@@ -30,6 +30,10 @@ const PROTECTED_READ_PREFIXES = [
   // still owed. Reading that list should need a session as much as reading
   // the customer table does.
   '/api/bookings',
+  // The enquiry list is a page of names, phone numbers and what each person
+  // is interested in buying. Anyone who could read it could work the shop's
+  // pipeline; sending one stays public, below.
+  '/api/enquiries',
 ]
 
 /**
@@ -40,7 +44,14 @@ const PROTECTED_READ_PREFIXES = [
  * caller: prices come from the catalogue, and the webhook verifies Stripe's
  * signature before it reads anything.
  */
-const PUBLIC_WRITE_PATHS = ['/api/orders', '/api/stripe/create-payment', '/api/stripe/webhook']
+const PUBLIC_WRITE_PATHS = [
+  '/api/orders',
+  '/api/stripe/create-payment',
+  '/api/stripe/webhook',
+  // The whole point of the storefront. Asking somebody to log in before they
+  // can ask a shop a question is asking them to go somewhere else.
+  '/api/enquiries',
+]
 
 const isUnder = (pathname: string, prefixes: string[]) =>
   prefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))
