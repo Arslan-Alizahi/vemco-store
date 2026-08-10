@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { ArrowLeft, Mail, MapPin, Phone, Printer, ShoppingBag, Store } from 'lucide-react'
+import { useParams, useRouter } from 'next/navigation'
+import { ArrowLeft, Mail, MapPin, Phone, Printer, ShoppingBag, Store, Trash2 } from 'lucide-react'
 import Container from '@/components/layout/Container'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -13,15 +13,43 @@ import Spinner from '@/components/ui/Spinner'
 import EmptyState from '@/components/ui/EmptyState'
 import ErrorState from '@/components/ui/ErrorState'
 import PrintStatement from '@/components/ui/PrintStatement'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { useToast } from '@/components/ui/Toast'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import type { CustomerSummary, Purchase } from '@/lib/customers'
 
 export default function CustomerDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { addToast } = useToast()
   const [customer, setCustomer] = useState<CustomerSummary | null>(null)
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [statementOpen, setStatementOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  /**
+   * Deletes, then leaves.
+   *
+   * Staying on the page of a record that no longer exists would show a
+   * customer whose next reload is a 404. Back to the list, where the proof
+   * that it worked is that they are no longer in it.
+   */
+  const handleDelete = async () => {
+    const res = await fetch(`/api/customers/${params.id}`, { method: 'DELETE' })
+    const data = await res.json()
+
+    if (!data.success) {
+      // The refusal a booking causes is the useful one, and it names what to
+      // do about it, so it is shown rather than replaced with a generic line.
+      addToast(data.message || 'We could not delete that customer', 'error')
+      setConfirmDelete(false)
+      return
+    }
+
+    addToast(`${data.data.name} deleted`, 'success')
+    router.push('/admin/customers')
+  }
 
   const load = useCallback(() => {
     setStatus('loading')
@@ -100,15 +128,56 @@ export default function CustomerDetailPage() {
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() => setStatementOpen(true)}
-          disabled={purchases.length === 0}
-          leftIcon={<Printer className="h-4 w-4" />}
-        >
-          Print statement
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setStatementOpen(true)}
+            disabled={purchases.length === 0}
+            leftIcon={<Printer className="h-4 w-4" />}
+          >
+            Print statement
+          </Button>
+
+          {/*
+            Deletion lives here rather than on the list, deliberately.
+
+            A delete control on every row of a table is a mis-tap away from
+            removing the wrong person, and from the list you cannot see what
+            you are about to remove. From here the whole record is on screen
+            -- what they bought, what they spent, when they were last in --
+            so the decision is made looking at the thing being decided.
+          */}
+          <Button
+            variant="danger"
+            onClick={() => setConfirmDelete(true)}
+            leftIcon={<Trash2 className="h-4 w-4" />}
+          >
+            Delete customer
+          </Button>
+        </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title={`Delete ${customer.name}?`}
+        /*
+          Says what survives as well as what goes. "Delete the customer" reads
+          as if it erases the sales too, and somebody worried about their books
+          would never press it; somebody who wanted the sales gone would press
+          it and be wrong. Both need the same sentence.
+        */
+        description={
+          purchases.length > 0
+            ? `Their contact details go. The ${purchases.length} ${
+                purchases.length === 1 ? 'purchase' : 'purchases'
+              } stay in the shop's records with the name and number printed on them — this only removes the customer card. It cannot be undone.`
+            : 'This removes their contact details. It cannot be undone.'
+        }
+        confirmLabel="Delete customer"
+        destructive
+      />
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-e1">

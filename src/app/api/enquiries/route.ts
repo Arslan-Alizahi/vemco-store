@@ -2,10 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { apiError, apiResponse } from '@/lib/utils'
 import { createEnquiry, listEnquiries, type EnquiryStatus } from '@/lib/enquiries'
 import { enquiryForShopMail, enquiryReceivedMail, sendMail } from '@/lib/mail'
-import { BRAND_EMAIL } from '@/lib/brand'
+import { BRAND_EMAIL, BRAND_PHONES } from '@/lib/brand'
+import { clientKey, createRateLimiter } from '@/lib/rate-limit'
 
 /** Never evaluated at build time -- it reads the database. */
 export const dynamic = 'force-dynamic'
+
+/**
+ * Three enquiries per address every ten minutes.
+ *
+ * This form is the one place the public can write to the database without a
+ * session, which is exactly what makes it useful and exactly what makes it a
+ * target. Left open, a bot filling it overnight would bury real customers in
+ * the shop's list and burn through the Gmail sending quota, so the genuine
+ * confirmations would stop arriving -- the failure nobody would notice until
+ * a customer rang to ask why they never got their reference.
+ *
+ * Three is chosen to be invisible to a person. Somebody asking about a sofa,
+ * changing their mind and asking about a dining table, then correcting a typo
+ * in their number, has used all the allowance a real customer ever needs.
+ */
+const enquiryLimit = createRateLimiter({ max: 3, windowMs: 10 * 60 * 1000 })
 
 /**
  * Reading the list needs a session: it is a page of names, phone numbers and
@@ -35,6 +52,26 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const key = clientKey(request)
+    if (enquiryLimit.exceeded(key)) {
+      const minutes = enquiryLimit.retryAfterMinutes(key)
+      /**
+       * 429, and a message written for the person rather than the bot.
+       *
+       * A real customer can hit this -- three attempts is not many if the
+       * form refuses them twice for a typo -- so it tells them the shop is
+       * still reachable and how, rather than leaving them with a wall.
+       */
+      return NextResponse.json(
+        apiError(
+          `You have sent a few enquiries already. Try again in ${minutes} ${
+            minutes === 1 ? 'minute' : 'minutes'
+          }, or ring us on ${BRAND_PHONES[0]} — we would rather talk anyway.`
+        ),
+        { status: 429, headers: { 'Retry-After': String(minutes * 60) } }
+      )
+    }
+
     const body = await request.json()
 
     const enquiry = await createEnquiry({

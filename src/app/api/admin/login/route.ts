@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { clientKey, createRateLimiter } from '@/lib/rate-limit'
 import { verifyPassword } from '@/lib/auth/password'
 import {
   SESSION_COOKIE,
@@ -11,36 +12,8 @@ import {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-/**
- * Attempts per address, in memory.
- *
- * Honest about what it is: this resets when the process restarts and does not
- * span instances. For a single-node shop on SQLite that is the whole
- * deployment, so it holds. Behind more than one instance it would need to
- * move into the database, and that is a change to make deliberately rather
- * than to assume.
- */
-const attempts = new Map<string, { count: number; firstAt: number }>()
-const WINDOW_MS = 15 * 60 * 1000
-const MAX_ATTEMPTS = 8
-
-const clientKey = (request: NextRequest): string =>
-  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-  request.headers.get('x-real-ip') ||
-  'unknown'
-
-const rateLimited = (key: string): boolean => {
-  const now = Date.now()
-  const record = attempts.get(key)
-
-  if (!record || now - record.firstAt > WINDOW_MS) {
-    attempts.set(key, { count: 1, firstAt: now })
-    return false
-  }
-
-  record.count += 1
-  return record.count > MAX_ATTEMPTS
-}
+/** Eight guesses a quarter of an hour, per address. See lib/rate-limit. */
+const loginLimit = createRateLimiter({ max: 8, windowMs: 15 * 60 * 1000 })
 
 export async function POST(request: NextRequest) {
   if (!isAuthConfigured()) {
@@ -55,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   const key = clientKey(request)
-  if (rateLimited(key)) {
+  if (loginLimit.exceeded(key)) {
     return NextResponse.json(
       { success: false, message: 'Too many attempts. Try again in a few minutes.' },
       { status: 429 }
@@ -82,7 +55,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  attempts.delete(key)
+  loginLimit.clear(key)
 
   const response = NextResponse.json({ success: true })
   response.cookies.set(SESSION_COOKIE, await createSessionToken(), {
