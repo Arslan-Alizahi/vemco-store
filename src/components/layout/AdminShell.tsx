@@ -90,10 +90,22 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   anything. A flex item defaults to min-width:auto, so it
                   refuses to shrink below its content and scrolls the page
                   instead of itself -- which is what adding two more sections
-                  to this bar did at 320px. */}
+                  to this bar did at 320px.
+
+                  `first:ms-auto` on the links, and NOT justify-end here.
+                  They look identical while everything fits and behave
+                  completely differently when it does not: an overflowing
+                  flex row with justify-end pushes its first items out past
+                  the *start* edge, where scrollLeft cannot reach them --
+                  0 is already the leftmost position. Dashboard sat at x=279
+                  in a container starting at x=385 and could not be scrolled
+                  to, clicked, or seen. An auto start-margin collapses to
+                  zero the moment the row overflows, so the same row right-
+                  aligns when there is room and stays reachable when there
+                  is not. */}
               <nav
                 aria-label="Admin sections"
-                className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto px-1"
+                className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1"
               >
                 {SECTIONS.map(section => {
                   const active = isActive(section.href)
@@ -111,6 +123,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                       aria-current={active ? 'page' : undefined}
                       className={cn(
                         'flex shrink-0 items-center gap-2 rounded-sm px-3 py-2 text-ui font-medium',
+                        'first:ms-auto',
                         'transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         active
                           ? 'bg-caramel-50 text-caramel-800'
