@@ -33,13 +33,13 @@ const TIERS = [
     name: 'Upcountry',
     days: '7-10 working days',
     price: 7500,
-    note: 'Outside Lahore, Karachi and Islamabad',
+    note: 'Outside Haripur, Abbottabad and Islamabad',
   },
 ]
 
 const ZONES = [
   {
-    title: 'Lahore, Karachi and Islamabad',
+    title: 'Haripur, Abbottabad and Islamabad',
     body: 'Our own delivery teams, with a two-hour arrival window confirmed the day before.',
   },
   {

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 const FACTS = [
   ['Founded', '2024'],
-  ['Head office', 'Lahore, Punjab'],
+  ['Head office', 'Haripur, Khyber Pakhtunkhwa'],
   ['Showroom', 'Dhindhiyan Road, Chohar Shareef Chowk, Haripur, KPK'],
   ['Delivers to', 'All major cities in Pakistan'],
 ]

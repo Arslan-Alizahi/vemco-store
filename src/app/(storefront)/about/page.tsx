@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Vimco Furniture House makes solid wood furniture in Lahore, publishes full specifications, and backs the structure for five years.',
+    'Vimco Furniture House makes solid wood furniture in Haripur, publishes full specifications, and backs the structure for five years.',
 }
 
 const PRINCIPLES = [
@@ -44,7 +44,7 @@ export default function AboutPage() {
         <PageHeader
           eyebrow="About Vimco Furniture House"
           title="Furniture that outlasts the room you bought it for"
-          lead="We build in Lahore, sell direct, and tell you what a piece is actually made of."
+          lead="We build in Haripur, sell direct, and tell you what a piece is actually made of."
           align="center"
         />
 

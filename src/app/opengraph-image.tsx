@@ -1,8 +1,10 @@
 import { ImageResponse } from 'next/og'
-import { bark, caramel, semantic } from '@/design/tokens'
+import { bark, semantic } from '@/design/tokens'
+import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
+import { SITE_DESCRIPTION } from '@/lib/site'
 
 export const runtime = 'edge'
-export const alt = 'Vimco Furniture House — Furniture for considered spaces'
+export const alt = `${BRAND_NAME} — ${BRAND_TAGLINE}`
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -26,25 +28,25 @@ export default async function OpengraphImage() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: bark[900],
+          background: semantic['surface-inverse'],
           padding: '72px',
           fontFamily: 'sans-serif',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 13,
-              background: caramel[600],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          />
-          <span style={{ color: semantic.canvas, fontSize: 34, letterSpacing: '-0.01em' }}>Vimco Furniture House</span>
-        </div>
+        {/* The wordmark, set the way the site sets it: letterspaced caps,
+            no glyph. The card used to lead with a plain caramel square, which
+            was a placeholder for a logo that never existed and the only amber
+            left anywhere in the brand. */}
+        <span
+          style={{
+            color: bark[300],
+            fontSize: 26,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+          }}
+        >
+          {BRAND_NAME}
+        </span>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span
@@ -56,10 +58,10 @@ export default async function OpengraphImage() {
               maxWidth: 900,
             }}
           >
-            Furniture for considered spaces
+            {BRAND_TAGLINE}
           </span>
-          <span style={{ color: bark[400], fontSize: 30, marginTop: 26 }}>
-            Solid wood, honest joinery, delivered across Pakistan
+          <span style={{ color: bark[300], fontSize: 28, marginTop: 26, maxWidth: 940 }}>
+            {SITE_DESCRIPTION}
           </span>
         </div>
       </div>

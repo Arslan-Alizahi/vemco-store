@@ -46,14 +46,14 @@ const FAQS: FaqItem[] = [
     category: 'delivery',
     question: 'How long does delivery take?',
     answer:
-      'Three to five working days in Lahore, Karachi and Islamabad. Seven to ten upcountry. Made-to-order pieces ship 3 to 4 weeks after the order is confirmed.',
+      'Three to five working days in Haripur, Abbottabad and Islamabad. Seven to ten upcountry. Made-to-order pieces ship 3 to 4 weeks after the order is confirmed.',
   },
   {
     id: 'delivery-free',
     category: 'delivery',
     question: 'Do you offer free delivery?',
     answer:
-      'Free city delivery on orders over Rs 100,000 in Lahore, Karachi and Islamabad, applied automatically at checkout. Upcountry is a flat Rs 7,500.',
+      'Free city delivery on orders over Rs 100,000 in Haripur, Abbottabad and Islamabad, agreed when we call you. Upcountry is a flat Rs 7,500.',
   },
   {
     id: 'delivery-room',
@@ -74,7 +74,7 @@ const FAQS: FaqItem[] = [
     category: 'payment',
     question: 'What payment methods do you accept?',
     answer:
-      'Card, bank transfer, and cash on delivery within Lahore. Card payments are handled by our payment processor; we never see or store your card number.',
+      'Card, bank transfer, and cash on delivery within Haripur. Card payments are handled by our payment processor; we never see or store your card number.',
   },
   {
     id: 'payment-when',
